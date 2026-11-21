@@ -9,7 +9,8 @@
   "tags": [
     { "id": "mas-vendido", "label": "Más vendido", "tone": "ambar", "showInList": false },
     { "id": "de-la-casa", "label": "La de la casa", "tone": "ambar", "showInList": false },
-    { "id": "combo", "label": "Combo", "tone": "combo", "showInList": true }
+    { "id": "combo", "label": "Combo", "tone": "combo", "showInList": true },
+    { "id": "promo", "label": "Promo", "tone": "promo", "showInList": true }
   ],
   "sides": [
     { "id": "gallo-pinto", "name": "Gallo pinto" },
@@ -86,6 +87,20 @@
       "maxExtras": 3,
       "available": true,
       "reviews": []
+    },
+    {
+      "id": "promo-2-enchiladas",
+      "name": "Promo: 2 enchiladas",
+      "category": "combos",
+      "price": 160,
+      "shortDescription": "2 enchiladas de la casa a precio de promo",
+      "description": "La promo del día: dos enchiladas de la casa, fritas al momento, por C$ 160.",
+      "includes": "2 enchiladas y ensalada de repollo y tomate.",
+      "image": "/img/enchilada.webp",
+      "tags": ["promo"],
+      "extras": ["crema", "chilero"],
+      "maxExtras": 2,
+      "available": true
     },
     {
       "id": "combo-martes-enchiladas",
@@ -280,6 +295,6 @@
     "subtitle": "Hoy de 4 a 7 pm",
     "homeSubtitle": "Solo hoy, de 4 a 7 pm",
     "image": "/img/enchilada.webp",
-    "dishId": "enchilada"
+    "dishId": "promo-2-enchiladas"
   }
 }

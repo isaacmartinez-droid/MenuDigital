@@ -12,7 +12,8 @@ import { Toast } from '../components/Toast'
 import { cx } from '../lib/cx'
 import { formatMoney, tipAmount } from '../lib/money'
 import { fmt, t, tableLabel } from '../lib/text'
-import { fetchAccount, rateDishes, requestBill, type NewReview } from '../lib/api'
+import { fetchAccount, rateDishes, requestBill } from '../lib/api'
+import { reviewsToSend, type DishEntry, type Overall } from '../lib/reviews'
 import { PaymentNotice } from '../components/PaymentNotice'
 import { itemDetails } from '../lib/comandaStatus'
 import { customerLabel } from '../lib/orderFlow'
@@ -25,30 +26,6 @@ import { useCart } from '../store/cart'
 import { accountStore, useAccount } from '../store/account'
 
 const sumTotals = (list: Comanda[]) => list.reduce((sum, c) => sum + c.total, 0)
-
-type DishEntry = [dishId: string, name: string]
-type Overall = 'rico' | 'mal' | null
-
-/**
- * Reseñas que se mandan: con pocos platos, estrellas y comentario de cada uno;
- * con muchos, "todo rico" = 5 a todos, o 2 a los marcados como "no estuvo bien".
- */
-function reviewsToSend(
-  dishes: DishEntry[],
-  ratings: Record<string, number>,
-  comments: Record<string, string>,
-  overall: Overall,
-  author: string,
-): NewReview[] {
-  if (dishes.length <= restaurant.ratings.perDishMax) {
-    return dishes
-      .filter(([id]) => ratings[id])
-      .map(([id]) => ({ dishId: id, rating: ratings[id], text: comments[id], author }))
-  }
-  if (overall === 'rico') return dishes.map(([id]) => ({ dishId: id, rating: 5, author }))
-  if (overall === 'mal') return Object.entries(ratings).map(([id, rating]) => ({ dishId: id, rating, author }))
-  return []
-}
 
 /** Campo corto de comentario (opcional), de una línea para que no ocupe mucho. */
 function CommentInput({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {

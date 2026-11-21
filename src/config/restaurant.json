@@ -38,6 +38,7 @@
       "rating": 4.8,
       "count": 120,
       "url": "https://www.google.com/maps/search/?api=1&query=Fritanga%20Nica%20Managua",
+      "reviewUrl": "https://www.google.com/maps/search/?api=1&query=Fritanga%20Nica%20Managua",
       "reviews": [
         { "text": "La carne bien suave y el maduro en su punto. Volvemos seguro.", "when": "hace 2 semanas" },
         { "text": "Rápido y sabroso. El combo para dos rinde bastante.", "when": "hace 1 mes" },
@@ -130,6 +131,11 @@
     "invalidTable": {
       "title": "Este QR no es válido",
       "body": "No encontramos esta mesa. Pedile ayuda al mesero o escaneá el código de tu mesa."
+    },
+    "notFound": {
+      "title": "Página no encontrada",
+      "body": "La página que buscás no existe o cambió de lugar.",
+      "cta": "Ir al inicio"
     },
     "menu": {
       "callWaiter": "Llamar al mesero",
@@ -463,6 +469,22 @@
       "payLine": "{name} · pagás al recoger",
       "pickupTitle": "Recogé en {name}",
       "payPickupNow": "No pagás nada ahora",
+      "rateCta": "Calificá tu comida",
+      "rateTitle": "¿Qué tal estuvo?",
+      "rateTap": "Tocá las estrellas",
+      "ratedOne": "Calificaste con 1 estrella",
+      "ratedMany": "Calificaste con {n} estrellas",
+      "rateComment": "Contanos más (opcional)",
+      "rateCommentPlaceholder": "Ej.: la carne bien suave y el maduro en su punto.",
+      "rateSend": "Enviar calificación",
+      "rateSending": "Enviando…",
+      "thanksTitle": "¡Gracias!",
+      "rateReceivedTitle": "Recibimos tu calificación",
+      "rateReceivedBody": "La cocina la ve hoy mismo. ¡Gracias por venir!",
+      "googleTitle": "Dejá tu reseña en Google",
+      "googleBody": "Una reseña allá hace que más gente nos encuentre. Te toma un minuto.",
+      "googleCta": "Dejar reseña en Google",
+      "backToMenu": "Volver al menú",
       "notify": {
         "lista": { "title": "Tu orden {id} está lista", "body": "Pasá a recogerla: te esperamos en caja." },
         "entregada": { "title": "¡Gracias por tu compra!", "body": "Esperamos verte pronto." }

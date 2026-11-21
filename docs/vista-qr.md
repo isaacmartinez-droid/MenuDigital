@@ -102,7 +102,8 @@ y, al final, avisa a caja cuánto y cómo va a pagar. **El pago siempre es en ca
 | `/m/:mesa/orden/:comandaId` | Seguimiento de una orden | `Tracking.tsx` |
 | `/m/:mesa/cuenta` | Tu cuenta | `Bill.tsx` |
 | `/m/:mesa/cuenta/pagada` | Cuenta pagada | `Paid.tsx` |
-| mesa o ruta que no existe | "Este QR no es válido" | `InvalidTable.tsx` |
+| mesa o ruta de mesa que no existe | "Este QR no es válido" | `InvalidTable.tsx` |
+| otra dirección (web) | "Página no encontrada" | `NotFound.tsx` (ver vista-web.md) |
 | error al cargar una pantalla | Pantalla amable con "Reintentar" | `RouteError.tsx` |
 | `/` y demás rutas sin `/m/` | Web para llevar (ver el README) | `WebLayout.tsx`, `Home.tsx`, … |
 | `/componentes` | Muestrario de componentes (solo en desarrollo) | `ComponentsPreview.tsx` |
@@ -588,7 +589,7 @@ Los componentes propios de la web (`PromoCard`, `TakeoutTicket`) están en
 | `motion.ts` | `prefersReducedMotion` y `scrollBehavior` |
 | `notifications.ts` | Ver 6.4 |
 | `orderFlow.ts` | `submitCart` (arma y envía la comanda con candado; en la web, con nombre, WhatsApp y origen), `toComandaItems` y `customerLabel` |
-| `reviews.ts` | `loadReviews`, `addReviews` y `reviewsFor(plato)`, que junta las del JSON con las guardadas |
+| `reviews.ts` | `loadReviews`, `addReviews`, `reviewsFor(plato)` (junta las del JSON con las guardadas), `reviewsToSend` (qué reseñas manda la calificación, compartido con la web) e `isRated`/`markRated` (web) |
 | `schedule.ts` | Horario en la zona del local: `getOpenState`, `nextOpening`, `todayClosing`, `zonedNow` y `formatClock` |
 | `simulator.ts` | Estado de la comanda según el tiempo (ver 6.2) |
 | `source.ts` | Origen de la visita web (`?src=`) |
@@ -667,12 +668,14 @@ Los componentes propios de la web (`PromoCard`, `TakeoutTicket`) están en
   sale sobre la foto (carrusel y detalle).
 - **`sides` y `extras`:** acompañantes y extras. Los extras tienen precio y un nombre corto
   opcional.
-- **`dishes`:** 16 platos.
+- **`dishes`:** 17 platos.
   - **Datos del plato:** `price`, `shortDescription`, `description`, `includes` e `image`.
   - **Opciones:** `tags`, `sides`, `defaultSide`, `extras` y `maxExtras`.
   - **Disponibilidad y reseñas:** `days`, `available`, `rating` y `reviews`.
   - **`replaceable`:** las partes que pueden agotarse, con sus reemplazos.
 - **`bestSellers`:** `fritanga-tradicional`, `enchilada` y `combo-para-dos`.
+- **`promo`** (solo web) y el plato **`promo-2-enchiladas`** (C$ 160, en combos, con la
+  etiqueta "Promo"), que también se ve en "Combos especiales" de la mesa.
 - **`suggestedDrinks`:** `fresco-de-cacao` y `chicha`.
 - **Agotados hoy** (`available: false`): fritanga de cerdo y tajadas con queso.
 

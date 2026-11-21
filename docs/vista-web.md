@@ -6,8 +6,8 @@ con la vista QR, la configuración y lo que falta. La vista de mesa está en
 [vista-qr.md](vista-qr.md); cómo correr el proyecto, en el [README](../README.md).
 
 - **Rama:** `plantilla-mesa` (la misma de la vista QR), todavía sin PR a `main`.
-- **Estado:** en curso. Están hechas las etapas a, b y c (celular); faltan calificación,
-  tablet, computadora y la ronda de correcciones.
+- **Estado:** en curso. Está hecho todo lo de celular (etapas a a d); faltan tablet,
+  computadora y la ronda de correcciones.
 
 ## Índice
 
@@ -81,7 +81,7 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 | a | Canal para llevar, W0 Bienvenida, W1 Inicio, W3 Menú, W9 Domicilio | Hecha (`19a9e3a`) |
 | b | W4 Tu pedido, W5 Tus datos, W6 Resumen y pago | Hecha (`e9de11f`) |
 | c | W7 Confirmación, W8 y W8b Seguimiento | Hecha (`845f819`) |
-| d | W10 Calificación y W10b reseña en Google, botón "Calificá tu comida" en W8b | Sigue |
+| d | W10 Calificación y W10b reseña en Google, botón "Calificá tu comida" en W8b; promo con su precio y página no encontrada | Hecha |
 | e | Tablet (T1–T5) | Pendiente |
 | f | Computadora (D1–D5) | Pendiente |
 | g | Revisión y correcciones | Pendiente |
@@ -98,7 +98,9 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 | `/resumen` | W6 Resumen y pago | `Summary.tsx` |
 | `/confirmacion/:comandaId` | W7 Confirmación | `Confirmation.tsx` |
 | `/orden/:comandaId` | W8 y W8b Seguimiento | `Tracking.tsx` (compartido) |
+| `/calificar/:comandaId` | W10 Calificación y W10b ¡Gracias! | `RateOrder.tsx` |
 | `/domicilio` | W9 Domicilio (diseñado, no activo) | `Delivery.tsx` |
+| cualquier otra (sin `/m/`) | "Página no encontrada" con **Ir al inicio** | `NotFound.tsx` |
 
 - Todas cuelgan de `WebLayout`, que muestra W0 la primera vez, guarda el origen de la visita
   (`?src=`) y sigue en segundo plano los pedidos en curso.
@@ -119,7 +121,7 @@ W1 Inicio ──→ W3 Menú ──→ Detalle
                                                                       │
                                                  W8 Seguimiento → W8b Tu comida está lista
                                                                       │
-                                                           (etapa d) W10 Calificá tu comida
+                                                   W10 Calificá tu comida → W10b ¡Gracias! + Google
 ```
 
 **Escribinos** por WhatsApp flota abajo a la derecha en el inicio, el menú y el seguimiento.
@@ -151,7 +153,7 @@ W1 Inicio ──→ W3 Menú ──→ Detalle
   - **Domicilio** · "Próximamente" (en gris) → W9.
   - Debajo: "¿Estás en el local? Escaneá el QR de tu mesa: es más rápido."
 - **Promo del día** (`PromoCard`): tarjeta verde con "Promo", "2 enchiladas por C$ 160",
-  "Solo hoy, de 4 a 7 pm" y foto → menú.
+  "Solo hoy, de 4 a 7 pm" y foto → menú. La promo es un plato real con su precio (ver 6.3).
 - **Los más vendidos:** el mismo carrusel de la mesa, con **"Ver menú →"** a la derecha del
   título. Tocar una tarjeta abre el detalle; el **+** agrega el plato y lleva al menú, donde
   aparece "Agregaste… · Deshacer".
@@ -167,8 +169,10 @@ W1 Inicio ──→ W3 Menú ──→ Detalle
 Es el mismo menú de la mesa, con estos cambios:
 - La pastilla del encabezado dice **"Para llevar"** en lugar de "Mesa 5".
 - No hay portada de mesa ni píldora "Ya vamos a pagar".
-- **Promo del día** arriba de "Los más vendidos", con "Hoy de 4 a 7 pm"; abre el detalle de la
-  enchilada (`promo.dishId`).
+- **Promo del día** arriba de "Los más vendidos", con "Hoy de 4 a 7 pm". Abre el detalle del
+  plato de la promo (`promo.dishId` → **"Promo: 2 enchiladas", C$ 160**, en la categoría
+  combos, con la etiqueta "Promo"), así **el carrito cobra lo mismo que anuncia la tarjeta**.
+  Como es un plato del menú, también aparece en "Combos especiales" (en la mesa y en la web).
 - **Escribinos** flotante, siempre.
 - La barra de orden en curso, cuando está lista, dice "Tu orden FN-0142 está lista · pasá a
   recogerla".
@@ -264,9 +268,42 @@ comal" / "¡Ya está!". Se cambió por la línea de tiempo con hora por paso y p
 FN-0142", "Tu orden FN-0142 está lista · Pasá a recogerla: te esperamos en caja." y "¡Gracias
 por tu compra!". Al quedar lista, vibra y la pestaña dice "Tu comida está lista".
 
-**Falta (etapa d):** el botón **Calificá tu comida** que el Figma pone abajo en W8b.
+**Calificá tu comida:** cuando el pedido está listo o ya recogido, la barra de abajo lleva a
+W10 (en lugar de "Escribinos", como en el Figma).
 
-### 6.10 W9 Domicilio (`Delivery.tsx`)
+### 6.10 W10 Calificación y W10b ¡Gracias! (`RateOrder.tsx`)
+
+Es la única vía para que quien pide para llevar deje reseña, porque no ve la placa del local.
+
+**W10 "¿Qué tal estuvo?"** sigue la regla de la mesa (`ratings.perDishMax`, hoy 2):
+- **Un plato:** igual al Figma: tarjeta con foto y nombre ("Tocá las estrellas" o "Calificaste
+  con 5 estrellas"), cinco estrellas grandes (36 px) y **"Contanos más (opcional)"**. El
+  comentario va en la reseña del plato.
+- **Dos platos:** una tarjeta con estrellas por plato y un solo "Contanos más" (va como
+  comentario general).
+- **Más de dos:** **"¿Todo estuvo rico?"** con **Sí, todo rico** o **Algo no**; con "Algo no" se
+  marcan los platos que no estuvieron bien (quedan con 2 estrellas), y "Contanos más".
+- **Enviar calificación** se habilita al poner al menos una estrella o elegir una respuesta.
+
+**W10b "¡Gracias!":**
+- lo calificado (tarjeta y estrellas, solo lectura);
+- aviso verde "Recibimos tu calificación · La cocina la ve hoy mismo. ¡Gracias por venir!";
+- **"Dejá tu reseña en Google"** · "Una reseña allá hace que más gente nos encuentre. Te toma
+  un minuto." con el botón **Dejar reseña en Google** (abre `web.google.reviewUrl` en otra
+  pestaña);
+- barra de abajo: **Volver al menú**.
+
+**Datos:** las reseñas se guardan como las de la mesa (`fritanga-nica:resenas`, con el nombre
+del cliente) y aparecen en "Lo que dicen" del plato. La orden queda marcada como calificada
+(`fritanga-nica:web:calificadas`): si vuelve a entrar, ve W10b directamente.
+
+### 6.11 Página no encontrada (`NotFound.tsx`)
+
+Una dirección web que no existe muestra el logo, **"Página no encontrada"**, "La página que
+buscás no existe o cambió de lugar." y **Ir al inicio**. Las direcciones de mesa (`/m/…`)
+siguen mostrando "Este QR no es válido".
+
+### 6.12 W9 Domicilio (`Delivery.tsx`)
 
 - Encabezado **"Domicilio" · "Muy pronto"**, con Volver al inicio.
 - Aviso azul "Pronto vas a poder pedir a domicilio · Por ahora pedí para llevar o escribinos por
@@ -310,6 +347,8 @@ por tu compra!". Al quedar lista, vibra y la pestaña dice "Tu comida está list
 | Bienvenida ya vista | `localStorage` | `fritanga-nica:web:bienvenida` |
 | Origen de la visita (`?src=`) | `sessionStorage` | `fritanga-nica:web:origen` |
 | "Ahora no" en los avisos | `sessionStorage` | `fritanga-nica:llevar:avisos` |
+| Órdenes ya calificadas | `localStorage` | `fritanga-nica:web:calificadas` |
+| Reseñas (compartidas con la mesa) | `localStorage` | `fritanga-nica:resenas` |
 
 Para empezar de cero en la web: borrar los datos del sitio en el navegador.
 
@@ -324,6 +363,7 @@ Para empezar de cero en la web: borrar los datos del sitio en el navegador.
 | `mapsUrl` | búsqueda "Fritanga Nica Managua" en Google Maps | Cómo llegar |
 | `google.rating`, `google.count` | 4.8 y 120 | Estrellas de la portada y de las reseñas (de ejemplo) |
 | `google.url` | búsqueda en Google Maps | Ver todas → |
+| `google.reviewUrl` | búsqueda en Google Maps (provisorio) | Dejar reseña en Google (W10b); cambiar por el link de reseña del perfil real |
 | `google.reviews` | 3 reseñas de ejemplo (`text`, `when`) | Lo que dicen en Google |
 | `deliveryFee` | 50 | Costo de envío en W9 |
 | `phoneDigits` | 8 | Dígitos del WhatsApp (Nicaragua) |
@@ -331,8 +371,9 @@ Para empezar de cero en la web: borrar los datos del sitio en el navegador.
 
 **`timings`:** `webWelcomeMs` 2000 (W0) y `webConfirmMs` 5000 (W7).
 
-**`texts.web`:** los 75 textos de la web (bienvenida, inicio, domicilio, datos, resumen,
-confirmación, seguimiento y notificaciones para llevar). Los textos compartidos siguen en sus
+**`texts.web`:** los textos de la web (bienvenida, inicio, domicilio, datos, resumen,
+confirmación, seguimiento, calificación y notificaciones para llevar). `texts.notFound` tiene
+los de "Página no encontrada". Los textos compartidos siguen en sus
 secciones (`menu`, `order`, `tracking`…).
 
 **`menu.json → promo`** (opcional; sin promo no se muestra la tarjeta):
@@ -344,7 +385,10 @@ secciones (`menu`, `order`, `tracking`…).
 | `subtitle` | Hoy de 4 a 7 pm (en el menú) |
 | `homeSubtitle` | Solo hoy, de 4 a 7 pm (en el inicio) |
 | `image` | `/img/enchilada.webp` |
-| `dishId` | `enchilada` (lo que abre en el menú) |
+| `dishId` | `promo-2-enchiladas` (el plato de la promo, C$ 160, que abre en el menú) |
+
+El precio de la promo es el del plato `promo-2-enchiladas`; si se cambia la promo, cambiar las
+dos cosas juntas (texto de `promo` y plato).
 
 ## 10. Modelo de datos: canal, WhatsApp y origen
 
@@ -378,11 +422,14 @@ secciones (`menu`, `order`, `tracking`…).
 | `src/screens/CustomerData.tsx` | W5 Tus datos |
 | `src/screens/Summary.tsx` | W6 Resumen y pago |
 | `src/screens/Confirmation.tsx` | W7 Confirmación |
+| `src/screens/RateOrder.tsx` | W10 Calificación y W10b ¡Gracias! |
+| `src/screens/NotFound.tsx` | Página no encontrada |
 | `src/screens/Delivery.tsx` | W9 Domicilio |
 
 **Cambiados para la web:** `Menu.tsx`, `Order.tsx`, `Tracking.tsx`, `MesaLayout.tsx`,
 `router.tsx`, `useMesa.ts` (`paths`), `storage.ts` (prefijo `llevar`), `orderFlow.ts`,
-`api.ts`, `notifications.ts`, `combos.ts` (`bestSellersFor`), `tableStore.ts` (exporta
+`api.ts`, `notifications.ts`, `combos.ts` (`bestSellersFor`), `reviews.ts` (ahora con
+`reviewsToSend`, que antes estaba en `Bill.tsx`, e `isRated`/`markRated`), `tableStore.ts` (exporta
 `safeLocalStorage`), `Carousel`, `NoticeBanner`, `PaymentNotice`, `WhatsAppButton` y los tipos.
 
 **Borrado:** `src/screens/RootRedirect.tsx`.
@@ -395,6 +442,9 @@ secciones (`menu`, `order`, `tracking`…).
 |---|---|---|
 | Menú, detalle, pedido y seguimiento con el diseño original de mesa | Con las correcciones ya aprobadas en mesa | Decisión del cliente: una sola versión de lo compartido |
 | Seguimiento con barra de checks, "En el comal" y "¡Ya está!" | Línea de tiempo con hora por paso, "Cocinando" y "Lista" | Corrección pedida por el cliente |
+| W10 con un solo plato | Con dos platos, estrellas por plato; con más, "¿Todo estuvo rico?" | Misma regla aprobada en la mesa |
+| Promo solo como tarjeta | La promo es un plato con su precio (C$ 160) | Pedido de la reunión con los socios: que el carrito cobre lo que anuncia |
+| Sin página de error web | "Página no encontrada" con Ir al inicio | Pedido de la reunión: no mostrar "Este QR no es válido" en la web |
 | Tu pedido con la fila "Total" | Total en el botón Continuar | Viene de la corrección de mesa |
 | Confirmación por WhatsApp sin indicar qué pasa sin señal | Aviso de error y volver a confirmar | Para llevar no puede quedar en espera sin que el cliente sepa |
 
@@ -402,10 +452,12 @@ secciones (`menu`, `order`, `tracking`…).
 - La dirección dice "Dirección por confirmar"; el Figma tiene "[TEXTO PENDIENTE: dirección]".
 - El **+** de los más vendidos en el inicio agrega y lleva al menú; el Figma no define qué hace.
 - La promo tiene dos textos distintos en el Figma ("Solo hoy, de 4 a 7 pm" en el inicio y "Hoy
-  de 4 a 7 pm" en el menú) y es solo de muestra: no cambia el precio en el carrito.
+  de 4 a 7 pm" en el menú).
+- El horario de la promo ("de 4 a 7 pm") no se controla: el plato se puede pedir a cualquier
+  hora y también aparece en "Combos especiales" de la mesa. Si hace falta, sumar un horario a
+  los platos (como `days`).
 - El Resumen muestra solo nombre y precio de cada plato, sin acompañante ni notas (como el
   Figma); W7 y W8 sí los muestran.
-- Una ruta web que no existe muestra "Este QR no es válido", que es un texto de mesa.
 - El estado de la portada usa la hora corta ("hasta 10 pm") y el encabezado del menú la larga
   ("cierra 10:00 pm").
 
@@ -432,12 +484,12 @@ secciones (`menu`, `order`, `tracking`…).
 | W7 tardaba 8 s en pasar al seguimiento en vez de 5 | El temporizador se reiniciaba cada vez que el pedido cambiaba de paso | Depende de que la comanda exista, no del objeto |
 | El campo con error de W5 se ponía verde al enfocarlo | El estilo de foco pisaba el rojo | Con error queda rojo siempre |
 | Los puntos de W0 casi no se veían | La animación de pulso los apagaba | Quietos, como en el Figma |
+| La promo decía "2 enchiladas por C$ 160" y el carrito cobraba otro monto | La tarjeta abría la enchilada suelta (C$ 90 cada una) | La promo es un plato propio de C$ 160 |
+| Una dirección web inexistente decía "Este QR no es válido" | La ruta comodín era la de mesa | `NotFound` para la web |
 
 ## 15. Pendiente
 
 **De la web:**
-- Etapa d: W10 Calificación, W10b ¡Gracias! con reseña en Google y el botón "Calificá tu
-  comida" en W8b.
 - Etapa e: tablet (T1 Inicio, T2 Menú, T3 Detalle en ventana, T4 Pedido-datos-pago,
   T5 Confirmación y seguimiento).
 - Etapa f: computadora (D1 Inicio, D2 Menú con carrito al costado, D3 Detalle en ventana,
@@ -445,8 +497,8 @@ secciones (`menu`, `order`, `tracking`…).
 - Etapa g: revisión y correcciones (ver la sección 12).
 
 **Del cliente:**
-- Dirección, número de WhatsApp y enlace real del perfil de Google (con su calificación y
-  reseñas).
+- Dirección, número de WhatsApp y enlace real del perfil de Google (con su calificación,
+  reseñas y el link para dejar reseña).
 - Confirmar la promo del día y su horario, los combos y los precios.
 - Fotos reales (ver [vista-qr.md 19](vista-qr.md#19-pendiente)) y una foto de portada.
 
@@ -463,3 +515,4 @@ secciones (`menu`, `order`, `tracking`…).
 | `e9de11f` | Web etapa b: tu pedido para llevar, tus datos y resumen |
 | `85412a0` | Seguimiento: línea de tiempo con hora por paso, textos más claros y pedido web sin cuenta de mesa |
 | `845f819` | Web etapa c: confirmación, seguimiento para llevar y avisos |
+| `efd7716` | Documentación de la vista web y actualización de la vista QR |

@@ -346,8 +346,17 @@ export function Tracking() {
         </BottomDock>
       )}
 
-      {/* Para llevar no hay mesero: las dudas, por WhatsApp. */}
-      {takeout && <WhatsAppButton />}
+      {/* Para llevar: lista o recogida, "Calificá tu comida" (W8b); antes, las dudas por WhatsApp. */}
+      {takeout &&
+        (status === 'lista' || status === 'entregada' ? (
+          <BottomDock>
+            <Button block onClick={() => navigate(paths.rate(comanda.id))}>
+              {t.web.rateCta}
+            </Button>
+          </BottomDock>
+        ) : (
+          <WhatsAppButton />
+        ))}
 
       {soldOut && (
         <SoldOutSheet

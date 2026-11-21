@@ -28,4 +28,5 @@ export const paths = {
   data: '/datos',
   summary: '/resumen',
   confirmation: (comandaId: string) => `/confirmacion/${comandaId}`,
+  rate: (comandaId: string) => `/calificar/${comandaId}`,
 }

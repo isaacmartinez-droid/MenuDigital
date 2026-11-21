@@ -74,7 +74,14 @@ export interface RestaurantConfig {
     /** Link de "Cómo llegar" (Google Maps). */
     mapsUrl: string
     /** Calificación y reseñas de Google (de ejemplo hasta conectar el perfil real). */
-    google: { rating: number; count: number; url: string; reviews: { text: string; when: string }[] }
+    google: {
+      rating: number
+      count: number
+      url: string
+      /** Link para dejar una reseña (W10b). Hoy es una búsqueda: cambiarlo por el del perfil real. */
+      reviewUrl: string
+      reviews: { text: string; when: string }[]
+    }
     /** Costo de envío a domicilio (W9, todavía no activo). */
     deliveryFee: number
     /** Dígitos del WhatsApp sin código de país (Nicaragua: 8). */

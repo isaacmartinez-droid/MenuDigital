@@ -1,5 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { InvalidTable } from './screens/InvalidTable'
+import { NotFound } from './screens/NotFound'
 import { MesaLayout } from './screens/MesaLayout'
 import { Menu } from './screens/Menu'
 import { WebLayout } from './screens/WebLayout'
@@ -21,6 +22,7 @@ const screens = {
   customerData: () => import('./screens/CustomerData'),
   summary: () => import('./screens/Summary'),
   confirmation: () => import('./screens/Confirmation'),
+  rate: () => import('./screens/RateOrder'),
 }
 
 const routes: RouteObject[] = [
@@ -38,7 +40,10 @@ const routes: RouteObject[] = [
       { path: 'resumen', lazy: async () => ({ Component: (await screens.summary()).Summary }) },
       { path: 'confirmacion/:comandaId', lazy: async () => ({ Component: (await screens.confirmation()).Confirmation }) },
       { path: 'orden/:comandaId', lazy: async () => ({ Component: (await screens.tracking()).Tracking }) },
+      { path: 'calificar/:comandaId', lazy: async () => ({ Component: (await screens.rate()).RateOrder }) },
       { path: 'domicilio', lazy: async () => ({ Component: (await screens.delivery()).Delivery }) },
+      // Web: cualquier otra dirección es "Página no encontrada" (las de /m/ siguen con "Este QR no es válido").
+      { path: '*', element: <NotFound /> },
     ],
   },
   {
@@ -55,7 +60,7 @@ const routes: RouteObject[] = [
       { path: '*', element: <InvalidTable /> },
     ],
   },
-  { path: '*', element: <InvalidTable /> },
+  { path: '*', element: <NotFound /> },
 ]
 
 /**
