@@ -1,13 +1,16 @@
-# Menú digital · pedidos en mesa
+# Menú digital · mesa y para llevar
 
-Plantilla frontend para que el cliente pida desde la mesa escaneando un QR. El primer
-restaurante es **Fritanga Nica** (Managua). Hoy todo se simula en el navegador: no hay
-backend ni pedidos reales.
+Plantilla frontend para que el cliente pida desde el celular: en el local, escaneando el QR
+de su mesa; desde la casa, en la página web para llevar. El primer restaurante es **Fritanga
+Nica** (Managua). Hoy todo se simula en el navegador: no hay backend ni pedidos reales.
 
 React + Vite + TypeScript · Tailwind CSS v4 · React Router · Zustand · lucide-react.
 
-Documentación completa de la vista QR (pantallas, decisiones, arquitectura, config y
-pendientes): [docs/vista-qr.md](docs/vista-qr.md). Forma de trabajo: [CLAUDE.md](CLAUDE.md).
+Documentación completa (pantallas, decisiones, arquitectura, config y pendientes):
+
+- Vista QR, pedido en mesa: [docs/vista-qr.md](docs/vista-qr.md).
+- Vista web, para llevar: [docs/vista-web.md](docs/vista-web.md).
+- Forma de trabajo: [CLAUDE.md](CLAUDE.md).
 
 ## Cómo correrla
 

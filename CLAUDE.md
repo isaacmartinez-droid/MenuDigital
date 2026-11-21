@@ -1,7 +1,10 @@
 # Menú digital · Fritanga Nica
 
-La documentación completa de la vista QR (pedido en mesa) está en `docs/vista-qr.md`. Leerla antes
-de tocar algo.
+La documentación completa está en `docs/vista-qr.md` (pedido en mesa) y `docs/vista-web.md` (web
+para llevar, con sus etapas y lo anotado para corregir). Leerlas antes de tocar algo.
+
+En la web, lo compartido con la mesa usa lo ya corregido en la mesa; "Figma primero" aplica a lo
+propio de la web (ver `docs/vista-web.md`, sección 2).
 
 ## Forma de trabajo (obligatoria)
 

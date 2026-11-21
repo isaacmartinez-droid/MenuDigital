@@ -3,7 +3,8 @@
 Registro completo de lo que se construyó para el pedido en mesa de **Fritanga Nica**: cada
 pantalla, por qué se decidió así, cómo está armado el código, la configuración, las
 limitaciones y lo que queda pendiente. Para instalar y correr el proyecto, ver el
-[README](../README.md).
+[README](../README.md). La web para llevar, que comparte buena parte del código, está en
+[vista-web.md](vista-web.md).
 
 - **Rama:** `plantilla-mesa`, todavía sin PR a `main`.
 - **Estado:** terminada como demo, con todo simulado en el navegador.
@@ -68,8 +69,9 @@ y, al final, avisa a caja cuánto y cómo va a pagar. **El pago siempre es en ca
   el diseño). En pantallas grandes se ve centrada, con 480 px de ancho máximo.
 - **Solo frontend.** No hay backend: los pedidos, la cocina, el mesero y la caja se simulan
   en `localStorage`, con tiempos de la config.
-- **Fuera de esta etapa:** cocina, caja, meseros, panel del dueño, web para llevar, servidor
-  local, pagos en línea, login y reseña en Google.
+- **Fuera de esta etapa:** cocina, caja, meseros, panel del dueño, servidor local, pagos en
+  línea, login y reseña en Google. La web para llevar se hizo después, en el mismo proyecto
+  ([vista-web.md](vista-web.md)).
 
 **Stack:**
 - React 19, Vite 8 y TypeScript 6.
@@ -438,7 +440,7 @@ suyo. Este es el orden de arriba abajo:
 
 | Estado | Qué pasa |
 |---|---|
-| **Fuera de horario** | Se ve el menú sin + ni barra del pedido. Si la mesa ya tenía cuenta, siguen el mesero y Ya vamos a pagar, pero no "Pedir algo más". El horario sale de `schedule` (America/Managua, 4:00 a 10:00 pm todos los días). *Decisión:* en el QR no sale "Escribinos" por WhatsApp, porque el cliente ya está en el local. El componente `WhatsAppButton` queda listo para la web. |
+| **Fuera de horario** | Se ve el menú sin + ni barra del pedido. Si la mesa ya tenía cuenta, siguen el mesero y Ya vamos a pagar, pero no "Pedir algo más". El horario sale de `schedule` (America/Managua, 4:00 a 10:00 pm todos los días). *Decisión:* en el QR no sale "Escribinos" por WhatsApp, porque el cliente ya está en el local. El componente `WhatsAppButton` se usa en la web. |
 | **Sin señal** | Aviso "Se nos fue la señal · Tu pedido está guardado y se envía solito cuando vuelva" en el menú, el pedido y el seguimiento. Al volver: "Ya volvió la señal. Enviamos tu pedido." y se abre el seguimiento. Un candado por mesa evita mandar el mismo carrito dos veces. |
 | **QR inválido** | "Este QR no es válido · No encontramos esta mesa. Pedile ayuda al mesero o escaneá el código de tu mesa." |
 | **Pantalla que no carga** | `RouteError`, con "Reintentar". |
@@ -449,7 +451,8 @@ suyo. Este es el orden de arriba abajo:
 ### 6.1 Estado
 
 **Estado por mesa** (`src/store/`). Cada store se crea con `tableStoreFactory` y se guarda en
-`localStorage` con la clave `fritanga-nica:mesa:<id>:<nombre>`:
+`localStorage` con la clave `fritanga-nica:mesa:<id>:<nombre>` (la web usa los mismos stores
+con `fritanga-nica:llevar:<nombre>`; ver [vista-web.md 8](vista-web.md#8-datos-que-se-guardan)):
 
 | Store | Clave | Qué guarda |
 |---|---|---|
@@ -506,9 +509,9 @@ envío, así que recargar la página no los reinicia.
 Corre siempre, en cualquier pantalla de la mesa:
 - **Reintenta el envío** pendiente cuando vuelve la señal.
 - **Espera el pago** después de avisar a caja y, al cobrarse, abre la cuenta pagada.
-- **`useKitchenUpdates`** sigue las órdenes de este teléfono que no se entregaron. En cada
-  cambio de estado manda la notificación, vibra al quedar lista y cambia el título de la
-  pestaña.
+- **`useKitchenUpdates`** (`lib/useKitchenUpdates.ts`, compartido con la web) sigue las
+  órdenes de este teléfono que no se entregaron. En cada cambio de estado manda la
+  notificación, vibra al quedar lista y cambia el título de la pestaña.
 - Con `?forzar=mesa-nueva`, borra la mesa antes de mostrar nada y quita el flag de la URL.
 
 ### 6.4 Notificaciones (`lib/notifications.ts`, `public/sw.js`)
@@ -543,16 +546,16 @@ Corre siempre, en cualquier pantalla de la mesa:
 |---|---|
 | `BottomSheet` | Hoja que sube desde abajo. Atrapa el foco, se cierra con Esc o tocando el fondo, y devuelve el foco a donde estaba |
 | `Button` | Botón base, con 4 variantes: `primary` (verde, 52 px), `secondary` (contorno), `onDark` (blanco sobre verde, en la portada) y `pill` (pastilla blanca) |
-| `Carousel` | Carrusel horizontal con avance automático, pausa, puntos y espera después de tocarlo |
+| `Carousel` | Carrusel horizontal con avance automático, pausa, puntos y espera después de tocarlo; link opcional junto al título (`action`) |
 | `CartBar` | `BottomDock` (barra fija de abajo), `DockSpacer` y `CartBar` ("Ver pedido", con el saltito) |
 | `CategoryTabs` | Pestañas fijas de categorías, con la lupa opcional |
 | `ChoiceRow` | Fila de opción (radio o check) y `GroupHeader` (título de grupo con regla y etiqueta opcional) |
 | `Comanda` | Tarjeta de comanda: número a mano, platos, nota y total |
 | `DishCard` | Plato en fila (lista) o en tarjeta (carrusel), tocable entera |
 | `Header` | Encabezado del menú (`Header`) y de las pantallas internas, con Volver (`PageHeader`) |
-| `NoticeBanner` | Aviso con tono positivo o de aviso, título, texto y acción |
+| `NoticeBanner` | Aviso con tono positivo, de aviso o `pronto` (azul, lo que no está activo), título, texto y acción |
 | `OptionCard` | Tarjeta elegible con título y ayuda (motivos del mesero) |
-| `PaymentNotice` | "Pagás en caja al terminar" |
+| `PaymentNotice` | "Pagás en caja al terminar"; con `takeout`, "Pagás al recoger" compacto (web) |
 | `Photo` | Foto WebP con versión liviana de 400 px y fondo de espera si no hay foto |
 | `QuantityStepper` | Contador − / + y el botón `AddButton` (+) |
 | `SearchBar` | Buscador con botón para borrar |
@@ -564,7 +567,10 @@ Corre siempre, en cualquier pantalla de la mesa:
 | `WaiterBanner` | Tarjeta de estado del llamado al mesero |
 | `WaiterButton` | Botón flotante "Llamar al mesero" con su hoja y sus avisos |
 | `WaiterSheet` | Hoja "¿Qué necesitás?" |
-| `WhatsAppButton` | Botón "Escribinos" por WhatsApp. No se usa en el QR; queda para la web |
+| `WhatsAppButton` | Botón flotante "Escribinos" por WhatsApp. No se usa en el QR; sí en la web |
+
+Los componentes propios de la web (`PromoCard`, `TakeoutTicket`) están en
+[vista-web.md 11](vista-web.md#11-referencia-de-archivos).
 
 ### 7.2 Lógica (`src/lib/`)
 
@@ -572,23 +578,26 @@ Corre siempre, en cualquier pantalla de la mesa:
 |---|---|
 | `api.ts` | Servidor simulado (ver 6.2) |
 | `catalog.ts` | Único lugar que lee los JSON: `restaurant`, `menu`, `getDish`, `getSide`, `getExtra`, `unitPrice`, `dishesByCategory`, `isValidTable` |
+| `channel.ts` | `TAKEOUT` (`'llevar'`) e `isTakeout`: el id que usan las pantallas compartidas en la web |
 | `closeTable.ts` | Borra la mesa del navegador y reinicia sus stores |
 | `comandaStatus.ts` | `itemDetails` (detalle de un plato), `statusLabel`, `sentAtClock`, `etaMinutes`, `etaFor` (rango de hora), `stepClocks` (hora de cada paso) y `activeComanda` |
-| `combos.ts` | `isOnDay`, `dayBadge`, `combosFor(hoy)`, `onlyDaysText`, `daysLabel` y `useToday` |
+| `combos.ts` | `isOnDay`, `dayBadge`, `combosFor(hoy)`, `bestSellersFor(hoy)`, `onlyDaysText`, `daysLabel` y `useToday` |
 | `cx.ts` | Une clases CSS |
 | `demoFlags.ts` | Lee y guarda los flags de la demo (`readDemoFlags`, `useDemoFlags`, `wantsFreshTable`, `clearAgotado`) |
 | `money.ts` | `formatMoney` (C$ en es-NI), `formatMoneyDelta` y `tipAmount` |
 | `motion.ts` | `prefersReducedMotion` y `scrollBehavior` |
 | `notifications.ts` | Ver 6.4 |
-| `orderFlow.ts` | `submitCart` (arma y envía la comanda con candado), `toComandaItems` y `customerLabel` |
+| `orderFlow.ts` | `submitCart` (arma y envía la comanda con candado; en la web, con nombre, WhatsApp y origen), `toComandaItems` y `customerLabel` |
 | `reviews.ts` | `loadReviews`, `addReviews` y `reviewsFor(plato)`, que junta las del JSON con las guardadas |
 | `schedule.ts` | Horario en la zona del local: `getOpenState`, `nextOpening`, `todayClosing`, `zonedNow` y `formatClock` |
 | `simulator.ts` | Estado de la comanda según el tiempo (ver 6.2) |
+| `source.ts` | Origen de la visita web (`?src=`) |
 | `storage.ts` | Acceso seguro a `localStorage` y `sessionStorage`, claves por mesa y `newId` |
 | `text.ts` | `t`, `fmt`, `platos(n)` y `tableLabel` |
 | `useGoBack.ts` | Volver atrás, o a una ruta de respaldo si se entró directo por link |
+| `useKitchenUpdates.ts` | Sigue los pedidos en curso (ver 6.3) |
 | `useLiveComanda.ts` | Comanda con su estado en vivo |
-| `useMesa.ts` | Mesa actual y `paths` (links de todas las pantallas) |
+| `useMesa.ts` | Mesa actual (o `llevar` en la web) y `paths` (links de todas las pantallas, de los dos canales) |
 | `useNow.ts` | Hora que se actualiza cada cierto intervalo |
 | `useOnline.ts` | Si hay señal |
 | `useOpenState.ts` | Si el local está abierto (con los flags de la demo) |
@@ -621,6 +630,7 @@ Corre siempre, en cualquier pantalla de la mesa:
 | `ratings` | `perDishMax: 2` | Hasta cuántos platos se califica con estrellas |
 | `tables` | `"1"` … `"8"` | Mesas válidas |
 | `whatsapp` | `50500000000` y un mensaje | Botón Escribinos. **El número es de ejemplo** |
+| `web` | Portada, dirección, mapa, Google, envío, dígitos del WhatsApp y orígenes | Solo la web (ver [vista-web.md 9](vista-web.md#9-configuración)) |
 | `schedule` | America/Managua, todos los días de 16:00 a 22:00 | Abierto o cerrado. Las franjas pueden cruzar la medianoche |
 | `ordering` | máx. 10 por envío, prefijo `FN`, primera comanda 142, este teléfono = Teléfono 1 | Comandas |
 | `notifications` | `statuses: ["en-el-comal", "lista", "entregada"]` | En qué pasos se avisa |
@@ -628,7 +638,7 @@ Corre siempre, en cualquier pantalla de la mesa:
 | `waiterReasons` | 3 motivos | Hoja del mesero |
 | `demo.tableMates` | Carlos y Teléfono 3 | Compañeros simulados |
 | `demo.paymentMethod` | `Tarjeta` | Método del recibo si el cliente no eligió uno |
-| `texts` | Todos los textos, por pantalla (`common`, `status`, `welcome`, `invalidTable`, `menu`, `combos`, `closed`, `offline`, `detail`, `order`, `tracking`, `waiter`, `soldOut`, `bill`, `payment`, `paid`) | Interfaz |
+| `texts` | Todos los textos, por pantalla (`common`, `status`, `welcome`, `invalidTable`, `menu`, `combos`, `closed`, `offline`, `detail`, `order`, `tracking`, `waiter`, `soldOut`, `bill`, `payment`, `paid` y `web`) | Interfaz |
 
 **`timings`.** Los valores son en milisegundos, salvo los que dicen min.
 
@@ -646,6 +656,8 @@ Corre siempre, en cualquier pantalla de la mesa:
 | `waiterCooldownMs` | 120000 | Espera para volver a llamar |
 | `billPaidMs` | 600000 | Cuánto queda "Pasá a caja" antes del cobro simulado (10 min) |
 | `apiLatencyMs` | 600 | Demora simulada de cada llamada |
+| `webWelcomeMs` | 2000 | Bienvenida de la web (se quita sola) |
+| `webConfirmMs` | 5000 | Confirmación de la web (pasa sola al seguimiento) |
 
 ## 9. Menú (`menu.json`)
 
@@ -677,7 +689,8 @@ En `src/types/`, con la forma que tendría la respuesta de una API:
   - `mine`, que dice si la hizo este teléfono;
   - `items`, `note` y `total`;
   - `status`, `createdAt` y `statusAt`;
-  - `substitutions`.
+  - `substitutions`;
+  - solo en la web: `channel` (`mesa`, `llevar` o `mostrador`), `phone` y `source`.
 - **`ComandaItem`:** guarda nombres y precios **del momento del envío**, para que un cambio de
   menú no altere lo pedido.
 - **`ComandaStatus`:** `recibida`, `en-el-comal`, `lista` o `entregada`.
@@ -856,7 +869,7 @@ No está en el repo; lo tiene el equipo.
 - **Diseño:** `Fritanga Nica · Documentación del diseño en Figma.pdf`, 12 páginas, en la raíz
   del proyecto e ignorado por git.
   - La página 02 es el pedido en mesa (M0–M9).
-  - La página 03 es la web para llevar (W, T y D), que es lo que sigue.
+  - La página 03 es la web para llevar (W, T y D), en curso ([vista-web.md](vista-web.md)).
 - **Capturas de mesa:** `Downloads\fritanga-capturas-mesa` (y su `.zip`).
 - **Plugin de Figma que arma las pantallas:** `Downloads\fritanga-nica-app-completa\code.js`.
   Sirve para sacar textos y medidas de las pantallas que no tienen captura.
@@ -878,9 +891,7 @@ No está en el repo; lo tiene el equipo.
 
 **Del proyecto:**
 - Crear el PR de `plantilla-mesa` a `main`.
-- Siguiente etapa: la **vista web para llevar** (W, T y D), siguiendo la
-  [forma de trabajo](#0-forma-de-trabajo): primero todo como en el Figma, después las
-  correcciones.
+- La **vista web para llevar** está en curso: ver [vista-web.md](vista-web.md).
 
 ## 20. Historial de commits
 
@@ -925,3 +936,7 @@ está en el cuerpo de su commit.
 | `625badf` | Reseñas con comentario, carrusel que no se detiene y Pagás en caja visible |
 | `6d45de2` | Notas en un solo lugar, aviso de cuenta, Pasá a caja 10 min y flags de demo |
 | `66a6053` | Primera versión de esta documentación |
+| `7f37c4a` | Documentación completa y forma de trabajo |
+| `85412a0` | Seguimiento: línea de tiempo con hora por paso y textos "Cocinando" y "Lista" |
+
+Los commits de la web están en [vista-web.md 16](vista-web.md#16-historial-de-commits).
