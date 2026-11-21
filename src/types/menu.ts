@@ -20,6 +20,8 @@ export interface Tag {
 export interface Category {
   id: string
   name: string
+  /** Ejemplo para la nota del plato en esta categoría (ej. bebidas: "sin hielo"). */
+  notePlaceholder?: string
 }
 
 /** Acompañante elegible (máx. 1 por plato). */

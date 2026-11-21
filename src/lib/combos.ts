@@ -32,15 +32,15 @@ export function dayBadge(dish: Dish, today: number): DayBadge | undefined {
 }
 
 /**
- * Combos en el orden del carrusel: primero el de hoy, después los de todos
- * los días, y al final los de otros días (el más próximo primero). Agotados al final.
+ * Combos que se pueden pedir hoy: primero el del día, después los de todos los
+ * días; agotados al final. Los de otros días no se muestran (un sábado no tiene
+ * sentido ver el combo del jueves).
  */
 export function combosFor(today: number): Dish[] {
-  const rank = (d: Dish) => {
-    const base = !d.days?.length ? 1 : d.days.includes(today) ? 0 : 2 + Math.min(...d.days.map((x) => (x - today + 7) % 7)) / 10
-    return d.available ? base : base + 10
-  }
-  return menu.dishes.filter((d) => d.category === COMBOS_CATEGORY).sort((a, b) => rank(a) - rank(b))
+  const rank = (d: Dish) => (d.days?.length ? 0 : 1) + (d.available ? 0 : 10)
+  return menu.dishes
+    .filter((d) => d.category === COMBOS_CATEGORY && isOnDay(d, today))
+    .sort((a, b) => rank(a) - rank(b))
 }
 
 /** Día de la semana de hoy en la zona del local (o el de ?dia=). Se recalcula cada minuto. */

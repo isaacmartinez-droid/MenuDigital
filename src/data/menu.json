@@ -4,7 +4,7 @@
     { "id": "combos", "name": "Combos" },
     { "id": "asados", "name": "Asados" },
     { "id": "antojitos", "name": "Antojitos" },
-    { "id": "bebidas", "name": "Bebidas" }
+    { "id": "bebidas", "name": "Bebidas", "notePlaceholder": "Ej.: sin hielo, poca azúcar" }
   ],
   "tags": [
     { "id": "mas-vendido", "label": "Más vendido", "tone": "ambar", "showInList": false },

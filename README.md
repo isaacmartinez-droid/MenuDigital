@@ -79,9 +79,12 @@ Todo lo del restaurante sale de dos JSON y de las fotos; no hace falta tocar com
    - **Combos especiales:** los platos de la categoría `combos` salen en su sección (en el
      lugar que tenga la categoría en `categories`). Con `days` (0 = domingo … 6 = sábado) un
      combo solo se puede pedir esos días: ese día dice "Combo de hoy", va primero en su sección
-     y además encabeza el carrusel "Los más vendidos"; los demás días se ve con "Solo los
-     martes" y sin +. Sin `days`, está todos los días. Los combos de ejemplo están por
+     y además encabeza el carrusel "Los más vendidos"; los demás días no aparece ni en el menú
+     ni en la búsqueda (si alguien abre su link, ve "Este combo sale solo los martes" y dos
+     alternativas de hoy). Sin `days`, está todos los días. Los combos de ejemplo están por
      confirmar con el local.
+   - `categories[].notePlaceholder`: ejemplo de la nota del plato para esa categoría
+     (bebidas: "Ej.: sin hielo, poca azúcar").
 3. **Fotos en `public/img/`** (cuadradas, idealmente 800 × 800) y luego:
    ```bash
    npm run images   # genera <foto>-400.webp, la versión liviana para listas

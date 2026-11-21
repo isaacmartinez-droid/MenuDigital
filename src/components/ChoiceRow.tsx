@@ -63,7 +63,8 @@ interface GroupHeaderProps {
   id: string
   title: string
   rule: string
-  badge: ReactNode
+  /** Pastilla a la derecha (opcional). */
+  badge?: ReactNode
 }
 
 /** Cabecera de grupo de opciones: "Acompañante · Elegí 1 · máx. 1" con su insignia. */

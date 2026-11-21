@@ -106,11 +106,12 @@ export function Menu() {
   const results = useMemo(() => {
     const q = normalize(query.trim())
     if (!q) return []
-    const found = menu.dishes.filter((d) =>
-      normalize(`${d.name} ${d.shortDescription} ${d.includes ?? ''}`).includes(q),
+    // Solo lo que se puede pedir hoy (los combos de otros días no aparecen).
+    const found = menu.dishes.filter(
+      (d) => isOnDay(d, today) && normalize(`${d.name} ${d.shortDescription} ${d.includes ?? ''}`).includes(q),
     )
     return [...found.filter((d) => d.available), ...found.filter((d) => !d.available)]
-  }, [query])
+  }, [query, today])
 
   // Pestañas: la activa sigue al scroll; al tocar una, se fija mientras dura el desplazamiento.
   const sectionIds = useMemo(() => menu.categories.map((c) => `cat-${c.id}`), [])

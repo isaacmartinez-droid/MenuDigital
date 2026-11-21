@@ -1,22 +1,49 @@
 import { useEffect, useId, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router'
-import { ChevronLeft } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { ChevronLeft, Star } from 'lucide-react'
+import type { Dish } from '../types/menu'
 import { Photo } from '../components/Photo'
 import { Tag } from '../components/Tag'
 import { ChoiceRow, GroupHeader } from '../components/ChoiceRow'
-import { QuantityStepper } from '../components/QuantityStepper'
+import { AddButton, QuantityStepper } from '../components/QuantityStepper'
 import { BottomDock } from '../components/CartBar'
+import { Button } from '../components/Button'
 import { StarRating } from '../components/StarRating'
 import { Toast } from '../components/Toast'
-import { dishExtras, dishSides, dishTags, getDish, getSide, restaurant, unitPrice } from '../lib/catalog'
+import {
+  dishesByCategory,
+  dishExtras,
+  dishSides,
+  dishTags,
+  getDish,
+  getSide,
+  menu,
+  restaurant,
+  unitPrice,
+} from '../lib/catalog'
 import { formatMoney, formatMoneyDelta } from '../lib/money'
 import { fmt, t } from '../lib/text'
 import { useOpenState } from '../lib/useOpenState'
-import { dayBadge, isOnDay, onlyDaysText, useToday } from '../lib/combos'
+import { combosFor, dayBadge, daysLabel, isOnDay, useToday } from '../lib/combos'
 import { useGoBack } from '../lib/useGoBack'
 import { paths, useMesa } from '../lib/useMesa'
 import { cartStore } from '../store/cart'
 import { useUi } from '../store/ui'
+
+/**
+ * Dos alternativas para un plato que hoy no se puede pedir: para un combo de
+ * otro día, los combos de hoy; para un agotado, platos de su misma categoría.
+ * Si no alcanza, se completa con los más vendidos.
+ */
+function alternativesFor(dish: Dish, today: number): Dish[] {
+  const orderable = (d: Dish) => d.id !== dish.id && d.available && isOnDay(d, today)
+  const pool = isOnDay(dish, today) ? dishesByCategory(dish.category) : combosFor(today)
+  const picks = pool.filter(orderable)
+  const fill = menu.bestSellers
+    .map(getDish)
+    .filter((d): d is Dish => Boolean(d) && orderable(d as Dish) && !picks.some((p) => p.id === d?.id))
+  return [...picks, ...fill].slice(0, 2)
+}
 
 /**
  * M2 Detalle del plato (pantalla con scroll y barra fija abajo).
@@ -24,6 +51,7 @@ import { useUi } from '../store/ui'
  */
 export function DishDetail() {
   const mesa = useMesa()
+  const navigate = useNavigate()
   const { dishId = '' } = useParams()
   const [search] = useSearchParams()
   const dish = getDish(dishId)
@@ -68,6 +96,26 @@ export function DishDetail() {
   const onDay = isOnDay(dish, today)
   const canAdd = dish.available && openState.open && onDay
   const reviews = dish.reviews ?? []
+  // Agotado o combo de otro día: en vez del formulario, el motivo y dos alternativas.
+  const unavailable = !dish.available || !onDay
+  const alternatives = unavailable ? alternativesFor(dish, today) : []
+  const notePlaceholder =
+    menu.categories.find((c) => c.id === dish.category)?.notePlaceholder ?? t.detail.notePlaceholder
+
+  const quickAddAlternative = (alt: Dish) => {
+    const result = cartStore(mesa).getState().quickAdd(alt.id)
+    if (!result.ok) {
+      setLimitHit(true)
+      return
+    }
+    const side = getSide(alt.defaultSide)
+    useUi.getState().setFlash({
+      lineId: result.lineId,
+      title: fmt(t.menu.added, { dish: alt.name }),
+      body: side ? fmt(t.menu.addedWithSide, { side: side.name.toLowerCase() }) : t.menu.addedPlain,
+    })
+    navigate(paths.menu(mesa))
+  }
 
   const toggleExtra = (id: string) =>
     setExtraIds((current) => (current.includes(id) ? current.filter((e) => e !== id) : [...current, id]))
@@ -99,7 +147,7 @@ export function DishDetail() {
           alt={fmt(t.detail.photoAlt, { dish: dish.name })}
           size="full"
           eager
-          dimmed={!dish.available}
+          dimmed={unavailable}
           className="h-[280px] w-full"
         />
         <button
@@ -124,23 +172,63 @@ export function DishDetail() {
           <p className="text-section text-texto">{formatMoney(dish.price)}</p>
         </div>
         <h1 className="mt-1 text-title text-texto">{dish.name}</h1>
-        {dish.description && <p className="mt-4 text-body text-texto-2">{dish.description}</p>}
+        {dish.rating && reviews.length > 0 && (
+          <p
+            className="mt-1 inline-flex items-center gap-1 text-small text-texto-2"
+            aria-label={fmt(t.detail.ratingLabel, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}
+          >
+            <Star size={14} strokeWidth={0} aria-hidden className="fill-ambar" />
+            <span aria-hidden>{fmt(t.detail.ratingShort, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}</span>
+          </p>
+        )}
+        {dish.description && <p className="mt-2 text-body text-texto-2">{dish.description}</p>}
+
+        {unavailable && (
+          <section className="mt-4 rounded-grande bg-fondo px-3.5 pt-3 pb-3" aria-labelledby={`${noteId}-u`}>
+            <p id={`${noteId}-u`} className="text-dish text-texto">
+              {!dish.available ? t.detail.unavailableSoldOut : fmt(t.detail.unavailableDay, { days: daysLabel(dish.days ?? []) })}
+              {alternatives.length > 0 && (
+                <span className="font-normal text-texto-2">
+                  {' '}
+                  {!dish.available ? t.detail.alternativesSoldOut : t.detail.alternativesDay}
+                </span>
+              )}
+            </p>
+            {alternatives.length > 0 && (
+              <ul className="mt-2.5 space-y-2">
+                {alternatives.map((alt) => (
+                  <li key={alt.id} className="flex items-center gap-3 rounded-tarjeta border border-borde bg-tarjeta p-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(paths.dish(mesa, alt.id), { replace: true })}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <Photo src={alt.image} className="size-12 shrink-0 rounded-chico" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-dish text-texto">{alt.name}</span>
+                        <span className="block text-small text-texto-2">{formatMoney(alt.price)}</span>
+                      </span>
+                    </button>
+                    {openState.open && (
+                      <AddButton onClick={() => quickAddAlternative(alt)} label={fmt(t.menu.add, { dish: alt.name })} />
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         {dish.includes && (
           <section className="mt-4">
             <h2 className="text-dish text-texto">{t.detail.whatComes}</h2>
-            <p className="mt-4 text-body text-texto">{dish.includes}</p>
+            <p className="mt-1 text-body text-texto">{dish.includes}</p>
           </section>
         )}
 
-        {sides.length > 0 && (
+        {!unavailable && sides.length > 0 && (
           <fieldset className="mt-4" aria-labelledby={`${sideGroup}-t`}>
-            <GroupHeader
-              id={`${sideGroup}-t`}
-              title={t.detail.side}
-              rule={t.detail.sideRule}
-              badge={<Tag tone="oscuro">{t.detail.required}</Tag>}
-            />
+            <GroupHeader id={`${sideGroup}-t`} title={t.detail.side} rule={t.detail.sideRule} />
             <div className="mt-1">
               {sides.map((side) => (
                 <ChoiceRow
@@ -158,13 +246,12 @@ export function DishDetail() {
           </fieldset>
         )}
 
-        {extras.length > 0 && (
+        {!unavailable && extras.length > 0 && (
           <fieldset className="mt-3" aria-labelledby={`${extrasGroup}-t`} aria-describedby={`${extrasGroup}-d`}>
             <GroupHeader
               id={`${extrasGroup}-t`}
               title={t.detail.extras}
               rule={fmt(t.detail.extrasRule, { max: maxExtras })}
-              badge={<Tag tone="contorno">{t.detail.optional}</Tag>}
             />
             <div className="mt-1">
               {extras.map((extra) => {
@@ -190,43 +277,43 @@ export function DishDetail() {
           </fieldset>
         )}
 
-        <div className="mt-3.5">
-          <label htmlFor={noteId} className="block text-dish text-texto">
-            {t.detail.note}
-          </label>
-          <input
-            id={noteId}
-            type="text"
-            value={note}
-            maxLength={120}
-            enterKeyHint="done"
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t.detail.notePlaceholder}
-            aria-describedby={`${noteId}-h`}
-            className="mt-2 h-12 w-full rounded-tarjeta border border-borde bg-tarjeta px-3.5 text-body text-texto placeholder:text-texto-2"
-          />
-          <p id={`${noteId}-h`} className="mt-2.5 text-small text-texto-2">
-            {t.detail.noteHelp}
-          </p>
-        </div>
-
-        <section className="mt-4 border-t border-borde pt-4" aria-labelledby={`${noteId}-r`}>
-          <div className="flex items-center justify-between gap-3">
-            <h2 id={`${noteId}-r`} className="text-dish text-texto">
-              {t.detail.reviews}
-            </h2>
-            <span className="flex items-center gap-2">
-              {dish.rating && (
-                <span className="text-small text-texto-2">
-                  {fmt(t.detail.reviewsCount, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}
-                </span>
-              )}
-              <StarRating value={dish.rating?.average ?? 0} label={t.detail.reviews} size={18} />
-            </span>
+        {!unavailable && (
+          <div className="mt-3.5">
+            <label htmlFor={noteId} className="block text-dish text-texto">
+              {t.detail.note}
+            </label>
+            <input
+              id={noteId}
+              type="text"
+              value={note}
+              maxLength={120}
+              enterKeyHint="done"
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={notePlaceholder}
+              aria-describedby={`${noteId}-h`}
+              className="mt-2 h-12 w-full rounded-tarjeta border border-borde bg-tarjeta px-3.5 text-body text-texto placeholder:text-texto-2"
+            />
+            <p id={`${noteId}-h`} className="mt-2.5 text-small text-texto-2">
+              {t.detail.noteHelp}
+            </p>
           </div>
-          {reviews.length === 0 ? (
-            <p className="mt-4 text-small text-texto-2">{t.detail.noReviews}</p>
-          ) : (
+        )}
+
+        {reviews.length > 0 && (
+          <section className="mt-4 border-t border-borde pt-4" aria-labelledby={`${noteId}-r`}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 id={`${noteId}-r`} className="text-dish text-texto">
+                {t.detail.reviews}
+              </h2>
+              <span className="flex items-center gap-2">
+                {dish.rating && (
+                  <span className="text-small text-texto-2">
+                    {fmt(t.detail.reviewsCount, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}
+                  </span>
+                )}
+                <StarRating value={dish.rating?.average ?? 0} label={t.detail.reviews} size={18} />
+              </span>
+            </div>
             <ul className="mt-3 space-y-3">
               {reviews.map((r) => (
                 <li key={r.id} className="rounded-tarjeta bg-fondo px-3 py-2.5">
@@ -238,8 +325,8 @@ export function DishDetail() {
                 </li>
               ))}
             </ul>
-          )}
-        </section>
+          </section>
+        )}
       </main>
 
       {limitHit && (
@@ -273,17 +360,17 @@ export function DishDetail() {
                 {fmt(editing ? t.detail.save : t.detail.add, { total: formatMoney(total) })}
               </button>
             </>
+          ) : unavailable ? (
+            <Button block variant="secondary" onClick={() => navigate(paths.menu(mesa))}>
+              {t.detail.seeMenu}
+            </Button>
           ) : (
             <button
               type="button"
               disabled
               className="h-[52px] flex-1 rounded-grande bg-foto-vacia text-button text-texto-2"
             >
-              {!dish.available
-                ? t.menu.soldOut
-                : !onDay
-                  ? onlyDaysText(dish)
-                  : fmt(t.closed.button, { open: openState.opensAt ?? '' })}
+              {fmt(t.closed.button, { open: openState.opensAt ?? '' })}
             </button>
           )}
         </div>
