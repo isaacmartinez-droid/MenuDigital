@@ -57,7 +57,9 @@ Para empezar de cero: cerrar la pestaña, o borrar el almacenamiento del sitio.
    Necesitan https o `localhost` (por la IP de la red local no aparecen) y la página abierta,
    aunque sea en segundo plano; para recibirlas con el navegador cerrado hace falta un backend
    con notificaciones push. En iPhone solo funcionan con la app agregada a la pantalla de inicio.
-5. **Llamar al mesero**, **Pedir algo más** (otra comanda, misma cuenta) o **Ya vamos a pagar**.
+5. **Llamar al mesero** es un botón flotante abajo a la derecha, en todas las pantallas (no en la
+   portada ni en la cuenta pagada; al bajar la lista se achica a la campana). Además: **Pedir
+   algo más** (otra comanda, misma cuenta) o **Ya vamos a pagar** (aparece cuando ya pidieron).
 6. **Tu cuenta**: lo tuyo con el detalle de cada plato → **¿Qué vas a pagar?** (solo lo mío o
    toda la mesa) → propina → **¿Cómo pagás?** (opcional; con efectivo, con cuánto, para el
    vuelto) → **Avisar a caja** → a los 5 s, cuenta pagada y el teléfono se desconecta de la mesa

@@ -12,9 +12,6 @@ import type { Comanda as ComandaModel } from '../types/order'
 import { Header } from '../components/Header'
 import { TrackingBar } from '../components/TrackingBar'
 import { Comanda } from '../components/Comanda'
-import { TableActions } from '../components/TableActions'
-import { WaiterSheet } from '../components/WaiterSheet'
-import { WaiterBanner } from '../components/WaiterBanner'
 import { SoldOutSheet } from '../components/SoldOutSheet'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { BottomDock, DockSpacer } from '../components/CartBar'
@@ -25,7 +22,6 @@ import { replaceComponent } from '../lib/api'
 import { clearAgotado, useDemoFlags } from '../lib/demoFlags'
 import { useOpenState } from '../lib/useOpenState'
 import { useLiveComanda } from '../lib/useLiveComanda'
-import { useWaiter } from '../lib/useWaiter'
 import { useOnline } from '../lib/useOnline'
 import { paths, useMesa } from '../lib/useMesa'
 import { comandasStore, useComandas } from '../store/comandas'
@@ -72,9 +68,7 @@ export function Tracking() {
   const now = useNow(30_000, comanda?.status !== 'entregada')
   const openState = useOpenState()
   const flags = useDemoFlags()
-  const waiter = useWaiter(mesa)
   const online = useOnline()
-  const [waiterSheet, setWaiterSheet] = useState(false)
   const [notifyPerm, setNotifyPerm] = useState(notificationPermission)
   const [notifyDismissed, setNotifyDismissed] = useState(() => readItem('session', tableKey(mesa, 'avisos')) === 'no')
   const [notifyJustOn, setNotifyJustOn] = useState(false)
@@ -177,13 +171,6 @@ export function Tracking() {
       />
 
       <main className="px-4 pt-2">
-        <WaiterBanner
-          phase={waiter.phase}
-          waiter={waiter.waiter}
-          notice={waiter.notice}
-          cooldownLeft={waiter.cooldownLeft}
-          className="mb-3"
-        />
         {!online && (
           <NoticeBanner role="status" tone="aviso" title={t.offline.title} body={t.offline.trackingBody} className="mb-3" />
         )}
@@ -296,13 +283,8 @@ export function Tracking() {
           </span>
         </button>
 
-        <TableActions
-          className="mt-3"
-          waiterLocked={waiter.coolingDown}
-          onCallWaiter={() => waiter.tryOpen() && setWaiterSheet(true)}
-          onPay={() => navigate(paths.bill(mesa))}
-        />
-        {openState.open && <DockSpacer size="lg" />}
+        {/* "Llamar al mesero" es el botón flotante; pagar, la fila "Cuenta de la mesa". */}
+        <DockSpacer size={openState.open ? 'lg' : 'md'} />
       </main>
 
       {/* Fuera de horario no se piden cosas nuevas; llamar al mesero y pagar siguen. */}
@@ -320,15 +302,6 @@ export function Tracking() {
           </div>
         </BottomDock>
       )}
-
-      <WaiterSheet
-        open={waiterSheet}
-        onClose={() => setWaiterSheet(false)}
-        onSubmit={(reason) => {
-          setWaiterSheet(false)
-          void waiter.send(reason)
-        }}
-      />
 
       {soldOut && (
         <SoldOutSheet

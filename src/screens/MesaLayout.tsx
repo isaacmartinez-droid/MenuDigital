@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { Outlet, ScrollRestoration, useNavigate, useParams } from 'react-router'
+import { Outlet, ScrollRestoration, useLocation, useNavigate, useParams } from 'react-router'
+import { WaiterButton } from '../components/WaiterButton'
+import { useOpenState } from '../lib/useOpenState'
+import { useUi } from '../store/ui'
 import { isValidTable, restaurant } from '../lib/catalog'
 import { waitForPayment, watchComanda } from '../lib/api'
 import { fmt, t } from '../lib/text'
@@ -21,9 +24,23 @@ export function MesaLayout() {
     <>
       <TableSession mesa={mesa} />
       <Outlet />
+      <FloatingWaiter mesa={mesa} />
       <ScrollRestoration />
     </>
   )
+}
+
+/**
+ * "Llamar al mesero" flotante en todas las pantallas de la mesa, salvo en la
+ * portada, en la cuenta pagada y con el local cerrado sin nada pedido.
+ */
+function FloatingWaiter({ mesa }: { mesa: string }) {
+  const { pathname } = useLocation()
+  const welcomeOpen = useUi((s) => s.welcomeOpen)
+  const open = useOpenState().open
+  const hasAccount = useComandas(mesa, (s) => s.comandas.length > 0)
+  if (welcomeOpen || pathname === paths.paid(mesa) || (!open && !hasAccount)) return null
+  return <WaiterButton mesa={mesa} />
 }
 
 /**
