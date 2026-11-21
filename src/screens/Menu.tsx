@@ -8,6 +8,7 @@ import { WaiterBanner } from '../components/WaiterBanner'
 import { SearchBar } from '../components/SearchBar'
 import { CategoryTabs } from '../components/CategoryTabs'
 import { DishCard } from '../components/DishCard'
+import { Carousel } from '../components/Carousel'
 import { CartBar, BottomDock, DockSpacer } from '../components/CartBar'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -232,25 +233,24 @@ export function Menu() {
               <CategoryTabs categories={menu.categories} activeId={activeCategory} onSelect={selectCategory} />
 
               {bestSellers.length > 0 && (
-                <section aria-labelledby="mas-vendidos">
-                  <h2 id="mas-vendidos" className="px-4 text-section text-texto">
-                    {t.menu.bestSellers}
-                  </h2>
-                  <div className="no-scrollbar mt-3 flex snap-x snap-mandatory scroll-px-4 gap-[13px] overflow-x-auto px-4">
-                    {bestSellers.map((dish) => (
-                      <DishCard
-                        key={dish.id}
-                        variant="carousel"
-                        dish={dish}
-                        quantity={dishQuantity(items, dish.id)}
-                        canOrder={canOrder}
-                        onAdd={() => quickAdd(dish)}
-                        onDecrement={() => decrement(dish)}
-                        onOpen={() => openDish(dish)}
-                      />
-                    ))}
-                  </div>
-                </section>
+                <Carousel
+                  title={t.menu.bestSellers}
+                  titleId="mas-vendidos"
+                  intervalMs={restaurant.timings.carouselMs}
+                >
+                  {bestSellers.map((dish) => (
+                    <DishCard
+                      key={dish.id}
+                      variant="carousel"
+                      dish={dish}
+                      quantity={dishQuantity(items, dish.id)}
+                      canOrder={canOrder}
+                      onAdd={() => quickAdd(dish)}
+                      onDecrement={() => decrement(dish)}
+                      onOpen={() => openDish(dish)}
+                    />
+                  ))}
+                </Carousel>
               )}
 
               {menu.categories.map((category) => (

@@ -95,7 +95,7 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen }: DishCardProps) {
 
   return (
     <article
-      className="flex w-[167px] shrink-0 snap-start flex-col rounded-grande border border-borde bg-tarjeta p-2"
+      className="flex w-[196px] shrink-0 snap-start flex-col rounded-grande border border-borde bg-tarjeta p-2"
       aria-label={dish.name}
     >
       <button
@@ -105,7 +105,7 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen }: DishCardProps) {
         aria-label={fmt(t.menu.openDetail, { dish: dish.name })}
         className="relative rounded-tarjeta"
       >
-        <Photo src={dish.image} className="h-[116px] w-full rounded-tarjeta" dimmed={soldOut} />
+        <Photo src={dish.image} className="h-[136px] w-full rounded-tarjeta" dimmed={soldOut} />
         {photoTag && (
           <Tag tone={photoTag.tone} className="absolute top-2 left-2">
             {photoTag.label}

@@ -39,6 +39,7 @@
     "myDeviceNumber": 1
   },
   "timings": {
+    "carouselMs": 4000,
     "undoToastMs": 4000,
     "processingMs": 3000,
     "cookingMs": 8000,
@@ -114,6 +115,8 @@
       "clearSearch": "Borrar búsqueda",
       "categoriesLabel": "Categorías",
       "bestSellers": "Los más vendidos",
+      "carouselPause": "Pausar el carrusel",
+      "carouselPlay": "Mover el carrusel",
       "searchResults": "Resultados",
       "noResults": "No encontramos \"{q}\". Probá con otra palabra.",
       "soldOut": "Agotado",

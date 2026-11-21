@@ -65,6 +65,8 @@ export interface RestaurantConfig {
   }
   /** Tiempos en milisegundos (salvo readyEstimateMin). */
   timings: {
+    /** Avance automático de "Los más vendidos". */
+    carouselMs: number
     undoToastMs: number
     processingMs: number
     cookingMs: number
