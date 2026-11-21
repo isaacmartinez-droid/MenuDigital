@@ -21,13 +21,19 @@ import { useOnline } from '../lib/useOnline'
 import { useGoBack } from '../lib/useGoBack'
 import { useOpenState } from '../lib/useOpenState'
 import { paths, useMesa } from '../lib/useMesa'
+import { isTakeout } from '../lib/channel'
 import { cartStore, cartTotal, countItems, lineTotal, useCart } from '../store/cart'
 
 type Notice = { kind: 'limit' | 'error'; key: string }
 
-/** M3 Tu pedido: platos, nombre opcional, bebidas sugeridas y "Enviar a la cocina". */
+/**
+ * M3 Tu pedido: platos, nombre opcional, bebidas sugeridas y "Enviar a la cocina".
+ * W4 (para llevar): sin nombre ni cuenta de mesa (los datos van en W5) y con
+ * "Continuar" en lugar de enviar.
+ */
 export function Order() {
   const mesa = useMesa()
+  const takeout = isTakeout(mesa)
   const navigate = useNavigate()
   const goBack = useGoBack(paths.menu(mesa))
   const items = useCart(mesa, (s) => s.items)
@@ -91,7 +97,7 @@ export function Order() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={t.order.title} subtitle={tableLabel(mesa)} onBack={goBack} />
+      <PageHeader title={t.order.title} subtitle={takeout ? t.web.place : tableLabel(mesa)} onBack={goBack} />
 
       <main className="px-4">
         {(pendingSend || !online) && (
@@ -121,7 +127,7 @@ export function Order() {
         ) : (
           <>
             {/* Lo que la mesa ya pidió antes y cómo queda la cuenta con este pedido; abre la cuenta. */}
-            {accountSoFar > 0 && (
+            {accountSoFar > 0 && !takeout && (
               <button
                 type="button"
                 onClick={() => navigate(paths.bill(mesa))}
@@ -202,51 +208,53 @@ export function Order() {
               </section>
             )}
 
-            <section className="mt-5" aria-labelledby={`${nameId}-t`}>
-              <h2 id={`${nameId}-t`} className="text-dish text-texto">
-                {t.order.nameTitle}
-              </h2>
-              {skipName && !customerName ? (
-                <p className="mt-2 text-small text-texto-2">
-                  {fmt(t.order.anonymous, { device: customerLabel('') })}{' '}
-                  <button type="button" onClick={() => setSkipName(false)} className="font-semibold text-verde underline">
-                    {t.order.addName}
-                  </button>
-                </p>
-              ) : (
-                <>
-                  <div className="mt-2 flex h-12 items-center rounded-tarjeta border border-borde bg-tarjeta has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-verde">
-                    <input
-                      id={nameId}
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => cart().setCustomerName(e.target.value)}
-                      placeholder={t.order.namePlaceholder}
-                      aria-label={t.order.nameLabel}
-                      aria-describedby={`${nameId}-h`}
-                      autoComplete="given-name"
-                      autoCapitalize="words"
-                      maxLength={30}
-                      enterKeyHint="done"
-                      className="h-full min-w-0 flex-1 bg-transparent pl-3 text-body text-texto outline-none placeholder:text-texto-2"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        cart().setCustomerName('')
-                        setSkipName(true)
-                      }}
-                      className="h-full shrink-0 px-3 text-small font-medium text-verde"
-                    >
-                      {t.common.skip}
+            {!takeout && (
+              <section className="mt-5" aria-labelledby={`${nameId}-t`}>
+                <h2 id={`${nameId}-t`} className="text-dish text-texto">
+                  {t.order.nameTitle}
+                </h2>
+                {skipName && !customerName ? (
+                  <p className="mt-2 text-small text-texto-2">
+                    {fmt(t.order.anonymous, { device: customerLabel('') })}{' '}
+                    <button type="button" onClick={() => setSkipName(false)} className="font-semibold text-verde underline">
+                      {t.order.addName}
                     </button>
-                  </div>
-                  <p id={`${nameId}-h`} className="mt-2 text-small text-texto-2">
-                    {t.order.nameHelp}
                   </p>
-                </>
-              )}
-            </section>
+                ) : (
+                  <>
+                    <div className="mt-2 flex h-12 items-center rounded-tarjeta border border-borde bg-tarjeta has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-verde">
+                      <input
+                        id={nameId}
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => cart().setCustomerName(e.target.value)}
+                        placeholder={t.order.namePlaceholder}
+                        aria-label={t.order.nameLabel}
+                        aria-describedby={`${nameId}-h`}
+                        autoComplete="given-name"
+                        autoCapitalize="words"
+                        maxLength={30}
+                        enterKeyHint="done"
+                        className="h-full min-w-0 flex-1 bg-transparent pl-3 text-body text-texto outline-none placeholder:text-texto-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          cart().setCustomerName('')
+                          setSkipName(true)
+                        }}
+                        className="h-full shrink-0 px-3 text-small font-medium text-verde"
+                      >
+                        {t.common.skip}
+                      </button>
+                    </div>
+                    <p id={`${nameId}-h`} className="mt-2 text-small text-texto-2">
+                      {t.order.nameHelp}
+                    </p>
+                  </>
+                )}
+              </section>
+            )}
 
             {/* Todas las notas en un solo lugar: las de cada plato (editables acá, con ✕ para
                 quitarlas) y la de todo el pedido (sin nota, campo; con nota, guardada con
@@ -355,7 +363,11 @@ export function Order() {
 
       {items.length > 0 && (
         <BottomDock>
-          {openState.open ? (
+          {openState.open && takeout ? (
+            <Button block onClick={() => navigate(paths.data)} trailing={formatMoney(total)}>
+              {t.web.continue}
+            </Button>
+          ) : openState.open ? (
             <div className="pt-1">
               <Button block onClick={() => setConfirming(true)} disabled={sending} trailing={formatMoney(total)}>
                 {sending ? t.order.sending : t.order.send}

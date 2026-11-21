@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
-import { Outlet, ScrollRestoration } from 'react-router'
+import { Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { restaurant } from '../lib/catalog'
+import { captureSource } from '../lib/source'
 import { readItem, writeItem } from '../lib/storage'
 import { WebWelcome } from './WebWelcome'
 
@@ -12,6 +13,9 @@ const WELCOME_KEY = `${restaurant.id}:web:bienvenida`
  * La primera vez en este teléfono, arriba de todo va W0 Bienvenida.
  */
 export function WebLayout() {
+  // Origen de la visita (?src=ig, fb, google o wa): viaja con el pedido para el panel del dueño.
+  const { search } = useLocation()
+  useState(() => captureSource(search))
   const [showWelcome, setShowWelcome] = useState(() => readItem('local', WELCOME_KEY) !== '1')
   const finishWelcome = useCallback(() => {
     writeItem('local', WELCOME_KEY, '1')

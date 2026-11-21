@@ -18,6 +18,8 @@ const screens = {
   bill: () => import('./screens/Bill'),
   paid: () => import('./screens/Paid'),
   delivery: () => import('./screens/Delivery'),
+  customerData: () => import('./screens/CustomerData'),
+  summary: () => import('./screens/Summary'),
 }
 
 const routes: RouteObject[] = [
@@ -31,6 +33,8 @@ const routes: RouteObject[] = [
       { path: 'menu', element: <Menu /> },
       { path: 'plato/:dishId', lazy: async () => ({ Component: (await screens.detail()).DishDetail }) },
       { path: 'pedido', lazy: async () => ({ Component: (await screens.order()).Order }) },
+      { path: 'datos', lazy: async () => ({ Component: (await screens.customerData()).CustomerData }) },
+      { path: 'resumen', lazy: async () => ({ Component: (await screens.summary()).Summary }) },
       { path: 'orden/:comandaId', lazy: async () => ({ Component: (await screens.tracking()).Tracking }) },
       { path: 'domicilio', lazy: async () => ({ Component: (await screens.delivery()).Delivery }) },
     ],

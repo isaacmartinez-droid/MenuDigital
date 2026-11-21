@@ -24,8 +24,11 @@ Hay dos canales en la misma app; la URL decide cuál:
 - **Mesa (QR):** cada mesa tiene su URL, `/m/5` es la Mesa 5 (es lo que va en el QR). Una mesa
   que no está en la config muestra "Este QR no es válido".
 - **Web para llevar:** `/` es el inicio (la primera vez, con la bienvenida de 2 s), `/menu` el
-  menú, `/plato/<id>` el detalle, `/pedido` el pedido y `/domicilio` el domicilio (diseñado, no
-  activo). En desarrollo, para volver a ver la bienvenida, borrar el almacenamiento del sitio.
+  menú, `/plato/<id>` el detalle, `/pedido` el pedido, `/datos` nombre y WhatsApp (se recuerdan
+  en el teléfono), `/resumen` el resumen y pago al recoger, y `/domicilio` el domicilio
+  (diseñado, no activo). Cada pedido web lleva canal `llevar`, el WhatsApp y el origen de la
+  visita (`?src=ig`, `fb`, `google` o `wa`). En desarrollo, para volver a ver la bienvenida,
+  borrar el almacenamiento del sitio.
 
 En desarrollo, `/componentes` muestra el muestrario de componentes base.
 

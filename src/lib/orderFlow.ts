@@ -4,6 +4,7 @@ import { ApiError, sendComanda } from './api'
 import { fmt, t } from './text'
 import { cartStore, countItems } from '../store/cart'
 import { comandasStore } from '../store/comandas'
+import { isTakeout } from './channel'
 
 /** Pasa las líneas del carrito a líneas de comanda, con nombres y precios congelados. */
 export function toComandaItems(items: CartItem[]): ComandaItem[] {
@@ -47,31 +48,42 @@ const inFlight = new Map<string, Promise<SubmitResult>>()
  * Si ya hay un envío en curso (ej. el reintento automático al volver la
  * señal y un toque en "Enviar" al mismo tiempo), devuelve ese mismo resultado.
  */
-export function submitCart(tableId: string): Promise<SubmitResult> {
+/** Datos del cliente web para llevar (en la mesa no hacen falta). */
+export interface TakeoutCustomer {
+  name: string
+  phone: string
+  source?: string
+}
+
+export function submitCart(tableId: string, customer?: TakeoutCustomer): Promise<SubmitResult> {
   const running = inFlight.get(tableId)
   if (running) return running
-  const attempt = doSubmit(tableId).finally(() => inFlight.delete(tableId))
+  const attempt = doSubmit(tableId, customer).finally(() => inFlight.delete(tableId))
   inFlight.set(tableId, attempt)
   return attempt
 }
 
-async function doSubmit(tableId: string): Promise<SubmitResult> {
+async function doSubmit(tableId: string, customer?: TakeoutCustomer): Promise<SubmitResult> {
   const cart = cartStore(tableId).getState()
   if (!cart.items.length) return { ok: false, reason: 'empty' }
   if (countItems(cart.items) > restaurant.ordering.maxItemsPerComanda) return { ok: false, reason: 'limit' }
   try {
     const { comanda, account } = await sendComanda({
       tableId,
-      customerName: customerLabel(cart.customerName),
+      customerName: customer ? customer.name.trim() : customerLabel(cart.customerName),
       items: toComandaItems(cart.items),
       note: cart.kitchenNote.trim() || undefined,
+      ...(isTakeout(tableId)
+        ? { channel: 'llevar' as const, phone: customer?.phone, source: customer?.source }
+        : {}),
     })
     comandasStore(tableId).getState().setAccount(account)
     cartStore(tableId).getState().clear()
     return { ok: true, comanda }
   } catch (error) {
     if (error instanceof ApiError && error.code === 'offline') {
-      cartStore(tableId).getState().setPendingSend(true)
+      // En la mesa se envía solo al volver la señal; para llevar, el cliente vuelve a confirmar.
+      if (!isTakeout(tableId)) cartStore(tableId).getState().setPendingSend(true)
       return { ok: false, reason: 'offline' }
     }
     return { ok: false, reason: 'server' }

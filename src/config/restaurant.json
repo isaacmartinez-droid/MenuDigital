@@ -44,7 +44,9 @@
         { "text": "Sabe a la fritanga de siempre. El gallo pinto, buenísimo.", "when": "hace 1 mes" }
       ]
     },
-    "deliveryFee": 50
+    "deliveryFee": 50,
+    "phoneDigits": 8,
+    "sources": ["ig", "fb", "google", "wa"]
   },
   "schedule": {
     "timezone": "America/Managua",
@@ -421,7 +423,29 @@
       "deliveryMap": "Mapa (próximamente)",
       "deliveryFee": "Costo de envío",
       "deliveryCta": "Próximamente",
-      "newTab": "(se abre en otra pestaña)"
+      "newTab": "(se abre en otra pestaña)",
+      "continue": "Continuar",
+      "dataTitle": "Tus datos",
+      "dataSubtitle": "Para confirmar tu pedido",
+      "nameLabel": "Tu nombre",
+      "namePlaceholder": "Ej.: Ana",
+      "nameError": "Escribí tu nombre: así sabemos de quién es el pedido.",
+      "phoneLabel": "Tu WhatsApp",
+      "phonePlaceholder": "8888 0000",
+      "phoneHelp": "Te escribimos para confirmar antes de cocinar.",
+      "phoneError": "Revisá tu WhatsApp: son {digits} dígitos.",
+      "remember": "No necesitás cuenta. Lo recordamos en este teléfono para la próxima.",
+      "summaryTitle": "Resumen",
+      "summarySubtitle": "Para llevar · a nombre de {name}",
+      "summaryItems": "Lo que pediste",
+      "total": "Total",
+      "payTitle": "¿Cómo pagás?",
+      "payPickup": "Pagás al recoger",
+      "payPickupHint": "Efectivo o tarjeta en el local",
+      "payCard": "Tarjeta desde la app",
+      "payTransfer": "Transferencia",
+      "confirm": "Confirmar pedido",
+      "confirming": "Enviando…"
     }
   }
 }

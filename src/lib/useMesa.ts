@@ -25,4 +25,6 @@ export const paths = {
   /** Solo web. */
   home: '/',
   delivery: '/domicilio',
+  data: '/datos',
+  summary: '/resumen',
 }

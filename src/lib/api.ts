@@ -6,7 +6,7 @@
  * MAÑANA: cada función hace fetch al backend con la misma firma, y las
  * pantallas no cambian. Los puntos a reemplazar están marcados con "API real:".
  */
-import type { BillRequest, Comanda, ComandaItem, ComandaStatus, PayMethod, PayScope, Substitution } from '../types/order'
+import type { BillRequest, Channel, Comanda, ComandaItem, ComandaStatus, PayMethod, PayScope, Substitution } from '../types/order'
 import { getDish, getExtra, getSide, restaurant, unitPrice } from './catalog'
 import { tipAmount } from './money'
 import { readDemoFlags } from './demoFlags'
@@ -14,6 +14,7 @@ import { newId, readItem, tableKey, writeItem } from './storage'
 import { addReviews } from './reviews'
 import { msToNextStatus, simulatedStatus } from './simulator'
 import { fmt, t } from './text'
+import { isTakeout } from './channel'
 
 export class ApiError extends Error {
   readonly code: 'offline' | 'server'
@@ -29,6 +30,10 @@ export interface NewComanda {
   items: ComandaItem[]
   /** Nota general para la cocina. */
   note?: string
+  /** Solo para llevar: canal, WhatsApp y origen (?src=). */
+  channel?: Channel
+  phone?: string
+  source?: string
 }
 
 export interface Receipt {
@@ -149,6 +154,8 @@ function seedTableMates(state: ServerTable, tableId: string, createdAt: string) 
  * Envía una comanda directo a cocina (sin aceptación del mesero).
  * Devuelve la comanda creada y la cuenta completa de la mesa.
  * API real: POST /api/mesas/:mesa/comandas → { comanda, cuenta }
+ * (para llevar: POST /api/pedidos con canal "llevar", nombre, WhatsApp y origen;
+ * queda "por confirmar" hasta que caja escribe por WhatsApp).
  */
 export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda; account: Comanda[] }> {
   return roundTrip(() => {
@@ -163,6 +170,9 @@ export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda
       mine: true,
       items: input.items,
       ...(input.note ? { note: input.note } : {}),
+      ...(input.channel ? { channel: input.channel } : {}),
+      ...(input.phone ? { phone: input.phone } : {}),
+      ...(input.source ? { source: input.source } : {}),
       total: input.items.reduce((s, i) => s + i.lineTotal, 0),
       status: 'recibida',
       createdAt: now,
@@ -170,7 +180,8 @@ export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda
       substitutions: [],
     }
     state.comandas.push(comanda)
-    seedTableMates(state, input.tableId, now)
+    // Los compañeros simulados son de la mesa; el pedido para llevar es solo de este cliente.
+    if (!isTakeout(input.tableId)) seedTableMates(state, input.tableId, now)
     saveServer(input.tableId, state)
     return { comanda, account: state.comandas }
   })

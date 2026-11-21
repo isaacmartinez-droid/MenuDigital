@@ -7,7 +7,7 @@ import { readItem, removeItem, tableKey, writeItem } from '../lib/storage'
  * localStorage bajo "<restaurante>:mesa:<id>:<nombre>". Así cada mesa
  * guarda lo suyo y cerrar la cuenta borra solo esa mesa.
  */
-const safeLocalStorage = createJSONStorage(() => ({
+export const safeLocalStorage = createJSONStorage(() => ({
   getItem: (k: string) => readItem('local', k),
   setItem: (k: string, v: string) => writeItem('local', k, v),
   removeItem: (k: string) => removeItem('local', k),

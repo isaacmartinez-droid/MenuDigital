@@ -33,6 +33,9 @@ export interface ComandaItem {
 
 export type ComandaStatus = 'recibida' | 'en-el-comal' | 'lista' | 'entregada'
 
+/** Canal del pedido (el mostrador lo usará la caja). */
+export type Channel = 'mesa' | 'llevar' | 'mostrador'
+
 /** Cambio pedido por cocina cuando se acaba una parte del plato (M4g). */
 export interface Substitution {
   dishId: string
@@ -57,6 +60,12 @@ export interface Comanda {
   items: ComandaItem[]
   /** Nota general para la cocina ("traer todo junto"). */
   note?: string
+  /** Por dónde entró: en la mesa (QR) o en línea para llevar. Sin canal = mesa. */
+  channel?: Channel
+  /** WhatsApp del cliente (solo para llevar: se le escribe para confirmar). */
+  phone?: string
+  /** De dónde llegó a la web (?src=ig|fb|google|wa), para el panel del dueño. */
+  source?: string
   total: number
   status: ComandaStatus
   /** ISO */

@@ -77,6 +77,10 @@ export interface RestaurantConfig {
     google: { rating: number; count: number; url: string; reviews: { text: string; when: string }[] }
     /** Costo de envío a domicilio (W9, todavía no activo). */
     deliveryFee: number
+    /** Dígitos del WhatsApp sin código de país (Nicaragua: 8). */
+    phoneDigits: number
+    /** Orígenes válidos de ?src= (Instagram, Facebook, Google, WhatsApp). */
+    sources: string[]
   }
   schedule: { timezone: string; ranges: ScheduleRange[] }
   ordering: {
