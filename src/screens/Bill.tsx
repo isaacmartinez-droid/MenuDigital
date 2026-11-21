@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { ChevronDown, Flame } from 'lucide-react'
+import { ChevronDown, Flame, Frown, Smile } from 'lucide-react'
 import type { Comanda, PayMethod, PayScope, TipChoice } from '../types/order'
 import { restaurant } from '../lib/catalog'
 import { PageHeader } from '../components/Header'
@@ -25,6 +25,127 @@ import { accountStore, useAccount } from '../store/account'
 
 const sumTotals = (list: Comanda[]) => list.reduce((sum, c) => sum + c.total, 0)
 
+type DishEntry = [dishId: string, name: string]
+type Overall = 'rico' | 'mal' | null
+
+/**
+ * Lo que se manda como calificación: con pocos platos, las estrellas de cada
+ * uno; con muchos, "todo rico" = 5 a todos, o 2 a los marcados como "no estuvo bien".
+ */
+function ratingsToSend(dishes: DishEntry[], ratings: Record<string, number>, overall: Overall) {
+  if (dishes.length <= restaurant.ratings.perDishMax) return ratings
+  if (overall === 'rico') return Object.fromEntries(dishes.map(([id]) => [id, 5]))
+  if (overall === 'mal') return ratings
+  return {}
+}
+
+/**
+ * Calificación al pagar. Hasta `ratings.perDishMax` platos: estrellas por plato
+ * (van a las reseñas). Con más: "¿Todo estuvo rico?"; si "Algo no", se marca qué plato.
+ */
+function RatingSection({
+  mesa,
+  dishes,
+  ratings,
+  overall,
+}: {
+  mesa: string
+  dishes: DishEntry[]
+  ratings: Record<string, number>
+  overall: Overall
+}) {
+  const account = () => accountStore(mesa).getState()
+  const perDish = dishes.length <= restaurant.ratings.perDishMax
+
+  return (
+    <section aria-labelledby="calificar" className="mt-5 rounded-grande border border-borde bg-tarjeta px-4 pt-4 pb-4">
+      <div className="flex items-center justify-between">
+        <h2 id="calificar" className="text-dish text-texto">
+          {perDish ? t.bill.rateTitle : t.bill.overallTitle}
+        </h2>
+        <button type="button" onClick={() => account().skipRatings()} className="-my-3 -mr-2 min-h-12 px-2 text-dish text-verde">
+          {t.common.skip}
+        </button>
+      </div>
+
+      {perDish ? (
+        <>
+          <ul className="mt-1.5">
+            {dishes.map(([dishId, dishName]) => (
+              <li key={dishId} className="flex h-8 items-center justify-between gap-3">
+                <span className="min-w-0 truncate text-body text-texto">{dishName}</span>
+                <StarRating
+                  value={ratings[dishId] ?? 0}
+                  onChange={(stars) => account().rate(dishId, stars)}
+                  label={fmt(t.bill.rateDish, { dish: dishName })}
+                />
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-small text-texto-2">{t.bill.rateHelp}</p>
+        </>
+      ) : (
+        <>
+          <div role="group" aria-labelledby="calificar" className="mt-2 grid grid-cols-2 gap-2">
+            <ChoiceButton
+              selected={overall === 'rico'}
+              onClick={() => account().setOverall('rico')}
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <Smile size={18} strokeWidth={2} aria-hidden />
+                  {t.bill.overallYes}
+                </span>
+              }
+            />
+            <ChoiceButton
+              selected={overall === 'mal'}
+              onClick={() => account().setOverall('mal')}
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <Frown size={18} strokeWidth={2} aria-hidden />
+                  {t.bill.overallNo}
+                </span>
+              }
+            />
+          </div>
+          {overall === 'rico' && (
+            <p role="status" className="mt-3 text-small text-verde">
+              {t.bill.rateThanks}
+            </p>
+          )}
+          {overall === 'mal' && (
+            <div className="mt-3">
+              <p id="que-no" className="text-small font-semibold text-texto">
+                {t.bill.overallWhich}
+              </p>
+              <div role="group" aria-labelledby="que-no" className="mt-2 flex flex-wrap gap-2">
+                {dishes.map(([dishId, dishName]) => {
+                  const bad = Boolean(ratings[dishId])
+                  return (
+                    <button
+                      key={dishId}
+                      type="button"
+                      aria-pressed={bad}
+                      onClick={() => account().toggleBadDish(dishId)}
+                      className={cx(
+                        'min-h-10 rounded-completo px-3.5 text-small font-medium transition-colors duration-150',
+                        bad ? 'bg-promo text-blanco' : 'border border-borde bg-tarjeta text-texto',
+                      )}
+                    >
+                      {dishName}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="mt-2 text-small text-texto-2">{t.bill.overallWhichHelp}</p>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
 /**
  * M6 "Tu cuenta" y, después de avisar, M6b "Pasá a caja".
  * Cada persona pide desde su teléfono, así que la pantalla gira en torno a
@@ -38,6 +159,7 @@ export function Bill() {
   const customerName = useCart(mesa, (s) => s.customerName)
   const ratings = useAccount(mesa, (s) => s.ratings)
   const ratingsSkipped = useAccount(mesa, (s) => s.ratingsSkipped)
+  const overall = useAccount(mesa, (s) => s.overall)
   const payScope = useAccount(mesa, (s) => s.payScope)
   const tip = useAccount(mesa, (s) => s.tip)
   const payMethod = useAccount(mesa, (s) => s.payMethod)
@@ -90,7 +212,8 @@ export function Bill() {
     setNotifying(true)
     try {
       const { cashier: who } = await requestBill(mesa, { scope, tip, method: payMethod, cashGiven })
-      if (!ratingsSkipped && Object.keys(ratings).length) void rateDishes(mesa, ratings).catch(() => undefined)
+      const toSend = ratingsToSend(dishes, ratings, overall)
+      if (!ratingsSkipped && Object.keys(toSend).length) void rateDishes(mesa, toSend).catch(() => undefined)
       accountStore(mesa).getState().markBillRequested(who)
     } catch {
       setOfflineKey(newId())
@@ -225,33 +348,7 @@ export function Bill() {
             </section>
 
             {!requested && !ratingsSkipped && dishes.length > 0 && (
-              <section aria-labelledby="calificar" className="mt-5 rounded-grande border border-borde bg-tarjeta px-4 pt-4 pb-4">
-                <div className="flex items-center justify-between">
-                  <h2 id="calificar" className="text-dish text-texto">
-                    {t.bill.rateTitle}
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => accountStore(mesa).getState().skipRatings()}
-                    className="-my-3 -mr-2 min-h-12 px-2 text-dish text-verde"
-                  >
-                    {t.common.skip}
-                  </button>
-                </div>
-                <ul className="mt-1.5">
-                  {dishes.map(([dishId, dishName]) => (
-                    <li key={dishId} className="flex h-8 items-center justify-between gap-3">
-                      <span className="min-w-0 truncate text-body text-texto">{dishName}</span>
-                      <StarRating
-                        value={ratings[dishId] ?? 0}
-                        onChange={(stars) => accountStore(mesa).getState().rate(dishId, stars)}
-                        label={fmt(t.bill.rateDish, { dish: dishName })}
-                      />
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-small text-texto-2">{t.bill.rateHelp}</p>
-              </section>
+              <RatingSection mesa={mesa} dishes={dishes} ratings={ratings} overall={overall} />
             )}
           </>
         )}
@@ -369,7 +466,7 @@ function ChoiceButton({
 }: {
   selected: boolean
   onClick: () => void
-  label: string
+  label: ReactNode
   detail?: ReactNode
 }) {
   return (

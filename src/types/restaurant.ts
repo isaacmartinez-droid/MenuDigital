@@ -57,6 +57,11 @@ export interface RestaurantConfig {
    * viene marcado (sugerida). Además siempre están "Otro monto" y "Sin propina".
    */
   tip: { percents: number[]; suggested: number }
+  /**
+   * Calificación en "Tu cuenta": con hasta `perDishMax` platos se califica cada
+   * uno con estrellas (va a las reseñas); con más, una sola pregunta "¿Todo estuvo rico?".
+   */
+  ratings: { perDishMax: number }
   /** ids de mesa válidos (lo que va en /m/:mesa). */
   tables: string[]
   whatsapp: { number: string; message: string }
