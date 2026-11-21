@@ -64,6 +64,7 @@ async function doSubmit(tableId: string): Promise<SubmitResult> {
       tableId,
       customerName: customerLabel(cart.customerName),
       items: toComandaItems(cart.items),
+      note: cart.kitchenNote.trim() || undefined,
     })
     comandasStore(tableId).getState().setAccount(account)
     cartStore(tableId).getState().clear()

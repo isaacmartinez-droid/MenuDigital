@@ -26,6 +26,8 @@ export interface NewComanda {
   tableId: string
   customerName: string
   items: ComandaItem[]
+  /** Nota general para la cocina. */
+  note?: string
 }
 
 export interface Receipt {
@@ -155,6 +157,7 @@ export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda
       customerName: input.customerName,
       mine: true,
       items: input.items,
+      ...(input.note ? { note: input.note } : {}),
       total: input.items.reduce((s, i) => s + i.lineTotal, 0),
       status: 'recibida',
       createdAt: now,

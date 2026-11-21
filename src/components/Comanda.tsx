@@ -47,6 +47,11 @@ export function Comanda({ comanda, heading, pill, footnote }: ComandaProps) {
           )
         })}
       </ul>
+      {comanda.note && (
+        <p className="mt-2 rounded-chico bg-fondo px-2.5 py-1.5 text-small text-texto-2">
+          {fmt(t.order.noteLine, { note: comanda.note })}
+        </p>
+      )}
       <div className="mt-1.5 flex items-center justify-between gap-3">
         <p className="text-small text-texto-2">{footnote}</p>
         <p className="shrink-0 text-price text-texto">{formatMoney(comanda.total)}</p>

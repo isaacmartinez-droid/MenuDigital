@@ -55,6 +55,8 @@ export interface Comanda {
   /** true si la hizo este teléfono. */
   mine: boolean
   items: ComandaItem[]
+  /** Nota general para la cocina ("traer todo junto"). */
+  note?: string
   total: number
   status: ComandaStatus
   /** ISO */

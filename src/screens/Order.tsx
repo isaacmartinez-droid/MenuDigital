@@ -10,7 +10,8 @@ import { Button } from '../components/Button'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { BottomSheet } from '../components/BottomSheet'
-import { Plus } from 'lucide-react'
+import { Clock, CupSoda, Plus, ReceiptText } from 'lucide-react'
+import { useComandas } from '../store/comandas'
 import { getDish, getExtra, getSide, menu, restaurant } from '../lib/catalog'
 import { formatMoney } from '../lib/money'
 import { fmt, platos, t, tableLabel } from '../lib/text'
@@ -31,6 +32,9 @@ export function Order() {
   const goBack = useGoBack(paths.menu(mesa))
   const items = useCart(mesa, (s) => s.items)
   const customerName = useCart(mesa, (s) => s.customerName)
+  const kitchenNote = useCart(mesa, (s) => s.kitchenNote)
+  // Lo que la mesa ya pidió antes (misma cuenta, todavía sin pagar).
+  const accountSoFar = useComandas(mesa, (s) => s.comandas.reduce((sum, c) => sum + c.total, 0))
   const pendingSend = useCart(mesa, (s) => s.pendingSend)
   const openState = useOpenState()
   const online = useOnline()
@@ -49,6 +53,9 @@ export function Order() {
   const cart = () => cartStore(mesa).getState()
   const total = cartTotal(items)
   const drinks = menu.suggestedDrinks.map(getDish).filter((d): d is Dish => Boolean(d?.available))
+  // Si ya hay una bebida en el pedido, no se insiste con la sugerencia.
+  const drinkCategories = new Set(drinks.map((d) => d.category))
+  const showDrinks = drinks.length > 0 && !items.some((i) => drinkCategories.has(getDish(i.dishId)?.category ?? ''))
 
   const changeQuantity = (line: CartItem, quantity: number) => {
     const result = cart().setLineQuantity(line.lineId, quantity)
@@ -105,82 +112,64 @@ export function Order() {
           </div>
         ) : (
           <>
-            <ul className="divide-y divide-borde rounded-grande border border-borde bg-tarjeta px-3">
-              {items.map((line) => (
-                <OrderLine
-                  key={line.lineId}
-                  line={line}
-                  onQuantity={(q) => changeQuantity(line, q)}
-                  onChangeSide={() => navigate(paths.editLine(mesa, line.dishId, line.lineId))}
-                />
-              ))}
-            </ul>
-
-            {/* Volver al menú con este mismo pedido abierto (lo agregado se suma acá). */}
-            {openState.open && (
-              <button
-                type="button"
-                onClick={goBack}
-                className="mt-1 -mb-2 inline-flex min-h-12 items-center gap-2 text-dish text-verde"
-              >
-                <Plus size={20} strokeWidth={2.25} aria-hidden />
-                {t.order.addMore}
-              </button>
-            )}
-
-            {skipName && !customerName ? (
-              <p className="mt-3 text-small text-texto-2">
-                {fmt(t.order.anonymous, { device: customerLabel('') })}{' '}
-                <button type="button" onClick={() => setSkipName(false)} className="font-semibold text-verde underline">
-                  {t.order.addName}
-                </button>
-              </p>
-            ) : (
-              <>
-                <div className="mt-3 flex h-12 items-center rounded-tarjeta border border-borde bg-tarjeta has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-verde">
-                  <input
-                    id={nameId}
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => cart().setCustomerName(e.target.value)}
-                    placeholder={t.order.nameLabel}
-                    aria-label={t.order.nameLabel}
-                    aria-describedby={`${nameId}-h`}
-                    autoComplete="given-name"
-                    autoCapitalize="words"
-                    maxLength={30}
-                    enterKeyHint="done"
-                    className="h-full min-w-0 flex-1 bg-transparent pl-3 text-body text-texto outline-none placeholder:text-texto-2"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      cart().setCustomerName('')
-                      setSkipName(true)
-                    }}
-                    className="h-full shrink-0 px-3 text-small font-medium text-verde"
-                  >
-                    {t.common.skip}
-                  </button>
-                </div>
-                <p id={`${nameId}-h`} className="mt-3 text-small text-texto-2">
-                  {t.order.nameHelp}
+            {/* Pedido que se suma a lo que la mesa ya pidió (misma cuenta). */}
+            {accountSoFar > 0 && (
+              <div className="mb-3 flex items-center gap-2.5 rounded-tarjeta bg-verde-suave px-3 py-2.5 text-small text-verde">
+                <ReceiptText size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                <p>
+                  <span className="font-semibold">{t.order.accountOpen}</span>
+                  {' · '}
+                  {fmt(t.order.accountSoFar, { total: formatMoney(accountSoFar) })}
                 </p>
-              </>
+              </div>
             )}
 
-            {drinks.length > 0 && (
-              <section className="mt-3" aria-labelledby="bebidas">
+            <section aria-labelledby="tus-platos">
+              <h2 id="tus-platos" className="text-dish text-texto">
+                {fmt(t.order.dishesTitle, { n: countItems(items) })}
+              </h2>
+              <ul className="mt-2 divide-y divide-borde rounded-grande border border-borde bg-tarjeta px-3">
+                {items.map((line) => (
+                  <OrderLine
+                    key={line.lineId}
+                    line={line}
+                    onQuantity={(q) => changeQuantity(line, q)}
+                    onChangeSide={() => navigate(paths.editLine(mesa, line.dishId, line.lineId))}
+                  />
+                ))}
+              </ul>
+
+              {/* Volver al menú con este mismo pedido abierto (lo agregado se suma acá). */}
+              {openState.open && (
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className="mt-1 -mb-2 inline-flex min-h-12 items-center gap-2 text-dish text-verde"
+                >
+                  <Plus size={20} strokeWidth={2.25} aria-hidden />
+                  {t.order.addMore}
+                </button>
+              )}
+            </section>
+
+            {showDrinks && (
+              <section className="mt-5" aria-labelledby="bebidas">
                 <h2 id="bebidas" className="text-dish text-texto">
                   {t.order.drinks}
                 </h2>
-                <div className="mt-3 grid grid-cols-2 items-start gap-[9px]">
+                <div className="mt-2 grid grid-cols-2 items-start gap-[9px]">
                   {drinks.map((drink) => (
                     <div
                       key={drink.id}
                       className="flex items-center gap-2 rounded-grande border border-borde bg-tarjeta p-2"
                     >
-                      <Photo src={drink.image} className="size-10 shrink-0 rounded-chico" />
+                      {drink.image ? (
+                        <Photo src={drink.image} className="size-10 shrink-0 rounded-chico" />
+                      ) : (
+                        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-chico bg-verde-suave text-verde">
+                          <CupSoda size={20} strokeWidth={2} />
+                        </span>
+                      )}
                       <div className="min-w-0 flex-1 text-small">
                         <p className="text-texto">{drink.name}</p>
                         <p className="text-texto-2">{formatMoney(drink.price)}</p>
@@ -194,21 +183,83 @@ export function Order() {
               </section>
             )}
 
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-section text-texto">{t.order.total}</span>
-              <span className="text-section text-texto">{formatMoney(total)}</span>
-            </div>
+            <section className="mt-5" aria-labelledby={`${nameId}-t`}>
+              <h2 id={`${nameId}-t`} className="text-dish text-texto">
+                {t.order.nameTitle}
+              </h2>
+              {skipName && !customerName ? (
+                <p className="mt-2 text-small text-texto-2">
+                  {fmt(t.order.anonymous, { device: customerLabel('') })}{' '}
+                  <button type="button" onClick={() => setSkipName(false)} className="font-semibold text-verde underline">
+                    {t.order.addName}
+                  </button>
+                </p>
+              ) : (
+                <>
+                  <div className="mt-2 flex h-12 items-center rounded-tarjeta border border-borde bg-tarjeta has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-verde">
+                    <input
+                      id={nameId}
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => cart().setCustomerName(e.target.value)}
+                      placeholder={t.order.namePlaceholder}
+                      aria-label={t.order.nameLabel}
+                      aria-describedby={`${nameId}-h`}
+                      autoComplete="given-name"
+                      autoCapitalize="words"
+                      maxLength={30}
+                      enterKeyHint="done"
+                      className="h-full min-w-0 flex-1 bg-transparent pl-3 text-body text-texto outline-none placeholder:text-texto-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        cart().setCustomerName('')
+                        setSkipName(true)
+                      }}
+                      className="h-full shrink-0 px-3 text-small font-medium text-verde"
+                    >
+                      {t.common.skip}
+                    </button>
+                  </div>
+                  <p id={`${nameId}-h`} className="mt-2 text-small text-texto-2">
+                    {t.order.nameHelp}
+                  </p>
+                </>
+              )}
+            </section>
+
+            <section className="mt-5">
+              <label htmlFor={`${nameId}-nota`} className="text-dish text-texto">
+                {t.order.noteTitle} <span className="font-normal text-texto-2">{t.order.noteOptional}</span>
+              </label>
+              <textarea
+                id={`${nameId}-nota`}
+                value={kitchenNote}
+                onChange={(e) => cart().setKitchenNote(e.target.value)}
+                placeholder={t.order.notePlaceholder}
+                maxLength={140}
+                rows={2}
+                className="mt-2 block w-full resize-none rounded-tarjeta border border-borde bg-tarjeta px-3 py-2.5 text-body text-texto outline-none placeholder:text-texto-2 focus-visible:outline-3 focus-visible:outline-verde"
+              />
+            </section>
           </>
         )}
-        <DockSpacer />
+        <DockSpacer size="lg" />
       </main>
 
       {items.length > 0 && (
         <BottomDock>
           {openState.open ? (
-            <Button block onClick={() => setConfirming(true)} disabled={sending} trailing={formatMoney(total)}>
-              {sending ? t.order.sending : t.order.send}
-            </Button>
+            <div className="pt-1">
+              <Button block onClick={() => setConfirming(true)} disabled={sending} trailing={formatMoney(total)}>
+                {sending ? t.order.sending : t.order.send}
+              </Button>
+              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-small text-texto-2">
+                <Clock size={14} strokeWidth={2} aria-hidden />
+                {fmt(t.order.eta, { min: restaurant.timings.readyEstimateMin, mesa })}
+              </p>
+            </div>
           ) : (
             <Button block disabled>
               {fmt(t.closed.button, { open: openState.opensAt ?? '' })}
@@ -262,6 +313,11 @@ export function Order() {
             )
           })}
         </ul>
+        {kitchenNote.trim() && (
+          <p className="mt-3 rounded-chico bg-fondo px-2.5 py-1.5 text-small text-texto-2">
+            {fmt(t.order.noteLine, { note: kitchenNote.trim() })}
+          </p>
+        )}
         <p className="mt-3 text-small text-texto-2">{t.order.confirmHelp}</p>
       </BottomSheet>
     </div>
@@ -291,7 +347,7 @@ function OrderLine({ line, onQuantity, onChangeSide }: OrderLineProps) {
       <Photo src={dish.image} className="size-14 shrink-0 rounded-tarjeta" />
       <div className="min-w-0 flex-1">
         <p className="text-dish text-texto">{dish.name}</p>
-        <p className="mt-0.5 text-small text-texto-2">{details.length ? details.join(' · ') : t.order.noChanges}</p>
+        {details.length > 0 && <p className="mt-0.5 text-small text-texto-2">{details.join(' · ')}</p>}
         {side && (dish.sides?.length ?? 0) > 1 && (
           <button
             type="button"
