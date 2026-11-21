@@ -113,6 +113,22 @@ export function Menu() {
     return [...found.filter((d) => d.available), ...found.filter((d) => !d.available)]
   }, [query, today])
 
+  // Cuando el buscador queda fuera de vista, las pestañas fijas muestran una lupa que vuelve a él.
+  const searchRef = useRef<HTMLDivElement>(null)
+  const [searchInView, setSearchInView] = useState(true)
+  useEffect(() => {
+    const el = searchRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => setSearchInView(entry.isIntersecting))
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  const goToSearch = () => {
+    window.scrollTo({ top: 0, behavior: scrollBehavior() })
+    // Foco en el mismo toque (en el teléfono abre el teclado) sin cortar el desplazamiento.
+    searchRef.current?.querySelector('input')?.focus({ preventScroll: true })
+  }
+
   // Pestañas: la activa sigue al scroll; al tocar una, se fija mientras dura el desplazamiento.
   const sectionIds = useMemo(() => menu.categories.map((c) => `cat-${c.id}`), [])
   const spied = useScrollSpy(sectionIds, TABS_HEIGHT, !searching)
@@ -144,6 +160,8 @@ export function Menu() {
       .map(getDish)
       .filter((d): d is Dish => Boolean(d) && !todaysCombos.some((c) => c.id === d?.id)),
   ]
+  // Búsqueda sin resultados: se sugieren los más vendidos que se pueden pedir hoy.
+  const suggestions = bestSellers.filter((d) => d.available && isOnDay(d, today)).slice(0, 4)
   // Sin combos cargados, la categoría "combos" no tiene pestaña ni sección.
   const categories = menu.categories.filter((c) => c.id !== COMBOS_CATEGORY || combos.length > 0)
 
@@ -207,6 +225,7 @@ export function Menu() {
         waiterLocked={waiter.coolingDown}
         onCallWaiter={() => waiter.tryOpen() && setWaiterSheet(true)}
         onPay={() => navigate(paths.bill(mesa))}
+        showPay={hasAccount}
       />
     )
   }
@@ -258,7 +277,7 @@ export function Menu() {
             {slot}
           </div>
 
-          <div className="mt-2 px-4">
+          <div ref={searchRef} className="mt-2 px-4">
             <SearchBar value={query} onChange={setQuery} />
           </div>
 
@@ -270,14 +289,39 @@ export function Menu() {
               {results.length ? (
                 <div className="divide-y divide-borde">{results.map(row)}</div>
               ) : (
-                <p role="status" className="py-8 text-center text-body text-texto-2">
-                  {fmt(t.menu.noResults, { q: query.trim() })}
-                </p>
+                <div className="py-8 text-center">
+                  <p role="status" className="text-body text-texto-2">
+                    {fmt(t.menu.noResults, { q: query.trim() })}
+                  </p>
+                  {/* Sin resultados: los más vendidos de hoy, para no dejar la pantalla vacía. */}
+                  {suggestions.length > 0 && (
+                    <>
+                      <p className="mt-5 text-small text-texto-2">{t.menu.trySuggestions}</p>
+                      <div className="mt-2 flex flex-wrap justify-center gap-2">
+                        {suggestions.map((dish) => (
+                          <button
+                            key={dish.id}
+                            type="button"
+                            onClick={() => openDish(dish)}
+                            className="min-h-10 rounded-completo border border-borde bg-tarjeta px-4 text-small font-medium text-texto"
+                          >
+                            {dish.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </section>
           ) : (
             <>
-              <CategoryTabs categories={categories} activeId={activeCategory} onSelect={selectCategory} />
+              <CategoryTabs
+                categories={categories}
+                activeId={activeCategory}
+                onSelect={selectCategory}
+                onSearch={searchInView ? undefined : goToSearch}
+              />
 
               {bestSellers.length > 0 && (
                 <Carousel
@@ -330,6 +374,7 @@ export function Menu() {
           <CartBar
             label={fmt(t.menu.viewOrder, { n: count, platos: platos(count) })}
             total={formatMoney(total)}
+            count={count}
             onClick={() => navigate(paths.order(mesa))}
           />
         )

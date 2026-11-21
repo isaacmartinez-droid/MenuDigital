@@ -8,13 +8,15 @@ interface TableActionsProps {
   onPay: () => void
   /** Ya se llamó hace poco: se ve apagado, pero al tocarlo dice cuánto falta. */
   waiterLocked: boolean
+  /** false antes de pedir: no hay nada que pagar y "Llamar al mesero" va a lo ancho. */
+  showPay?: boolean
   className?: string
 }
 
-/** Botones de mesa: "Llamar al mesero" y "Ya vamos a pagar". */
-export function TableActions({ onCallWaiter, onPay, waiterLocked, className }: TableActionsProps) {
+/** Botones de mesa: "Llamar al mesero" y, si ya pidieron, "Ya vamos a pagar". */
+export function TableActions({ onCallWaiter, onPay, waiterLocked, showPay = true, className }: TableActionsProps) {
   return (
-    <div className={cx('grid grid-cols-2 gap-2', className)}>
+    <div className={cx('grid gap-2', showPay ? 'grid-cols-2' : 'grid-cols-1', className)}>
       <Button
         variant="pill"
         aria-disabled={waiterLocked || undefined}
@@ -24,9 +26,11 @@ export function TableActions({ onCallWaiter, onPay, waiterLocked, className }: T
       >
         {t.menu.callWaiter}
       </Button>
-      <Button variant="pill" onClick={onPay} icon={<Banknote size={20} className="text-verde" aria-hidden />}>
-        {t.menu.payNow}
-      </Button>
+      {showPay && (
+        <Button variant="pill" onClick={onPay} icon={<Banknote size={20} className="text-verde" aria-hidden />}>
+          {t.menu.payNow}
+        </Button>
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Search } from 'lucide-react'
 import type { Category } from '../types/menu'
 import { cx } from '../lib/cx'
 import { t } from '../lib/text'
@@ -7,13 +8,15 @@ interface CategoryTabsProps {
   categories: Category[]
   activeId: string
   onSelect: (id: string) => void
+  /** Si se pasa, aparece una lupa al inicio (cuando el buscador quedó fuera de vista). */
+  onSearch?: () => void
 }
 
 /**
  * Pestañas de categorías (fijas arriba al hacer scroll). Tocar una lleva a
  * su sección; al hacer scroll, la pestaña activa sigue a la sección visible.
  */
-export function CategoryTabs({ categories, activeId, onSelect }: CategoryTabsProps) {
+export function CategoryTabs({ categories, activeId, onSelect, onSearch }: CategoryTabsProps) {
   const listRef = useRef<HTMLDivElement>(null)
 
   // Mantiene visible la pestaña activa dentro de la fila horizontal.
@@ -29,8 +32,21 @@ export function CategoryTabs({ categories, activeId, onSelect }: CategoryTabsPro
   }, [activeId])
 
   return (
-    <nav aria-label={t.menu.categoriesLabel} className="sticky top-0 z-20 bg-fondo py-2">
-      <div ref={listRef} className="no-scrollbar flex gap-[8.5px] overflow-x-auto px-4">
+    <nav aria-label={t.menu.categoriesLabel} className="sticky top-0 z-20 flex items-center bg-fondo py-2">
+      {onSearch && (
+        <button
+          type="button"
+          onClick={onSearch}
+          aria-label={t.menu.searchLabel}
+          className="ml-4 grid size-9 shrink-0 animate-fade-in place-items-center rounded-completo border border-borde bg-tarjeta text-texto"
+        >
+          <Search size={18} strokeWidth={2} aria-hidden />
+        </button>
+      )}
+      <div
+        ref={listRef}
+        className={cx('no-scrollbar relative flex min-w-0 flex-1 gap-[8.5px] overflow-x-auto pr-4', onSearch ? 'pl-2' : 'pl-4')}
+      >
         {categories.map((c) => {
           const active = c.id === activeId
           return (
