@@ -187,6 +187,8 @@
       "noteOptional": "(opcional)",
       "notePlaceholder": "Ej.: sin chile, traer todo junto…",
       "noteLine": "Nota: {note}",
+      "noteEdit": "Editar",
+      "noteRemove": "Quitar",
       "eta": "Listo en ~{min} min · lo llevan a la Mesa {mesa}",
       "anonymous": "Tu pedido va como {device}.",
       "addName": "Poner nombre",

@@ -10,7 +10,7 @@ import { Button } from '../components/Button'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { BottomSheet } from '../components/BottomSheet'
-import { Clock, CupSoda, Plus, ReceiptText } from 'lucide-react'
+import { Clock, CupSoda, Pencil, Plus, ReceiptText } from 'lucide-react'
 import { useComandas } from '../store/comandas'
 import { getDish, getExtra, getSide, menu, restaurant } from '../lib/catalog'
 import { formatMoney } from '../lib/money'
@@ -42,6 +42,8 @@ export function Order() {
   const [skipName, setSkipName] = useState(false)
   const [sending, setSending] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  /** true mientras el campo de la nota tiene el foco; al salir, una nota escrita se ve guardada. */
+  const [editingNote, setEditingNote] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
 
   useEffect(() => {
@@ -229,19 +231,59 @@ export function Order() {
               )}
             </section>
 
-            <section className="mt-5">
-              <label htmlFor={`${nameId}-nota`} className="text-dish text-texto">
-                {t.order.noteTitle} <span className="font-normal text-texto-2">{t.order.noteOptional}</span>
-              </label>
-              <textarea
-                id={`${nameId}-nota`}
-                value={kitchenNote}
-                onChange={(e) => cart().setKitchenNote(e.target.value)}
-                placeholder={t.order.notePlaceholder}
-                maxLength={140}
-                rows={2}
-                className="mt-2 block w-full resize-none rounded-tarjeta border border-borde bg-tarjeta px-3 py-2.5 text-body text-texto outline-none placeholder:text-texto-2 focus-visible:outline-3 focus-visible:outline-verde"
-              />
+            {/* Nota para la cocina: sin nota, campo para escribir; con nota ya escrita (en este
+                pedido o en uno anterior), se muestra guardada con "Editar" y "Quitar". */}
+            <section className="mt-5" aria-labelledby={`${nameId}-nota-t`}>
+              {editingNote || !kitchenNote.trim() ? (
+                <>
+                  <label id={`${nameId}-nota-t`} htmlFor={`${nameId}-nota`} className="text-dish text-texto">
+                    {t.order.noteTitle} <span className="font-normal text-texto-2">{t.order.noteOptional}</span>
+                  </label>
+                  <textarea
+                    id={`${nameId}-nota`}
+                    value={kitchenNote}
+                    onChange={(e) => cart().setKitchenNote(e.target.value)}
+                    onFocus={(e) => {
+                      setEditingNote(true)
+                      // Al entrar con "Editar", el cursor queda al final para seguir escribiendo.
+                      const end = e.currentTarget.value.length
+                      e.currentTarget.setSelectionRange(end, end)
+                    }}
+                    onBlur={() => setEditingNote(false)}
+                    autoFocus={editingNote}
+                    placeholder={t.order.notePlaceholder}
+                    maxLength={140}
+                    rows={2}
+                    className="mt-2 block w-full resize-none rounded-tarjeta border border-borde bg-tarjeta px-3 py-2.5 text-body text-texto outline-none placeholder:text-texto-2 focus-visible:outline-3 focus-visible:outline-verde"
+                  />
+                </>
+              ) : (
+                <>
+                  <h2 id={`${nameId}-nota-t`} className="text-dish text-texto">
+                    {t.order.noteTitle}
+                  </h2>
+                  <div className="mt-2 rounded-tarjeta border border-borde bg-tarjeta px-3 pt-2.5 pb-1">
+                    <p className="text-body break-words text-texto">{kitchenNote.trim()}</p>
+                    <div className="-mr-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => cart().setKitchenNote('')}
+                        className="min-h-11 px-2 text-small font-medium text-texto-2"
+                      >
+                        {t.order.noteRemove}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingNote(true)}
+                        className="inline-flex min-h-11 items-center gap-1.5 px-2 text-small font-semibold text-verde"
+                      >
+                        <Pencil size={14} strokeWidth={2.25} aria-hidden />
+                        {t.order.noteEdit}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
           </>
         )}

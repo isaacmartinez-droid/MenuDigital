@@ -23,7 +23,10 @@ interface CartState {
   items: CartItem[]
   /** Nombre que puso el cliente (se recuerda para la próxima comanda). */
   customerName: string
-  /** Nota general para la cocina ("traer todo junto"); viaja con la comanda. */
+  /**
+   * Nota general para la cocina ("sin chile", "traer todo junto"); viaja con cada
+   * comanda y se recuerda para la siguiente, como el nombre (se puede editar o quitar).
+   */
   kitchenNote: string
   /** El cliente tocó "Enviar" sin señal: se envía solo cuando vuelva. */
   pendingSend: boolean
@@ -41,7 +44,7 @@ interface CartState {
   replaceLine: (lineId: string, line: NewLine) => AddResult
   setCustomerName: (name: string) => void
   setKitchenNote: (note: string) => void
-  /** Vacía el pedido después de enviarlo (el nombre se recuerda; la nota no). */
+  /** Vacía el pedido después de enviarlo (el nombre y la nota se recuerdan). */
   clear: () => void
 }
 
@@ -142,7 +145,7 @@ const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
 
   setCustomerName: (customerName) => set({ customerName }),
   setKitchenNote: (kitchenNote) => set({ kitchenNote }),
-  clear: () => set({ items: [], kitchenNote: '', pendingSend: false }),
+  clear: () => set({ items: [], pendingSend: false }),
 }))
 
 export const cartStore = carts.get
