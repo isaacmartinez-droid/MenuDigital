@@ -3,6 +3,7 @@ import { restaurant } from './catalog'
 import { etaFor } from './comandaStatus'
 import { fmt, t } from './text'
 import { paths } from './useMesa'
+import { isTakeout } from './channel'
 
 /**
  * Avisos del sistema en cada paso de la orden.
@@ -46,7 +47,9 @@ export async function enableNotifications(): Promise<NotificationPermission | 'u
 export async function notifyStatus(comanda: Comanda, status: ComandaStatus, mesa: string): Promise<void> {
   if (notificationPermission() !== 'granted') return
   if (!restaurant.notifications.statuses.includes(status)) return
-  const copy = t.tracking.notify[status]
+  // Para llevar, "lista" y "entregada" dicen otra cosa (se recoge en el local).
+  const takeoutCopy = isTakeout(mesa) && (status === 'lista' || status === 'entregada') ? t.web.notify[status] : null
+  const copy = takeoutCopy ?? t.tracking.notify[status]
   const eta = etaFor(comanda, Date.now())
   const vars = { id: comanda.id, mesa, min: `${eta.minFrom}–${eta.minTo}` }
   try {

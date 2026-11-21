@@ -20,6 +20,7 @@ const screens = {
   delivery: () => import('./screens/Delivery'),
   customerData: () => import('./screens/CustomerData'),
   summary: () => import('./screens/Summary'),
+  confirmation: () => import('./screens/Confirmation'),
 }
 
 const routes: RouteObject[] = [
@@ -35,6 +36,7 @@ const routes: RouteObject[] = [
       { path: 'pedido', lazy: async () => ({ Component: (await screens.order()).Order }) },
       { path: 'datos', lazy: async () => ({ Component: (await screens.customerData()).CustomerData }) },
       { path: 'resumen', lazy: async () => ({ Component: (await screens.summary()).Summary }) },
+      { path: 'confirmacion/:comandaId', lazy: async () => ({ Component: (await screens.confirmation()).Confirmation }) },
       { path: 'orden/:comandaId', lazy: async () => ({ Component: (await screens.tracking()).Tracking }) },
       { path: 'domicilio', lazy: async () => ({ Component: (await screens.delivery()).Delivery }) },
     ],

@@ -59,7 +59,7 @@ export function Summary() {
     setSending(true)
     const result = await submitCart(TAKEOUT, { name, phone, source: readSource() })
     if (result.ok) {
-      navigate(paths.tracking(TAKEOUT, result.comanda.id), { replace: true })
+      navigate(paths.confirmation(result.comanda.id), { replace: true })
       return
     }
     setSending(false)

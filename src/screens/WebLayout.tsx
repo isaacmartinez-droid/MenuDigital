@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react'
 import { Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { restaurant } from '../lib/catalog'
 import { captureSource } from '../lib/source'
+import { TAKEOUT } from '../lib/channel'
+import { useKitchenUpdates } from '../lib/useKitchenUpdates'
 import { readItem, writeItem } from '../lib/storage'
 import { WebWelcome } from './WebWelcome'
 
@@ -16,6 +18,8 @@ export function WebLayout() {
   // Origen de la visita (?src=ig, fb, google o wa): viaja con el pedido para el panel del dueño.
   const { search } = useLocation()
   useState(() => captureSource(search))
+  // Sigue en cocina los pedidos en curso (notificaciones, vibración y título de la pestaña).
+  useKitchenUpdates(TAKEOUT)
   const [showWelcome, setShowWelcome] = useState(() => readItem('local', WELCOME_KEY) !== '1')
   const finishWelcome = useCallback(() => {
     writeItem('local', WELCOME_KEY, '1')

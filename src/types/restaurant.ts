@@ -101,6 +101,8 @@ export interface RestaurantConfig {
     etaRangeMin: number
     /** W0 Bienvenida de la web: se quita sola después de este tiempo. */
     webWelcomeMs: number
+    /** W7 Confirmación: pasa sola al seguimiento después de este tiempo. */
+    webConfirmMs: number
     /** Avance automático de "Los más vendidos". */
     carouselMs: number
     undoToastMs: number

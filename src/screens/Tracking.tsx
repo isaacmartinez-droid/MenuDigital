@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { BellRing, ChevronRight, Plus } from 'lucide-react'
+import { BellRing, ChevronRight, MapPin, Plus } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { formatMoney } from '../lib/money'
 import { useNow } from '../lib/useNow'
@@ -16,6 +16,9 @@ import { SoldOutSheet } from '../components/SoldOutSheet'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Button } from '../components/Button'
+import { TakeoutTicket } from '../components/TakeoutTicket'
+import { PaymentNotice } from '../components/PaymentNotice'
+import { WhatsAppButton } from '../components/WhatsAppButton'
 import { getDish, restaurant } from '../lib/catalog'
 import { fmt, t, tableLabel } from '../lib/text'
 import { replaceComponent } from '../lib/api'
@@ -117,13 +120,18 @@ export function Tracking() {
   const inProgress = status === 'recibida' || status === 'en-el-comal'
   const eta = etaFor(comanda, now)
   const headline = {
-    recibida: { title: t.tracking.processingTitle, body: `${t.tracking.processingBody} · ${sentAt}` },
+    recibida: {
+      title: t.tracking.processingTitle,
+      body: `${takeout ? t.web.processingBody : t.tracking.processingBody} · ${sentAt}`,
+    },
     'en-el-comal': {
       title: t.tracking.cookingTitle,
       body: `${fmt(t.tracking.etaIn, { from: eta.minFrom, to: eta.minTo })} · ${sentAt}`,
     },
     lista: { title: t.tracking.readyTitle, body: takeout ? t.web.readyBody : fmt(t.tracking.readyBody, { mesa }) },
-    entregada: { title: t.tracking.deliveredTitle, body: t.tracking.deliveredBody },
+    entregada: takeout
+      ? { title: t.web.doneTitle, body: t.web.doneBody }
+      : { title: t.tracking.deliveredTitle, body: t.tracking.deliveredBody },
   }[status]
   // Las demás órdenes de este teléfono (la más reciente primero) y el total de toda la mesa.
   const others = comandas.filter((c) => c.mine && c.id !== comanda.id).sort((a, b) => b.number - a.number)
@@ -240,9 +248,39 @@ export function Tracking() {
           <NoticeBanner role="status" tone="positivo" title={t.tracking.notifyOn} className="mt-3" />
         )}
 
-        <div className="mt-3">
-          <Comanda comanda={comanda} heading={fmt(t.tracking.yourOrder, { name: comanda.customerName })} />
-        </div>
+        {takeout ? (
+          <>
+            {/* W8: el número para mostrar al recoger, dónde se recoge y, ya lista, cómo se paga. */}
+            <div className="mt-3">
+              <TakeoutTicket comanda={comanda} />
+            </div>
+            <section className="mt-3 flex items-center gap-3 rounded-grande border border-borde bg-tarjeta p-4">
+              <MapPin size={20} strokeWidth={1.8} aria-hidden className="shrink-0 text-verde" />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-dish text-texto">{fmt(t.web.pickupTitle, { name: restaurant.name })}</h2>
+                <p className="text-small text-texto-2">{restaurant.web.address || t.web.addressPending}</p>
+              </div>
+              <a
+                href={restaurant.web.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 shrink-0 items-center text-dish text-verde"
+              >
+                {t.web.directions}
+                <span className="sr-only"> {t.web.newTab}</span>
+              </a>
+            </section>
+            {status === 'lista' && (
+              <div className="mt-3">
+                <PaymentNotice takeout />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="mt-3">
+            <Comanda comanda={comanda} heading={fmt(t.tracking.yourOrder, { name: comanda.customerName })} />
+          </div>
+        )}
 
         {others.length > 0 && (
           <section aria-labelledby="otras-ordenes" className="mt-4">
@@ -293,7 +331,7 @@ export function Tracking() {
       </main>
 
       {/* Fuera de horario no se piden cosas nuevas; llamar al mesero y pagar siguen. */}
-      {openState.open && (
+      {openState.open && !takeout && (
         <BottomDock>
           <div className="pt-1">
             <Button
@@ -307,6 +345,9 @@ export function Tracking() {
           </div>
         </BottomDock>
       )}
+
+      {/* Para llevar no hay mesero: las dudas, por WhatsApp. */}
+      {takeout && <WhatsAppButton />}
 
       {soldOut && (
         <SoldOutSheet

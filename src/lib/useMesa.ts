@@ -27,4 +27,5 @@ export const paths = {
   delivery: '/domicilio',
   data: '/datos',
   summary: '/resumen',
+  confirmation: (comandaId: string) => `/confirmacion/${comandaId}`,
 }

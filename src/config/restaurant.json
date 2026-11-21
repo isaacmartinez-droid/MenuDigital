@@ -62,6 +62,7 @@
   "timings": {
     "etaRangeMin": 5,
     "webWelcomeMs": 2000,
+    "webConfirmMs": 5000,
     "carouselMs": 4000,
     "undoToastMs": 4000,
     "processingMs": 3000,
@@ -450,7 +451,22 @@
       "payTransfer": "Transferencia",
       "confirm": "Confirmar pedido",
       "confirming": "Enviando…",
-      "readyBody": "Pasá a recogerla",
+      "readyBody": "Pasá a recogerla: te esperamos en caja con tu número",
+      "processingBody": "Te escribimos al WhatsApp para confirmarla",
+      "doneTitle": "¡Gracias por tu compra!",
+      "doneBody": "Esperamos verte pronto",
+      "confirmTitle": "Recibimos tu orden",
+      "ticketLabel": "Comanda · para llevar",
+      "confirmBody": "Te escribimos al WhatsApp para confirmar. Aquí te avisamos cuando esté listo.",
+      "follow": "Seguir mi pedido",
+      "showNumber": "Mostrá este número al recoger",
+      "payLine": "{name} · pagás al recoger",
+      "pickupTitle": "Recogé en {name}",
+      "payPickupNow": "No pagás nada ahora",
+      "notify": {
+        "lista": { "title": "Tu orden {id} está lista", "body": "Pasá a recogerla: te esperamos en caja." },
+        "entregada": { "title": "¡Gracias por tu compra!", "body": "Esperamos verte pronto." }
+      },
       "pickedUp": "Recogida",
       "activeBarReady": "Tu orden {id} está lista · pasá a recogerla"
     }
