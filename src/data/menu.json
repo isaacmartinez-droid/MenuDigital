@@ -1,7 +1,7 @@
 {
   "categories": [
-    { "id": "combos", "name": "Combos" },
     { "id": "fritangas", "name": "Fritangas" },
+    { "id": "combos", "name": "Combos" },
     { "id": "asados", "name": "Asados" },
     { "id": "antojitos", "name": "Antojitos" },
     { "id": "bebidas", "name": "Bebidas" }

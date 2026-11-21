@@ -132,7 +132,8 @@ export function Menu() {
   const total = cartTotal(items)
   const bestSellers = menu.bestSellers.map(getDish).filter((d): d is Dish => Boolean(d))
   const combos = combosFor(today)
-  const listCategories = menu.categories.filter((c) => c.id !== COMBOS_CATEGORY)
+  // Sin combos cargados, la categoría "combos" no tiene pestaña ni sección.
+  const categories = menu.categories.filter((c) => c.id !== COMBOS_CATEGORY || combos.length > 0)
 
   const card = (dish: Dish, variant: 'row' | 'carousel') => (
     <DishCard
@@ -237,7 +238,7 @@ export function Menu() {
             </section>
           ) : (
             <>
-              <CategoryTabs categories={menu.categories} activeId={activeCategory} onSelect={selectCategory} />
+              <CategoryTabs categories={categories} activeId={activeCategory} onSelect={selectCategory} />
 
               {bestSellers.length > 0 && (
                 <Carousel
@@ -249,20 +250,21 @@ export function Menu() {
                 </Carousel>
               )}
 
-              {combos.length > 0 && (
-                <Carousel
-                  title={t.combos.title}
-                  subtitle={t.combos.subtitle}
-                  titleId={`cat-${COMBOS_CATEGORY}`}
-                  scrollMarginTop={TABS_HEIGHT + 8}
-                  intervalMs={restaurant.timings.carouselMs}
-                  className="mt-5"
-                >
-                  {combos.map((dish) => card(dish, 'carousel'))}
-                </Carousel>
-              )}
-
-              {listCategories.map((category) => (
+              {/* Las secciones siguen el orden de categorías de menu.json; "combos" va como carrusel. */}
+              {categories.map((category) =>
+                category.id === COMBOS_CATEGORY ? (
+                  <Carousel
+                    key={category.id}
+                    title={t.combos.title}
+                    subtitle={t.combos.subtitle}
+                    titleId={`cat-${COMBOS_CATEGORY}`}
+                    scrollMarginTop={TABS_HEIGHT + 8}
+                    intervalMs={restaurant.timings.carouselMs}
+                    className="mt-6 mb-2"
+                  >
+                    {combos.map((dish) => card(dish, 'carousel'))}
+                  </Carousel>
+                ) : (
                 <section key={category.id} aria-labelledby={`cat-${category.id}`} className="mt-3.5 px-4">
                   <h2
                     id={`cat-${category.id}`}
@@ -275,7 +277,8 @@ export function Menu() {
                     {dishesByCategory(category.id).map(row)}
                   </div>
                 </section>
-              ))}
+                ),
+              )}
             </>
           )}
 
