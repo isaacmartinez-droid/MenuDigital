@@ -41,6 +41,12 @@ export function Paid() {
         <p className="mt-3 text-body text-texto-2">{t.paid.subtitle}</p>
 
         <dl className="mt-4 space-y-2 rounded-grande border border-borde bg-tarjeta px-4 py-4 text-left">
+          {receipt.tip > 0 && (
+            <>
+              <Row label={t.paid.subtotal} value={formatMoney(receipt.subtotal)} />
+              <Row label={t.paid.tip} value={formatMoney(receipt.tip)} />
+            </>
+          )}
           <Row label={fmt(t.paid.table, { mesa: receipt.tableId })} value={formatMoney(receipt.total)} />
           <Row label={t.paid.method} value={receipt.method} />
           <Row label={t.paid.cashier} value={fmt(t.paid.cashierValue, { cashier: receipt.cashier })} />

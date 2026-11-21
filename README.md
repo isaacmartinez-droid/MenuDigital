@@ -61,6 +61,8 @@ Todo lo del restaurante sale de dos JSON y de las fotos; no hace falta tocar com
    - `whatsapp`: número y mensaje del botón "Escribinos" (`WhatsAppButton`). El QR de mesa no
      lo muestra; queda listo para la web para llevar.
    - `ordering`: límite de platos por envío, prefijo y número inicial de comanda.
+   - `tip`: propina voluntaria de "Tu cuenta" (`percents` que se ofrecen y `suggested`, que
+     viene marcada). Siempre están también "Otro monto" y "Sin propina".
    - `timings`: todos los tiempos simulados, en milisegundos.
    - `demo`: compañeros de mesa simulados y método de pago del recibo.
    - `texts`: **todos** los textos de la interfaz (voseo). Si falta uno, TypeScript da error.

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useNavigate } from 'react-router'
-import type { Comanda, SplitMode } from '../types/order'
+import type { Comanda, SplitMode, TipChoice } from '../types/order'
+import { restaurant } from '../lib/catalog'
 import { PageHeader } from '../components/Header'
 import { PaymentNotice } from '../components/PaymentNotice'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -9,7 +10,7 @@ import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Button } from '../components/Button'
 import { Toast } from '../components/Toast'
 import { cx } from '../lib/cx'
-import { formatMoney } from '../lib/money'
+import { formatMoney, tipAmount } from '../lib/money'
 import { fmt, t, tableLabel } from '../lib/text'
 import { fetchAccount, rateDishes, requestBill } from '../lib/api'
 import { newId } from '../lib/storage'
@@ -31,6 +32,7 @@ export function Bill() {
   const ratings = useAccount(mesa, (s) => s.ratings)
   const ratingsSkipped = useAccount(mesa, (s) => s.ratingsSkipped)
   const split = useAccount(mesa, (s) => s.split)
+  const tip = useAccount(mesa, (s) => s.tip)
   const billRequestedAt = useAccount(mesa, (s) => s.billRequestedAt)
   const cashier = useAccount(mesa, (s) => s.cashier)
   const [notifying, setNotifying] = useState(false)
@@ -54,7 +56,9 @@ export function Bill() {
   }, [offlineKey])
 
   const sorted = [...comandas].sort((a, b) => a.number - b.number)
-  const total = sorted.reduce((sum, c) => sum + c.total, 0)
+  const subtotal = sorted.reduce((sum, c) => sum + c.total, 0)
+  const tipValue = tipAmount(subtotal, tip)
+  const total = subtotal + tipValue
   const phones = new Set(sorted.map((c) => c.customerName)).size
   const requested = Boolean(billRequestedAt)
   // Ya avisaron a caja: "Pedir algo más" solo si el local sigue abierto.
@@ -68,7 +72,7 @@ export function Bill() {
     if (notifying) return
     setNotifying(true)
     try {
-      const { cashier: name } = await requestBill(mesa, split)
+      const { cashier: name } = await requestBill(mesa, split, tip)
       if (!ratingsSkipped && Object.keys(ratings).length) void rateDishes(mesa, ratings).catch(() => undefined)
       accountStore(mesa).getState().markBillRequested(name)
     } catch {
@@ -106,7 +110,15 @@ export function Bill() {
               />
             )}
 
-            <BillSummary mesa={mesa} comandas={sorted} phones={phones} total={total} />
+            <BillSummary
+              mesa={mesa}
+              comandas={sorted}
+              phones={phones}
+              subtotal={subtotal}
+              tipLabel={tip.kind === 'none' ? null : tip.kind === 'percent' ? fmt(t.bill.tipPercent, { pct: tip.percent }) : t.bill.tip}
+              tipValue={tipValue}
+              total={total}
+            />
 
             <div className="mt-3">
               <PaymentNotice />
@@ -168,6 +180,8 @@ export function Bill() {
                 </div>
               </section>
             )}
+
+            {!requested && <TipPicker mesa={mesa} subtotal={subtotal} tip={tip} />}
           </>
         )}
         {showDock && <DockSpacer size="lg" />}
@@ -195,15 +209,83 @@ export function Bill() {
   )
 }
 
+interface TipPickerProps {
+  mesa: string
+  subtotal: number
+  tip: TipChoice
+}
+
+/** Propina voluntaria: porcentajes de la config (la sugerida viene marcada), otro monto o sin propina. */
+function TipPicker({ mesa, subtotal, tip }: TipPickerProps) {
+  const amountId = useId()
+  const setTip = (next: TipChoice) => accountStore(mesa).getState().setTip(next)
+  const option = (selected: boolean, label: string, onClick: () => void) => (
+    <button
+      key={label}
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cx(
+        'h-11 rounded-completo px-3 text-dish transition-colors duration-150',
+        selected ? 'focus-on-dark bg-verde text-blanco' : 'border border-borde bg-tarjeta text-texto',
+      )}
+    >
+      {label}
+    </button>
+  )
+
+  return (
+    <section aria-labelledby="propina" className="mt-3">
+      <h2 id="propina" className="text-dish text-texto">
+        {t.bill.tipTitle}
+      </h2>
+      <p className="mt-1 text-small text-texto-2">{fmt(t.bill.tipHelp, { pct: restaurant.tip.suggested })}</p>
+      <div role="group" aria-labelledby="propina" className="mt-3 grid grid-cols-2 gap-2">
+        {restaurant.tip.percents.map((pct) =>
+          option(
+            tip.kind === 'percent' && tip.percent === pct,
+            `${pct} % · ${formatMoney(tipAmount(subtotal, { kind: 'percent', percent: pct }))}`,
+            () => setTip({ kind: 'percent', percent: pct }),
+          ),
+        )}
+        {option(tip.kind === 'amount', t.bill.tipOther, () => setTip({ kind: 'amount', amount: 0 }))}
+        {option(tip.kind === 'none', t.bill.tipNone, () => setTip({ kind: 'none' }))}
+      </div>
+      {tip.kind === 'amount' && (
+        <div className="mt-3 flex h-12 items-center rounded-tarjeta border border-borde bg-tarjeta has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-verde">
+          <span aria-hidden className="pl-3 text-body text-texto-2">
+            {restaurant.currency.symbol}
+          </span>
+          <input
+            id={amountId}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            aria-label={t.bill.tipAmountLabel}
+            placeholder={t.bill.tipAmountPlaceholder}
+            value={tip.amount ? String(tip.amount) : ''}
+            onChange={(e) => setTip({ kind: 'amount', amount: Number(e.target.value.replace(/\D/g, '').slice(0, 5)) })}
+            className="h-full min-w-0 flex-1 bg-transparent px-2 text-body text-texto outline-none placeholder:text-texto-2"
+          />
+        </div>
+      )}
+    </section>
+  )
+}
+
 interface BillSummaryProps {
   mesa: string
   comandas: Comanda[]
   phones: number
+  subtotal: number
+  /** "Propina (10 %)", "Propina" o null si no dejan. */
+  tipLabel: string | null
+  tipValue: number
   total: number
 }
 
-/** Cuenta de la mesa por persona y comanda ("Ana (vos) · FN-0142"). */
-function BillSummary({ mesa, comandas, phones, total }: BillSummaryProps) {
+/** Cuenta de la mesa por persona y comanda ("Ana (vos) · FN-0142"), con propina si la dejan. */
+function BillSummary({ mesa, comandas, phones, subtotal, tipLabel, tipValue, total }: BillSummaryProps) {
   return (
     <section aria-labelledby="cuenta-mesa" className="rounded-grande border border-borde bg-tarjeta px-4 pt-4 pb-4">
       <div className="flex items-center justify-between gap-3">
@@ -230,8 +312,20 @@ function BillSummary({ mesa, comandas, phones, total }: BillSummaryProps) {
           </li>
         ))}
       </ul>
+      {tipLabel && (
+        <dl className="mt-3 space-y-1 border-t border-borde pt-3 text-body">
+          <div className="flex justify-between gap-3">
+            <dt className="text-texto-2">{t.bill.subtotal}</dt>
+            <dd className="text-texto">{formatMoney(subtotal)}</dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-texto-2">{tipLabel}</dt>
+            <dd className="text-texto">{formatMoney(tipValue)}</dd>
+          </div>
+        </dl>
+      )}
       <div className="mt-3 flex items-center justify-between border-t border-borde pt-3">
-        <span className="text-section text-texto">{t.bill.tableTotal}</span>
+        <span className="text-section text-texto">{tipLabel ? t.bill.totalToPay : t.bill.tableTotal}</span>
         <span className="text-section text-texto">{formatMoney(total)}</span>
       </div>
     </section>

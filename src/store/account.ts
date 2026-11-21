@@ -1,5 +1,6 @@
 import { useStore } from 'zustand'
-import type { SplitMode } from '../types/order'
+import type { SplitMode, TipChoice } from '../types/order'
+import { restaurant } from '../lib/catalog'
 import { tableStoreFactory } from './tableStore'
 
 /**
@@ -21,6 +22,8 @@ interface AccountState {
   ratings: Record<string, number>
   ratingsSkipped: boolean
   split: SplitMode
+  /** Viene marcada la sugerida de la config; es voluntaria. */
+  tip: TipChoice
   billRequestedAt: number | null
   cashier: string | null
   startWaiterCall: (reason: string) => void
@@ -29,6 +32,7 @@ interface AccountState {
   rate: (dishId: string, stars: number) => void
   skipRatings: () => void
   setSplit: (split: SplitMode) => void
+  setTip: (tip: TipChoice) => void
   markBillRequested: (cashier: string) => void
 }
 
@@ -37,6 +41,7 @@ const store = tableStoreFactory<AccountState>('cuenta', () => (set, get) => ({
   ratings: {},
   ratingsSkipped: false,
   split: 'junto',
+  tip: { kind: 'percent', percent: restaurant.tip.suggested },
   billRequestedAt: null,
   cashier: null,
   startWaiterCall: (reason) => set({ waiterCall: { at: Date.now(), reason } }),
@@ -48,6 +53,7 @@ const store = tableStoreFactory<AccountState>('cuenta', () => (set, get) => ({
   rate: (dishId, stars) => set({ ratings: { ...get().ratings, [dishId]: stars } }),
   skipRatings: () => set({ ratingsSkipped: true }),
   setSplit: (split) => set({ split }),
+  setTip: (tip) => set({ tip }),
   markBillRequested: (cashier) => set({ billRequestedAt: Date.now(), cashier }),
 }))
 

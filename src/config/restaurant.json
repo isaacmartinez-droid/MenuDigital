@@ -23,6 +23,7 @@
     "azul-logo": "#14237A"
   },
   "currency": { "symbol": "C$", "locale": "es-NI" },
+  "tip": { "percents": [10, 15], "suggested": 10 },
   "tables": ["1", "2", "3", "4", "5", "6", "7", "8"],
   "whatsapp": {
     "number": "50500000000",
@@ -250,6 +251,16 @@
       "splitTitle": "¿Pagan juntos o cada quien lo suyo?",
       "together": "Todo junto",
       "separate": "Cada quien lo suyo",
+      "tipTitle": "¿Dejan propina?",
+      "tipHelp": "Es voluntaria; sugerimos el {pct} %. Va completa para el equipo.",
+      "tipOther": "Otro monto",
+      "tipNone": "Sin propina",
+      "tipAmountLabel": "Monto de la propina en córdobas",
+      "tipAmountPlaceholder": "Monto",
+      "subtotal": "Consumo",
+      "tipPercent": "Propina ({pct} %)",
+      "tip": "Propina",
+      "totalToPay": "Total a pagar",
       "notify": "Avisar a caja",
       "notifyHelp": "Caja te prepara la cuenta para que no esperés",
       "notifying": "Avisando…",
@@ -267,6 +278,8 @@
       "subtitle": "Gracias por venir. Te esperamos pronto.",
       "table": "Mesa {mesa}",
       "method": "Pagado con",
+      "subtotal": "Consumo",
+      "tip": "Propina",
       "cashier": "Cobró",
       "cashierValue": "{cashier} · caja",
       "closedNote": "La mesa se cerró. Los próximos clientes empiezan una cuenta nueva y no ven estos pedidos."

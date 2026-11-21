@@ -52,6 +52,11 @@ export interface RestaurantConfig {
   logo: { webp: string; png: string; alt: string }
   colors: Record<ColorToken, string>
   currency: { symbol: string; locale: string }
+  /**
+   * Propina voluntaria en "Tu cuenta": porcentajes que se ofrecen y el que
+   * viene marcado (sugerida). Además siempre están "Otro monto" y "Sin propina".
+   */
+  tip: { percents: number[]; suggested: number }
   /** ids de mesa válidos (lo que va en /m/:mesa). */
   tables: string[]
   whatsapp: { number: string; message: string }

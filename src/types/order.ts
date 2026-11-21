@@ -77,3 +77,9 @@ export interface PendingComanda {
 export type WaiterReason = string
 
 export type SplitMode = 'junto' | 'separado'
+
+/** Propina elegida para la cuenta de la mesa (voluntaria). */
+export type TipChoice =
+  | { kind: 'percent'; percent: number }
+  | { kind: 'amount'; amount: number }
+  | { kind: 'none' }
