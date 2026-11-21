@@ -87,7 +87,8 @@ export function BottomSheet({ open, onClose, title, description, children, foote
         tabIndex={-1}
         className="bottom-dock z-10 max-h-[90dvh] animate-sheet-in overflow-y-auto rounded-t-hoja bg-tarjeta outline-none"
       >
-        <div className="px-6 pt-6 pb-8">
+        {/* Abajo queda aire para el pulgar, como en las capturas (≈ 76 px). */}
+        <div className="px-6 pt-6 pb-[76px]">
           <div className="flex items-center justify-between gap-4">
             <h2 id={titleId} className="text-title text-texto">
               {title}

@@ -8,20 +8,19 @@ import { readItem, writeItem } from './storage'
  * activos al navegar entre pantallas.
  *   ?forzar=cerrado   menú fuera de horario (M8)
  *   ?forzar=abierto   abierto aunque sea fuera de horario
- *   ?forzar=agotado   se acaba un acompañante de la comanda en curso (M4g)
- *   ?forzar=ninguno   quita el forzado
+ *   ?forzar=agotado   se acaba una parte del plato de la comanda en curso (M4g);
+ *                     se usa una vez y no cambia el forzado abierto/cerrado
+ *   ?forzar=ninguno   quita todos los forzados
  *   ?compas=0         sin compañeros de mesa simulados (Carlos, Teléfono 3)
  */
-export type Forzar = 'cerrado' | 'abierto' | 'agotado' | null
-
 export interface DemoFlags {
-  forzar: Forzar
+  horario: 'cerrado' | 'abierto' | null
+  agotado: boolean
   compas: boolean
 }
 
 const KEY = `${restaurant.id}:demo`
-const DEFAULTS: DemoFlags = { forzar: null, compas: true }
-const FORZAR_VALUES = ['cerrado', 'abierto', 'agotado']
+const DEFAULTS: DemoFlags = { horario: null, agotado: false, compas: true }
 
 function stored(): DemoFlags {
   try {
@@ -31,27 +30,33 @@ function stored(): DemoFlags {
   }
 }
 
+const save = (flags: DemoFlags) => writeItem('session', KEY, JSON.stringify(flags))
+
 /** Lee los flags de la URL (si hay) y los combina con los guardados. */
 export function readDemoFlags(search: string = window.location.search): DemoFlags {
   const params = new URLSearchParams(search)
   const flags = stored()
   let changed = false
-  if (params.has('forzar')) {
-    const value = params.get('forzar') ?? ''
-    flags.forzar = FORZAR_VALUES.includes(value) ? (value as Forzar) : null
+  for (const value of params.getAll('forzar')) {
     changed = true
+    if (value === 'cerrado' || value === 'abierto') flags.horario = value
+    else if (value === 'agotado') flags.agotado = true
+    else {
+      flags.horario = null
+      flags.agotado = false
+    }
   }
   if (params.has('compas')) {
     flags.compas = params.get('compas') !== '0'
     changed = true
   }
-  if (changed) writeItem('session', KEY, JSON.stringify(flags))
+  if (changed) save(flags)
   return flags
 }
 
-/** Consume un forzado de una sola vez (ej. "agotado" ya se mostró). */
-export function clearForzar(): void {
-  writeItem('session', KEY, JSON.stringify({ ...stored(), forzar: null }))
+/** "Agotado" se usa una sola vez: después de mostrarlo se apaga. */
+export function clearAgotado(): void {
+  save({ ...stored(), agotado: false })
 }
 
 export function useDemoFlags(): DemoFlags {

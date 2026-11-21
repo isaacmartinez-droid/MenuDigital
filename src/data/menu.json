@@ -48,7 +48,7 @@
           "substitutes": [
             { "id": "tajadas", "name": "Tajadas", "note": "Mismo precio" },
             { "id": "tostones", "name": "Tostones", "note": "Mismo precio" },
-            { "id": "sin-acompanante", "name": "Sin acompañante" }
+            { "id": "sin-acompanante", "name": "Sin acompañante", "removes": true }
           ]
         }
       ]

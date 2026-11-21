@@ -5,6 +5,7 @@ import { Menu } from './screens/Menu'
 import { Pending } from './screens/Pending'
 import { DishDetail } from './screens/DishDetail'
 import { Order } from './screens/Order'
+import { Tracking } from './screens/Tracking'
 import { ComponentsPreview } from './screens/ComponentsPreview'
 
 const routes: RouteObject[] = [
@@ -17,7 +18,7 @@ const routes: RouteObject[] = [
       { index: true, element: <Menu /> },
       { path: 'plato/:dishId', element: <DishDetail /> },
       { path: 'pedido', element: <Order /> },
-      { path: 'orden/:comandaId', element: <Pending title="Tu orden" stage="d)" /> },
+      { path: 'orden/:comandaId', element: <Tracking /> },
       { path: 'cuenta', element: <Pending title="Tu cuenta" stage="e)" /> },
       { path: 'cuenta/pagada', element: <Pending title="Cuenta pagada" stage="e)" /> },
       { path: '*', element: <InvalidTable /> },

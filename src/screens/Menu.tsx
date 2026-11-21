@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { Banknote, Bell } from 'lucide-react'
 import type { Dish } from '../types/menu'
 import { Header } from '../components/Header'
-import { Button } from '../components/Button'
+import { TableActions } from '../components/TableActions'
+import { WaiterSheet } from '../components/WaiterSheet'
+import { WaiterBanner } from '../components/WaiterBanner'
 import { SearchBar } from '../components/SearchBar'
 import { CategoryTabs } from '../components/CategoryTabs'
 import { DishCard } from '../components/DishCard'
@@ -20,6 +21,7 @@ import { scrollBehavior } from '../lib/motion'
 import { paths, useMesa } from '../lib/useMesa'
 import { cartStore, cartTotal, countItems, dishQuantity, useCart } from '../store/cart'
 import { useUi } from '../store/ui'
+import { useWaiter } from '../lib/useWaiter'
 import { Welcome } from './Welcome'
 
 type ToastState =
@@ -114,6 +116,9 @@ export function Menu() {
   }
   useEffect(() => () => window.clearTimeout(pinTimer.current), [])
 
+  const waiter = useWaiter(mesa)
+  const [waiterSheet, setWaiterSheet] = useState(false)
+
   const count = countItems(items)
   const total = cartTotal(items)
   const bestSellers = menu.bestSellers.map(getDish).filter((d): d is Dish => Boolean(d))
@@ -151,6 +156,15 @@ export function Menu() {
         body={fmt(t.order.limitBody, { max: restaurant.ordering.maxItemsPerComanda })}
       />
     )
+  } else if (waiter.phase !== 'idle' || waiter.notice) {
+    slot = (
+      <WaiterBanner
+        phase={waiter.phase}
+        waiter={waiter.waiter}
+        notice={waiter.notice}
+        cooldownLeft={waiter.cooldownLeft}
+      />
+    )
   } else if (!canOrder) {
     slot = (
       <NoticeBanner
@@ -161,18 +175,11 @@ export function Menu() {
     )
   } else {
     slot = (
-      <div className="grid grid-cols-2 gap-2">
-        <Button variant="pill" icon={<Bell size={20} className="text-verde" aria-hidden />}>
-          {t.menu.callWaiter}
-        </Button>
-        <Button
-          variant="pill"
-          icon={<Banknote size={20} className="text-verde" aria-hidden />}
-          onClick={() => navigate(paths.bill(mesa))}
-        >
-          {t.menu.payNow}
-        </Button>
-      </div>
+      <TableActions
+        waiterLocked={waiter.coolingDown}
+        onCallWaiter={() => waiter.tryOpen() && setWaiterSheet(true)}
+        onPay={() => navigate(paths.bill(mesa))}
+      />
     )
   }
 
@@ -259,6 +266,15 @@ export function Menu() {
           <DockSpacer />
         </main>
       </div>
+
+      <WaiterSheet
+        open={waiterSheet}
+        onClose={() => setWaiterSheet(false)}
+        onSubmit={(reason) => {
+          setWaiterSheet(false)
+          void waiter.send(reason)
+        }}
+      />
 
       {canOrder ? (
         count > 0 && (

@@ -10,7 +10,7 @@ const { ranges, timezone } = restaurant.schedule
  * (America/Managua) y se recalcula cada minuto. ?forzar=cerrado / abierto lo pisa.
  */
 export function useOpenState(): OpenState {
-  const { forzar } = useDemoFlags()
+  const { horario: forzar } = useDemoFlags()
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {

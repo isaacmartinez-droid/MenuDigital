@@ -42,7 +42,7 @@ export function TrackingBar({ status }: TrackingBarProps) {
           return (
             <li
               key={step}
-              className="flex flex-col items-center gap-2"
+              className="flex flex-col items-center gap-1.5"
               aria-current={s === 'current' ? 'step' : undefined}
             >
               <span
@@ -54,7 +54,7 @@ export function TrackingBar({ status }: TrackingBarProps) {
                   s === 'pending' && 'bg-fondo text-texto-2',
                 )}
               >
-                <Icon size={s === 'done' ? 20 : 16} strokeWidth={2.25} />
+                <Icon size={s === 'done' ? 22 : 18} strokeWidth={2.25} />
               </span>
               <span className={cx('text-small', s === 'pending' ? 'text-texto-2' : 'text-texto')}>
                 {labels[i]}

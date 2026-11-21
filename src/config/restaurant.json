@@ -206,13 +206,20 @@
       "notifiedBody": "En un momento te confirmamos quién viene.",
       "comingTitle": "{waiter} va en camino",
       "comingBody": "Podés volver a llamar en {min} minutos.",
-      "cooldown": "Ya avisamos. Podés volver a llamar en {time}."
+      "cooldown": "Ya avisamos. Podés volver a llamar en {time}.",
+      "cooldownTitle": "{waiter} ya va para tu mesa",
+      "offlineTitle": "No pudimos avisar",
+      "offlineBody": "Se nos fue la señal. Probá de nuevo en un momento o hacele una seña al mesero."
     },
     "soldOut": {
       "title": "Se acabó el {component}",
       "body": "Tu {dish} venía con {component} y se nos acabó. ¿Lo cambiamos?",
       "submit": "Cambiar",
-      "done": "Listo: cambiamos el {component} por {substitute}."
+      "done": "Listo: cambiamos el {component} por {substitute}.",
+      "doneNone": "Listo: tu {dish} va sin {component}.",
+      "doneTitle": "Cambio avisado a la cocina",
+      "line": "{substitute} en vez de {component}",
+      "lineNone": "sin {component}"
     },
     "bill": {
       "title": "Tu cuenta",

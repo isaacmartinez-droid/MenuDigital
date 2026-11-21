@@ -186,13 +186,23 @@ export function watchComanda(comanda: Comanda, onStatus: (status: ComandaStatus)
 }
 
 /**
- * Avisa a los meseros. Resuelve cuando uno toma el aviso.
- * API real: POST /api/mesas/:mesa/llamados { motivo } y esperar la confirmación por WebSocket.
+ * Avisa a los meseros con el motivo. Resuelve cuando el aviso quedó registrado.
+ * API real: POST /api/mesas/:mesa/llamados { motivo }
  */
-export async function callWaiter(tableId: string, reason: string): Promise<{ waiter: string }> {
+export async function callWaiter(tableId: string, reason: string): Promise<void> {
   void tableId
   void reason
-  return roundTrip(() => ({ waiter: staff.waiter }), timings.waiterAckMs)
+  return roundTrip(() => undefined, 300)
+}
+
+/**
+ * Avisa cuando un mesero toma el llamado ("Carlos va en camino").
+ * Simulado: a los timings.waiterAckMs de haber llamado; sobrevive a recargas.
+ * API real: WebSocket con el evento "llamado tomado". Devuelve la función para dejar de escuchar.
+ */
+export function watchWaiterCall(calledAt: number, onAck: (waiter: string) => void): () => void {
+  const id = window.setTimeout(() => onAck(staff.waiter), Math.max(0, calledAt + timings.waiterAckMs - Date.now()))
+  return () => window.clearTimeout(id)
 }
 
 /**

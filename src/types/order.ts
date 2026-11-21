@@ -40,6 +40,8 @@ export interface Substitution {
   componentName: string
   substituteId: string
   substituteName: string
+  /** true = se quitó sin reemplazo ("Sin acompañante"). */
+  removes?: boolean
   at: string
 }
 

@@ -58,6 +58,8 @@ export interface Substitute {
   note?: string
   /** Diferencia de precio por unidad; 0 o ausente = mismo precio. */
   priceDelta?: number
+  /** true = no se reemplaza, solo se quita ("Sin acompañante"). */
+  removes?: boolean
 }
 
 /** Parte del plato que puede agotarse en cocina y tiene reemplazos. */
