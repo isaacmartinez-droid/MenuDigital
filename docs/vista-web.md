@@ -665,8 +665,9 @@ En Vercel es algo mejor: comprime con Brotli, más que el servidor de prueba.
   - El nombre del dominio se cambia en Vercel → Settings → Domains.
 - **QR con la marca** (`npm run qr`, ver el README): además de las placas de mesa genera
   `llevar.svg` (la web) y la **hoja de la demo** (`qr/hoja-demo.pdf`) con dos placas: "Mesa 5" y
-  "Pedí para llevar", con `?forzar=abierto` para que funcionen a cualquier hora. Los QR se
-  verificaron decodificándolos.
+  "Pedí para llevar", con `?forzar=abierto` para que funcionen a cualquier hora. La de mesa
+  también lleva `mesa-nueva` (cada escaneo empieza de cero) y `pago-rapido` (caja cobra a los
+  5 s en vez de 10 min). Los QR se verificaron decodificándolos.
 - **Antes de imprimir las placas reales**, definir el dominio: el QR queda atado al link.
 
 ## 17. Flags de la demo en la web

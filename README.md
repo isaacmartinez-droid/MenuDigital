@@ -160,8 +160,8 @@ Lee `publicUrl`, `tables`, colores, logo y `texts.qr` de `restaurant.json` y esc
 - `placas-mesas.html`: una placa por mesa, dos por hoja carta, para recortar. Se abre en el
   navegador y se imprime (o se guarda como PDF).
 - `hoja-demo.html`: Mesa 5 y "Pedí para llevar" con `?forzar=abierto` (la de mesa también con
-  `mesa-nueva`, así cada escaneo empieza de cero), para mostrarle la app al cliente a cualquier
-  hora. Las placas reales llevan el link limpio.
+  `mesa-nueva`, así cada escaneo empieza de cero, y `pago-rapido`, así caja cobra a los 5 s),
+  para mostrarle la app al cliente a cualquier hora. Las placas reales llevan el link limpio.
 - `mesa-<n>.svg`, `llevar.svg`, `demo-*.svg`: los QR sueltos, para usarlos en otro diseño.
 
 Los QR van en verde con los ojos en el azul del logo y el logo al centro. Usan corrección de

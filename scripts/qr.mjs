@@ -4,7 +4,8 @@
 //   mesa-<n>.svg          QR de cada mesa (link limpio, el que va en el local)
 //   llevar.svg            QR de la web para llevar
 //   placas-mesas.html     una placa por mesa, dos por hoja carta (abrir e imprimir)
-//   hoja-demo.html        Mesa 5 y Para llevar con ?forzar=abierto, para mostrarle al cliente
+//   hoja-demo.html        Mesa 5 y Para llevar con ?forzar=abierto (la mesa, también mesa-nueva
+//                         y pago-rapido), para mostrarle al cliente
 //   demo-mesa-5.svg, demo-llevar.svg
 // Los QR usan corrección de errores H (30 %): el logo del centro no impide leerlos.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -141,9 +142,10 @@ writeFileSync(
   ),
 )
 
-// Hoja de demo: Mesa 5 (empieza de cero en cada escaneo) y Para llevar, abiertas a cualquier hora
+// Hoja de demo: Mesa 5 (empieza de cero en cada escaneo y caja cobra a los 5 s) y Para llevar,
+// abiertas a cualquier hora
 const demoTable = tables.includes('5') ? '5' : tables[0]
-const demoTableUrl = `${tableUrl(demoTable)}?forzar=mesa-nueva&forzar=abierto`
+const demoTableUrl = `${tableUrl(demoTable)}?forzar=mesa-nueva&forzar=abierto&forzar=pago-rapido`
 const demoTakeoutUrl = `${base}/?forzar=abierto`
 writeFileSync(join(out, `demo-mesa-${demoTable}.svg`), qrSvg(demoTableUrl))
 writeFileSync(join(out, 'demo-llevar.svg'), qrSvg(demoTakeoutUrl))
