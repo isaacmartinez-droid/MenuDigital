@@ -14,6 +14,8 @@ import { useOpenState } from '../lib/useOpenState'
 import { paths } from '../lib/useMesa'
 import { cartTotal, lineTotal, useCart } from '../store/cart'
 import { isValidName, isValidPhone, useCustomer } from '../store/customer'
+import { useIsDesktop } from '../lib/useMediaQuery'
+import { SummaryDesktop } from './SummaryDesktop'
 
 /**
  * W6 Resumen y pago (para llevar): lo que pidió, total y cómo paga (solo
@@ -26,8 +28,11 @@ export function Summary() {
   const phone = useCustomer((s) => s.phone)
   const openState = useOpenState()
   const { sending, notice, confirm } = useConfirmTakeout()
+  const desktop = useIsDesktop()
 
   // Sin pedido no hay resumen; sin datos, primero "Tus datos" (salvo mientras se envía).
+  // D4 (computadora): datos y pago en esta misma pantalla, con el resumen al lado.
+  if (desktop) return <SummaryDesktop />
   if (!sending && items.length === 0) return <Navigate to={paths.menu(TAKEOUT)} replace />
   if (!sending && (!isValidName(name) || !isValidPhone(phone))) return <Navigate to={paths.data} replace />
 

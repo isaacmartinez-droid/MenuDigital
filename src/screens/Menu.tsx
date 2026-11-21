@@ -11,6 +11,9 @@ import { COMBOS_CATEGORY, bestSellersFor, combosFor, isOnDay, useToday } from '.
 import { isTakeout } from '../lib/channel'
 import { PromoCard } from '../components/PromoCard'
 import { WhatsAppButton } from '../components/WhatsAppButton'
+import { DesktopNav } from '../components/DesktopNav'
+import { SideCart } from '../components/SideCart'
+import { useIsDesktop } from '../lib/useMediaQuery'
 import { CartBar, BottomDock, DockSpacer } from '../components/CartBar'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -50,6 +53,10 @@ const normalize = (s: string) =>
 export function Menu() {
   const mesa = useMesa()
   const takeout = isTakeout(mesa)
+  // D2 (computadora, web): categorías a la izquierda, platos al centro y el carrito fijo a la derecha.
+  const desktop = useIsDesktop() && takeout
+  // Alto de lo que queda fijo arriba al saltar a una sección: las pestañas, o la barra de navegación.
+  const stickyTop = desktop ? 96 : TABS_HEIGHT + 8
   const navigate = useNavigate()
   const items = useCart(mesa, (s) => s.items)
   const openState = useOpenState()
@@ -245,175 +252,225 @@ export function Menu() {
     <>
       {showWelcome && <Welcome mesa={mesa} onDone={finishWelcome} />}
 
+      {desktop && <DesktopNav action="cart" active="menu" />}
+
       <div className="app-shell" inert={showWelcome || Boolean(detail) || undefined}>
-        <Header
-          name={restaurant.name}
-          logo={restaurant.logo}
-          open={canOrder}
-          statusText={
-            canOrder
-              ? fmt(t.status.open, { close: openState.closesAt ?? '' })
-              : fmt(t.status.closed, { open: openState.opensAt ?? '' })
-          }
-          tableText={takeout ? t.web.place : tableLabel(mesa)}
-        />
+        <div className="desktop:hidden">
+          <Header
+            name={restaurant.name}
+            logo={restaurant.logo}
+            open={canOrder}
+            statusText={
+              canOrder
+                ? fmt(t.status.open, { close: openState.closesAt ?? '' })
+                : fmt(t.status.closed, { open: openState.opensAt ?? '' })
+            }
+            tableText={takeout ? t.web.place : tableLabel(mesa)}
+          />
+        </div>
 
-        <main>
-          <div className="px-4">
-            {/* Orden en curso de este teléfono: un toque vuelve a su seguimiento. */}
-            {active && (
-              <button
-                type="button"
-                onClick={() => navigate(paths.tracking(mesa, active.id))}
-                className={cx(
-                  'mb-2 flex min-h-12 w-full items-center gap-2.5 rounded-tarjeta px-3 py-2 text-left text-small',
-                  active.status === 'lista' ? 'bg-ambar-suave text-texto-sobre-ambar' : 'bg-verde-suave text-verde',
-                )}
-              >
-                {active.status === 'lista' ? (
-                  <BellRing size={18} strokeWidth={2} aria-hidden className="shrink-0" />
-                ) : active.status === 'en-el-comal' ? (
-                  <Flame size={18} strokeWidth={2} aria-hidden className="shrink-0" />
-                ) : (
-                  <Clock size={18} strokeWidth={2} aria-hidden className="shrink-0" />
-                )}
-                <span className="min-w-0 flex-1 font-semibold">
-                  {active.status === 'lista'
-                    ? fmt(takeout ? t.web.activeBarReady : t.tracking.activeBarReady, { id: active.id })
-                    : fmt(t.tracking.activeBar, { id: active.id, status: statusLabel(active.status).toLowerCase() })}
-                </span>
-                <ChevronRight size={18} strokeWidth={2} aria-hidden className="shrink-0" />
-              </button>
-            )}
-            {slot}
-          </div>
-
-          <div ref={searchRef} className="mt-2 px-4">
-            <SearchBar value={query} onChange={setQuery} />
-          </div>
-
-          {searching ? (
-            <section aria-labelledby="resultados" className="mt-4 px-4">
-              <h2 id="resultados" className="sr-only">
-                {t.menu.searchResults}
-              </h2>
-              {results.length ? (
-                <div className="divide-y divide-borde">{results.map(row)}</div>
-              ) : (
-                <div className="py-8 text-center">
-                  <p role="status" className="text-body text-texto-2">
-                    {fmt(t.menu.noResults, { q: query.trim() })}
-                  </p>
-                  {/* Sin resultados: los más vendidos de hoy, para no dejar la pantalla vacía. */}
-                  {suggestions.length > 0 && (
-                    <>
-                      <p className="mt-5 text-small text-texto-2">{t.menu.trySuggestions}</p>
-                      <div className="mt-2 flex flex-wrap justify-center gap-2">
-                        {suggestions.map((dish) => (
-                          <button
-                            key={dish.id}
-                            type="button"
-                            onClick={() => openDish(dish)}
-                            className="min-h-10 rounded-completo border border-borde bg-tarjeta px-4 text-small font-medium text-texto"
-                          >
-                            {dish.name}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </section>
-          ) : (
-            <>
-              <CategoryTabs
-                categories={categories}
-                activeId={activeCategory}
-                onSelect={selectCategory}
-                onSearch={searchInView ? undefined : goToSearch}
-              />
-
-              {/* W3: promo del día, arriba de los más vendidos. */}
-              {promo && (
-                <div className="mb-4 px-4">
-                  <PromoCard
-                    promo={promo}
-                    subtitle={promo.subtitle}
-                    onClick={() => (promoDish ? openDish(promoDish) : undefined)}
-                  />
-                </div>
-              )}
-
-              {bestSellers.length > 0 && (
-                <Carousel
-                  title={t.menu.bestSellers}
-                  titleId="mas-vendidos"
-                  intervalMs={restaurant.timings.carouselMs}
-                  className="tablet:hidden"
-                >
-                  {/* Las dos primeras se ven al abrir: se piden ya, sin esperar (mejora el tiempo de carga). */}
-                  {bestSellers.map((dish, i) => card(dish, 'carousel', i < 2))}
-                </Carousel>
-              )}
-              {/* T2 (tablet): los más vendidos en grilla de 4 en lugar del carrusel. */}
-              {takeout && bestSellers.length > 0 && (
-                <section aria-labelledby="mas-vendidos-grilla" className="hidden px-4 tablet:block">
-                  <h2 id="mas-vendidos-grilla" className="text-section text-texto">
-                    {t.menu.bestSellers}
-                  </h2>
-                  <div className="mt-3 grid grid-cols-4 gap-3">
-                    {bestSellers.map((dish) => (
-                      <DishCard
-                        key={dish.id}
-                        variant="carousel"
-                        fluid
-                        photoClassName="h-[120px]"
-                        dish={dish}
-                        today={today}
-                        quantity={dishQuantity(items, dish.id)}
-                        canOrder={canOrder}
-                        onAdd={() => quickAdd(dish)}
-                        onDecrement={() => decrement(dish)}
-                        onOpen={() => openDish(dish)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Secciones en el orden de categorías de menu.json. "Combos" lleva título propio,
-                  una línea de ayuda y va ordenada: el de hoy, los de siempre, los de otros días. */}
-              {categories.map((category) => {
-                const isCombos = category.id === COMBOS_CATEGORY
+        <main className="desktop:grid desktop:grid-cols-[220px_minmax(0,1fr)_360px] desktop:items-start desktop:gap-8 desktop:px-12 desktop:py-6">
+          {desktop && (
+            <nav aria-label={t.menu.categoriesLabel} className="sticky top-[96px] flex flex-col gap-1">
+              <p className="mb-1 px-3 text-small tracking-[0.08em] text-texto-2 uppercase">{t.web.categoriesTitle}</p>
+              {[
+                ...(promo ? [{ id: 'promos', name: t.web.promosTitle }] : []),
+                ...(bestSellers.length ? [{ id: 'mas-vendidos-grilla', name: t.menu.bestSellers }] : []),
+                ...categories.map((c) => ({ id: `cat-${c.id}`, name: c.id === COMBOS_CATEGORY ? t.combos.title : c.name })),
+              ].map((item) => {
+                const on = `cat-${activeCategory}` === item.id
                 return (
-                  <section key={category.id} aria-labelledby={`cat-${category.id}`} className="mt-3.5 px-4">
-                    <h2
-                      id={`cat-${category.id}`}
-                      className="text-section text-texto"
-                      style={{ scrollMarginTop: TABS_HEIGHT + 8 }}
-                    >
-                      {isCombos ? t.combos.title : category.name}
-                    </h2>
-                    {isCombos && <p className="mt-0.5 text-small text-texto-2">{t.combos.subtitle}</p>}
-                    {/* T2 (tablet): dos columnas, cada plato en su tarjeta. */}
-                    <div className="divide-y divide-borde [&>article:first-child]:pt-[11px] tablet:mt-3 tablet:grid tablet:grid-cols-2 tablet:gap-3 tablet:divide-y-0 tablet:[&>article]:rounded-grande tablet:[&>article]:border tablet:[&>article]:border-borde tablet:[&>article]:bg-tarjeta tablet:[&>article]:px-3 tablet:[&>article:first-child]:pt-3">
-                      {(isCombos ? combos : dishesByCategory(category.id)).map(row)}
-                    </div>
-                  </section>
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-current={on ? 'true' : undefined}
+                    onClick={() =>
+                      item.id.startsWith('cat-')
+                        ? selectCategory(item.id.slice(4))
+                        : document.getElementById(item.id)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
+                    }
+                    className={cx(
+                      'flex min-h-11 items-center rounded-tarjeta px-3 text-left text-dish transition-colors',
+                      on ? 'bg-verde-suave text-verde' : 'text-texto hover:bg-tarjeta',
+                    )}
+                  >
+                    {item.name}
+                  </button>
                 )
               })}
-            </>
+            </nav>
           )}
+          <div className="desktop:-mx-4 desktop:min-w-0">
+            <div className="px-4">
+              {/* Orden en curso de este teléfono: un toque vuelve a su seguimiento. */}
+              {active && (
+                <button
+                  type="button"
+                  onClick={() => navigate(paths.tracking(mesa, active.id))}
+                  className={cx(
+                    'mb-2 flex min-h-12 w-full items-center gap-2.5 rounded-tarjeta px-3 py-2 text-left text-small',
+                    active.status === 'lista' ? 'bg-ambar-suave text-texto-sobre-ambar' : 'bg-verde-suave text-verde',
+                  )}
+                >
+                  {active.status === 'lista' ? (
+                    <BellRing size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                  ) : active.status === 'en-el-comal' ? (
+                    <Flame size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                  ) : (
+                    <Clock size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                  )}
+                  <span className="min-w-0 flex-1 font-semibold">
+                    {active.status === 'lista'
+                      ? fmt(takeout ? t.web.activeBarReady : t.tracking.activeBarReady, { id: active.id })
+                      : fmt(t.tracking.activeBar, { id: active.id, status: statusLabel(active.status).toLowerCase() })}
+                  </span>
+                  <ChevronRight size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                </button>
+              )}
+              {slot}
+            </div>
 
-          <DockSpacer />
+            <div ref={searchRef} className="mt-2 px-4">
+              <SearchBar value={query} onChange={setQuery} />
+            </div>
+
+            {searching ? (
+              <section aria-labelledby="resultados" className="mt-4 px-4">
+                <h2 id="resultados" className="sr-only">
+                  {t.menu.searchResults}
+                </h2>
+                {results.length ? (
+                  <div className="divide-y divide-borde">{results.map(row)}</div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <p role="status" className="text-body text-texto-2">
+                      {fmt(t.menu.noResults, { q: query.trim() })}
+                    </p>
+                    {/* Sin resultados: los más vendidos de hoy, para no dejar la pantalla vacía. */}
+                    {suggestions.length > 0 && (
+                      <>
+                        <p className="mt-5 text-small text-texto-2">{t.menu.trySuggestions}</p>
+                        <div className="mt-2 flex flex-wrap justify-center gap-2">
+                          {suggestions.map((dish) => (
+                            <button
+                              key={dish.id}
+                              type="button"
+                              onClick={() => openDish(dish)}
+                              className="min-h-10 rounded-completo border border-borde bg-tarjeta px-4 text-small font-medium text-texto"
+                            >
+                              {dish.name}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </section>
+            ) : (
+              <>
+                <CategoryTabs
+                  categories={categories}
+                  activeId={activeCategory}
+                  onSelect={selectCategory}
+                  onSearch={searchInView ? undefined : goToSearch}
+                  className="desktop:hidden"
+                />
+
+                {/* W3: promo del día, arriba de los más vendidos. */}
+                {promo && (
+                  <div id="promos" className="mb-4 px-4 desktop:mt-6 desktop:mb-8" style={{ scrollMarginTop: stickyTop }}>
+                    <PromoCard
+                      promo={promo}
+                      subtitle={promo.subtitle}
+                      onClick={() => (promoDish ? openDish(promoDish) : undefined)}
+                    />
+                  </div>
+                )}
+
+                {bestSellers.length > 0 && (
+                  <Carousel
+                    title={t.menu.bestSellers}
+                    titleId="mas-vendidos"
+                    intervalMs={restaurant.timings.carouselMs}
+                    className="tablet:hidden"
+                  >
+                    {/* Las dos primeras se ven al abrir: se piden ya, sin esperar (mejora el tiempo de carga). */}
+                    {bestSellers.map((dish, i) => card(dish, 'carousel', i < 2))}
+                  </Carousel>
+                )}
+                {/* T2 (tablet): los más vendidos en grilla de 4 en lugar del carrusel. */}
+                {takeout && bestSellers.length > 0 && (
+                  <section aria-labelledby="mas-vendidos-grilla" className="hidden px-4 tablet:block">
+                    <h2
+                      id="mas-vendidos-grilla"
+                      className="text-section text-texto desktop:text-title-lg"
+                      style={{ scrollMarginTop: stickyTop }}
+                    >
+                      {t.menu.bestSellers}
+                    </h2>
+                    {/* D2 (computadora): grilla de 3, con fotos más altas. */}
+                    <div className="mt-3 grid grid-cols-4 gap-3 desktop:mt-4 desktop:grid-cols-3 desktop:gap-4">
+                      {bestSellers.map((dish) => (
+                        <DishCard
+                          key={dish.id}
+                          variant="carousel"
+                          fluid
+                          photoClassName="h-[120px] desktop:h-[150px]"
+                          dish={dish}
+                          today={today}
+                          quantity={dishQuantity(items, dish.id)}
+                          canOrder={canOrder}
+                          onAdd={() => quickAdd(dish)}
+                          onDecrement={() => decrement(dish)}
+                          onOpen={() => openDish(dish)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Secciones en el orden de categorías de menu.json. "Combos" lleva título propio,
+                    una línea de ayuda y va ordenada: el de hoy, los de siempre, los de otros días. */}
+                {categories.map((category) => {
+                  const isCombos = category.id === COMBOS_CATEGORY
+                  return (
+                    <section key={category.id} aria-labelledby={`cat-${category.id}`} className="mt-3.5 px-4 desktop:mt-8">
+                      <h2
+                        id={`cat-${category.id}`}
+                        className="text-section text-texto desktop:text-title-lg"
+                        style={{ scrollMarginTop: stickyTop }}
+                      >
+                        {isCombos ? t.combos.title : category.name}
+                      </h2>
+                      {isCombos && <p className="mt-0.5 text-small text-texto-2">{t.combos.subtitle}</p>}
+                      {/* T2 (tablet): dos columnas, cada plato en su tarjeta. */}
+                      <div className="divide-y divide-borde [&>article:first-child]:pt-[11px] tablet:mt-3 tablet:grid tablet:grid-cols-2 tablet:gap-3 tablet:divide-y-0 tablet:[&>article]:rounded-grande tablet:[&>article]:border tablet:[&>article]:border-borde tablet:[&>article]:bg-tarjeta tablet:[&>article]:px-3 tablet:[&>article:first-child]:pt-3">
+                        {(isCombos ? combos : dishesByCategory(category.id)).map(row)}
+                      </div>
+                    </section>
+                  )
+                })}
+              </>
+            )}
+
+            <div className="desktop:hidden">
+              <DockSpacer />
+            </div>
+          </div>
+          {desktop && (
+            <aside className="sticky top-[96px]">
+              <SideCart canOrder={canOrder} />
+            </aside>
+          )}
         </main>
       </div>
 
 
       {/* Con el detalle abierto encima, la barra y WhatsApp quedan inertes (no se llega con el teclado). */}
       <div inert={Boolean(detail) || undefined}>
-        {canOrder ? (
+        {/* En computadora el pedido está en el carrito lateral: no hay barra abajo. */}
+        {desktop ? null : canOrder ? (
           count > 0 && (
             <CartBar
               label={fmt(t.menu.viewOrder, { n: count, platos: platos(count) })}

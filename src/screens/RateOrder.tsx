@@ -91,7 +91,7 @@ export function RateOrder() {
 
   return (
     <>
-      <div className="app-shell">
+      <div className="app-shell desktop:max-w-[834px]">
         <PageHeader title={sent ? t.web.thanksTitle : t.web.rateTitle} onBack={goBack} />
         <main className="flex flex-col gap-4 px-4 pt-2 tablet:px-8">
           {sent ? (
@@ -225,7 +225,7 @@ export function RateOrder() {
         </main>
       </div>
 
-      <BottomDock>
+      <BottomDock className="desktop:max-w-[834px]">
         {sent ? (
           <Button block variant="secondary" onClick={() => navigate(paths.menu(TAKEOUT))}>
             {t.web.backToMenu}

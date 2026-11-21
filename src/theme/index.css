@@ -149,6 +149,24 @@
   }
 }
 
+/*
+ * Computadora (web para llevar, D1–D5): desde 1200 px y solo dentro de la web. Pisa a
+ * tablet: (que también aplica desde 768 px). Ancho del diseño: 1440 px.
+ */
+@custom-variant desktop {
+  @media (min-width: 1200px) {
+    &:where(.web, .web *) {
+      @slot;
+    }
+  }
+}
+
+@media (min-width: 1200px) {
+  .web {
+    --container-app: 1440px;
+  }
+}
+
 /* Contenedor de la app: 390 px de diseño, centrado hasta 480 px. */
 @utility app-shell {
   width: 100%;

@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router'
 import { Bike, Clock, MapPin, ShoppingBag, Star } from 'lucide-react'
 import type { Dish } from '../types/menu'
-import type { ScheduleRange } from '../types/restaurant'
 import { Button } from '../components/Button'
 import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Carousel } from '../components/Carousel'
@@ -10,49 +9,30 @@ import { PromoCard } from '../components/PromoCard'
 import { WhatsAppButton } from '../components/WhatsAppButton'
 import { TAKEOUT } from '../lib/channel'
 import { getSide, menu, restaurant } from '../lib/catalog'
-import { bestSellersFor, daysLabel, useToday } from '../lib/combos'
+import { bestSellersFor, useToday } from '../lib/combos'
 import { cx } from '../lib/cx'
-import { formatClock } from '../lib/schedule'
+import { hoursOn, scheduleLines } from '../lib/hours'
+import { GoogleStars as Stars } from '../components/GoogleStars'
 import { fmt, t } from '../lib/text'
 import { useOpenState } from '../lib/useOpenState'
 import { paths } from '../lib/useMesa'
 import { cartStore, dishQuantity, useCart } from '../store/cart'
 import { useUi } from '../store/ui'
+import { useIsDesktop } from '../lib/useMediaQuery'
+import { HomeDesktop } from './HomeDesktop'
 
 const { web } = restaurant
 
 /** "10:00 pm" → "10 pm" (la portada usa la hora corta). */
 const shortClock = (clock: string) => clock.replace(':00', '')
 
-const toMinutes = (hhmm: string) => {
-  const [h, m] = hhmm.split(':').map(Number)
-  return h * 60 + (m || 0)
-}
 
-/** "Todos los días · 4:00 pm a 10:00 pm", una línea por franja del horario. */
-function scheduleLines(ranges: ScheduleRange[]): string[] {
-  return ranges.map((r) =>
-    fmt(t.web.hoursRange, {
-      days: r.days.length === 7 ? t.web.everyDay : daysLabel(r.days),
-      open: formatClock(toMinutes(r.open)),
-      close: formatClock(toMinutes(r.close)),
-    }),
-  )
-}
 
-function Stars({ size }: { size: number }) {
-  return (
-    <span aria-hidden className="flex gap-1 text-ambar">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Star key={i} size={size} fill="currentColor" strokeWidth={0} />
-      ))}
-    </span>
-  )
-}
 
 /** W1 Inicio de la página web: portada, cómo lo querés, promo, más vendidos, reseñas, horario y ubicación. */
 export function Home() {
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
   const openState = useOpenState()
   const today = useToday()
   const items = useCart(TAKEOUT, (s) => s.items)
@@ -60,10 +40,7 @@ export function Home() {
   const promo = menu.promo
   const goMenu = () => navigate(paths.menu(TAKEOUT))
   // Horario de hoy para la tablet: "Abierto hoy · 4:00 pm a 10:00 pm".
-  const todayRange = restaurant.schedule.ranges.find((r) => r.days.includes(today))
-  const todayHours = todayRange
-    ? { open: formatClock(toMinutes(todayRange.open)), close: formatClock(toMinutes(todayRange.close)) }
-    : null
+  const todayHours = hoursOn(today)
 
   // El + de la portada agrega y lleva al menú, donde se ve el aviso con Deshacer.
   const quickAdd = (dish: Dish) => {
@@ -80,6 +57,9 @@ export function Home() {
   }
 
   const linkClass = 'inline-flex min-h-11 items-center text-dish text-verde'
+
+  // D1: en computadora el inicio tiene su propia disposición.
+  if (isDesktop) return <HomeDesktop quickAdd={quickAdd} />
 
   return (
     <>

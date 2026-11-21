@@ -10,13 +10,14 @@ interface CategoryTabsProps {
   onSelect: (id: string) => void
   /** Si se pasa, aparece una lupa al inicio (cuando el buscador quedó fuera de vista). */
   onSearch?: () => void
+  className?: string
 }
 
 /**
  * Pestañas de categorías (fijas arriba al hacer scroll). Tocar una lleva a
  * su sección; al hacer scroll, la pestaña activa sigue a la sección visible.
  */
-export function CategoryTabs({ categories, activeId, onSelect, onSearch }: CategoryTabsProps) {
+export function CategoryTabs({ categories, activeId, onSelect, onSearch, className }: CategoryTabsProps) {
   const listRef = useRef<HTMLDivElement>(null)
 
   // Mantiene visible la pestaña activa dentro de la fila horizontal.
@@ -32,7 +33,7 @@ export function CategoryTabs({ categories, activeId, onSelect, onSearch }: Categ
   }, [activeId])
 
   return (
-    <nav aria-label={t.menu.categoriesLabel} className="sticky top-0 z-20 flex items-center bg-fondo py-2">
+    <nav aria-label={t.menu.categoriesLabel} className={cx('sticky top-0 z-20 flex items-center bg-fondo py-2', className)}>
       {onSearch && (
         <button
           type="button"

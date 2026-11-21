@@ -6,8 +6,8 @@ con la vista QR, la configuración y lo que falta. La vista de mesa está en
 [vista-qr.md](vista-qr.md); cómo correr el proyecto, en el [README](../README.md).
 
 - **Rama:** `plantilla-mesa` (la misma de la vista QR), todavía sin PR a `main`.
-- **Estado:** en curso. Están hechos el celular (etapas a a d) y la tablet (etapa e); faltan
-  la computadora y la ronda de correcciones.
+- **Estado:** en curso. Están hechos el celular (etapas a a d), la tablet (e) y la computadora
+  (f); falta la ronda de correcciones (g).
 
 ## Índice
 
@@ -51,9 +51,9 @@ es la mesa; el resto es la web. Cuando exista el backend, cada pedido llega con 
 (`mesa`, `llevar` o `mostrador`) y el backend decide qué hacer: la mesa va directo a cocina; la
 web queda "por confirmar" y avisa a caja y por WhatsApp.
 
-**Celular y tablet.** La tablet (desde 768 px) tiene su propio layout (ver 6.13); la
-computadora (etapa f) está pendiente. La mesa sigue siendo solo celular, aunque se abra en una
-tablet.
+**Celular, tablet y computadora.** La tablet (desde 768 px, ver 6.13) y la computadora (desde
+1200 px, ver 6.14) tienen su propio layout. La mesa sigue siendo solo celular, aunque se abra en
+una tablet o una computadora.
 
 ## 2. Forma de trabajo en la web
 
@@ -85,7 +85,7 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 | c | W7 Confirmación, W8 y W8b Seguimiento | Hecha (`845f819`) |
 | d | W10 Calificación y W10b reseña en Google, botón "Calificá tu comida" en W8b; promo con su precio y página no encontrada | Hecha |
 | e | Tablet (T1–T5) | Hecha |
-| f | Computadora (D1–D5) | Pendiente |
+| f | Computadora (D1–D5) | Hecha |
 | g | Revisión y correcciones | Pendiente |
 
 ## 4. Rutas
@@ -97,7 +97,7 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 | `/menu/plato/:dishId` | Detalle del plato, abierto encima del menú | `DishDetail.tsx` (compartido) |
 | `/pedido` | W4 Tu pedido | `Order.tsx` (compartido) |
 | `/datos` | W5 Tus datos | `CustomerData.tsx` |
-| `/resumen` | W6 Resumen y pago | `Summary.tsx` |
+| `/resumen` | W6 Resumen y pago; en computadora, D4 Datos y pago | `Summary.tsx`, `SummaryDesktop.tsx` |
 | `/confirmacion/:comandaId` | W7 Confirmación | `Confirmation.tsx` |
 | `/orden/:comandaId` | W8 y W8b Seguimiento | `Tracking.tsx` (compartido) |
 | `/calificar/:comandaId` | W10 Calificación y W10b ¡Gracias! | `RateOrder.tsx` |
@@ -336,6 +336,32 @@ menú (`/menu/plato/:dishId`). El menú queda montado debajo (inerte para el tec
 vuelve arriba al abrirlo ni al cerrarlo. En celular se ve igual que antes (pantalla completa);
 en tablet es la ventana de T3. Al agregar, vuelve al menú con el aviso "Agregaste…".
 
+### 6.14 Computadora (D1–D5)
+
+Desde 1200 px la web usa el diseño de computadora (1440 px de ancho). Todas las pantallas
+diseñadas llevan arriba la **barra de navegación** (`DesktopNav`): marca y estado del local,
+**Menú · Promos · Cómo llegar · Horario**, la pastilla "Para llevar" y el botón de la pantalla
+("Ver menú y pedir" en el inicio, **"Ver pedido · N · C$ total"** en el menú).
+
+| Pantalla | Cómo quedó |
+|---|---|
+| **D1 Inicio** (`HomeDesktop.tsx`) | Portada en dos columnas: "Abierto hoy · …", **Fritanga Nica**, "Carne asada al carbón, gallo pinto y maduro. Pedí en línea y recogé en el local.", **Ver menú y pedir** y **Cómo llegar**, y la promo; a la derecha, la foto grande. **Los más vendidos en grilla de 4** con "Ver todo el menú →", **3 reseñas** de Google y tres tarjetas: **Horario**, **Dónde estamos** (con Cómo llegar) y **Escribinos** (WhatsApp con el número). |
+| **D2 Menú** (`Menu.tsx`) | Tres columnas: **categorías** fijas a la izquierda (Promos, Los más vendidos y cada categoría, marcando la que se ve), los platos al centro (buscador, promo, más vendidos en grilla de 3 y categorías en dos columnas) y **"Tu pedido" fijo a la derecha** (`SideCart`): cada plato con su contador, "¿Un fresco de cacao?", total y **Continuar**. No hay barra abajo. |
+| **D3 Detalle** | Ventana horizontal de 900 × 660: la foto a la izquierda y las opciones a la derecha (se desplazan por dentro), con el contador y "Agregar" al pie. |
+| **D4 Datos y pago** (`SummaryDesktop.tsx`, en `/resumen`) | A la izquierda: **← Volver al menú**, **Tus datos** (nombre y WhatsApp lado a lado), "No necesitás cuenta. Lo recordamos en esta computadora para la próxima." y **¿Cómo pagás?**. A la derecha: el **Resumen** con cada plato y su detalle, total, "Para llevar · pagás al recoger", **Confirmar pedido** (valida los datos y envía) y "Te escribimos al WhatsApp para confirmar antes de cocinar." |
+| **D5 Confirmación** | "Recibimos tu orden" grande y el texto; la comanda de papel y el seguimiento en vivo lado a lado, con **Cómo llegar** y **Escribinos** debajo del seguimiento. |
+
+**Recorrido en computadora:** Inicio → Menú (el detalle se abre encima) → **Continuar** en el
+carrito lateral → D4 (`/resumen`) → Confirmación. "Tu pedido" (`/pedido`) y "Tus datos"
+(`/datos`) no hacen falta: el carrito y los datos están en esas pantallas.
+
+**Pantallas sin diseño de computadora** (Tu pedido, Tus datos, Seguimiento, Calificación y
+Domicilio): se ven como en tablet, centradas en 834 px, con su barra de abajo del mismo ancho.
+
+**Cómo está hecho:** variante `desktop:` en `index.css` (desde 1200 px, solo dentro de `.web`;
+`--container-app` pasa a 1440 px) y el hook `useIsDesktop()` (`lib/useMediaQuery.ts`) para las
+pantallas que cambian de estructura (D1, D2, D4 y D5).
+
 ## 7. Cómo comparte código con la mesa
 
 - **El id de la cuenta.** Las pantallas compartidas usan `useMesa()`, que devuelve el número de
@@ -462,7 +488,14 @@ dos cosas juntas (texto de `promo` y plato).
 | `src/components/PayOptions.tsx` | ¿Cómo pagás? (W6 y T4) |
 | `src/components/StatusCard.tsx` | Tarjeta de estado de una orden (seguimiento y T5) |
 | `src/lib/useConfirmTakeout.ts` | Confirmar el pedido para llevar (W6 y T4) |
-| `src/lib/whatsapp.ts` | Link de "Escribinos" |
+| `src/lib/whatsapp.ts` | Link de "Escribinos" y el número legible (`whatsappDisplay`) |
+| `src/lib/useMediaQuery.ts` | `useMediaQuery` y `useIsDesktop` (computadora) |
+| `src/lib/hours.ts` | `scheduleLines` y `hoursOn` (horario del día) |
+| `src/components/DesktopNav.tsx` | Barra de navegación de computadora |
+| `src/components/SideCart.tsx` | "Tu pedido" fijo a la derecha del menú en computadora |
+| `src/components/GoogleStars.tsx` | Cinco estrellas de Google |
+| `src/screens/HomeDesktop.tsx` | D1 Inicio en computadora |
+| `src/screens/SummaryDesktop.tsx` | D4 Datos y pago en computadora |
 
 **Cambiados para la web:** `Menu.tsx` (detalle encima y grillas de tablet), `DishDetail.tsx`
 (ventana), `Order.tsx`, `Tracking.tsx`, `Confirmation.tsx`, `MesaLayout.tsx`, `DishCard.tsx`
@@ -533,8 +566,6 @@ dos cosas juntas (texto de `promo` y plato).
 ## 15. Pendiente
 
 **De la web:**
-- Etapa f: computadora (D1 Inicio, D2 Menú con carrito al costado, D3 Detalle en ventana,
-  D4 Datos y pago, D5 Confirmación y seguimiento).
 - Etapa g: revisión y correcciones (ver la sección 12).
 
 **Del cliente:**

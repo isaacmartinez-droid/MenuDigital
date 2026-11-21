@@ -36,7 +36,7 @@ export function CustomerData() {
 
   return (
     <>
-      <div className="app-shell">
+      <div className="app-shell desktop:max-w-[834px]">
         <PageHeader title={t.web.dataTitle} subtitle={t.web.dataSubtitle} onBack={goBack} />
         <main className="px-4 pt-2 tablet:px-8">
           <form id={FORM_ID} noValidate onSubmit={submit} className="flex flex-col gap-4">
@@ -47,7 +47,7 @@ export function CustomerData() {
         </main>
       </div>
 
-      <BottomDock>
+      <BottomDock className="desktop:max-w-[834px]">
         <Button block type="submit" form={FORM_ID}>
           {t.web.continue}
         </Button>

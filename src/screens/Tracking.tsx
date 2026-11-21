@@ -150,7 +150,7 @@ export function Tracking() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell desktop:max-w-[834px]">
       <Header
         name={restaurant.name}
         logo={restaurant.logo}
@@ -298,7 +298,7 @@ export function Tracking() {
 
       {/* Fuera de horario no se piden cosas nuevas; llamar al mesero y pagar siguen. */}
       {openState.open && !takeout && (
-        <BottomDock>
+        <BottomDock className="desktop:max-w-[834px]">
           <div className="pt-1">
             <Button
               block
@@ -315,7 +315,7 @@ export function Tracking() {
       {/* Para llevar: lista o recogida, "Calificá tu comida" (W8b); antes, las dudas por WhatsApp. */}
       {takeout &&
         (status === 'lista' || status === 'entregada' ? (
-          <BottomDock>
+          <BottomDock className="desktop:max-w-[834px]">
             <Button block onClick={() => navigate(paths.rate(comanda.id))}>
               {t.web.rateCta}
             </Button>

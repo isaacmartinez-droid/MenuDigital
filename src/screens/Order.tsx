@@ -109,7 +109,7 @@ export function Order() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell desktop:max-w-[834px]">
       <PageHeader
         title={t.order.title}
         subtitle={
@@ -419,7 +419,7 @@ export function Order() {
       </main>
 
       {items.length > 0 && (
-        <BottomDock>
+        <BottomDock className="desktop:max-w-[834px]">
           {openState.open && takeout ? (
             <>
               <div className="tablet:hidden">

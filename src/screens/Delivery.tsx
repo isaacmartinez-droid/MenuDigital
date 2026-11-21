@@ -18,7 +18,7 @@ export function Delivery() {
 
   return (
     <>
-      <div className="app-shell">
+      <div className="app-shell desktop:max-w-[834px]">
         <PageHeader title={t.web.deliveryPageTitle} subtitle={t.web.deliverySubtitle} onBack={goBack} />
         <main className="flex flex-col gap-4 px-4 pt-2 tablet:px-8">
           <NoticeBanner tone="pronto" title={t.web.deliveryNoticeTitle} body={t.web.deliveryNoticeBody} />
@@ -66,7 +66,7 @@ export function Delivery() {
         </main>
       </div>
 
-      <BottomDock>
+      <BottomDock className="desktop:max-w-[834px]">
         <button type="button" disabled className="h-[52px] w-full rounded-grande bg-foto-vacia text-button text-texto-2">
           {t.web.deliveryCta}
         </button>
