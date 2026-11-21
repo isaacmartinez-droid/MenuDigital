@@ -6,6 +6,9 @@ backend ni pedidos reales.
 
 React + Vite + TypeScript · Tailwind CSS v4 · React Router · Zustand · lucide-react.
 
+Documentación completa de la vista QR (pantallas, decisiones, arquitectura, config y
+pendientes): [docs/vista-qr.md](docs/vista-qr.md). Forma de trabajo: [CLAUDE.md](CLAUDE.md).
+
 ## Cómo correrla
 
 ```bash
