@@ -192,7 +192,7 @@ export function Menu() {
     <>
       {showWelcome && <Welcome mesa={mesa} onDone={finishWelcome} />}
 
-      <div className="app-shell" aria-hidden={showWelcome || undefined}>
+      <div className="app-shell" inert={showWelcome || undefined}>
         <Header
           name={restaurant.name}
           logo={restaurant.logo}

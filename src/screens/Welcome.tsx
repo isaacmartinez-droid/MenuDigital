@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
+import { Button } from '../components/Button'
 import { restaurant } from '../lib/catalog'
 import { fmt, t } from '../lib/text'
+import { cartStore, useCart } from '../store/cart'
 
 interface WelcomeProps {
   mesa: string
@@ -8,33 +10,45 @@ interface WelcomeProps {
 }
 
 /**
- * M0 Bienvenida: aparece solo la primera vez de la sesión en esa mesa
- * y se quita sola a los 1.5 s (config: timings.welcomeMs) o al tocar.
+ * M0 Bienvenida: aparece solo la primera vez de la sesión en esa mesa.
+ * No se quita sola: muestra la mesa, pide el nombre (opcional) y se entra
+ * con "Entrar al menú". El nombre queda en el carrito de la mesa y es el
+ * que lleva la comanda; en "Tu pedido" se puede cambiar.
  */
 export function Welcome({ mesa, onDone }: WelcomeProps) {
-  const doneRef = useRef(onDone)
-  useEffect(() => {
-    doneRef.current = onDone
-  })
+  const customerName = useCart(mesa, (s) => s.customerName)
+  const nameId = useId()
+  const titleId = useId()
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const id = window.setTimeout(() => doneRef.current(), restaurant.timings.welcomeMs)
+    // Foco en la portada (sin abrir el teclado) para que se anuncie al entrar.
+    dialogRef.current?.focus()
     const { overflow } = document.body.style
     document.body.style.overflow = 'hidden'
     return () => {
-      window.clearTimeout(id)
       document.body.style.overflow = overflow
     }
   }, [])
 
   return (
     <div
-      className="focus-on-dark fixed inset-0 z-50 flex animate-fade-in flex-col bg-verde text-blanco"
-      onClick={onDone}
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      className="focus-on-dark fixed inset-0 z-50 animate-fade-in overflow-y-auto bg-verde text-blanco outline-none"
     >
-      <div className="app-shell flex flex-1 flex-col px-6 text-center">
-        <div className="flex flex-1 flex-col items-center justify-center pb-8">
-          <picture className="block h-[164px] w-[212px] rounded-grande bg-tarjeta p-4">
+      <form
+        className="app-shell flex min-h-full flex-col px-6 text-center"
+        onSubmit={(e) => {
+          e.preventDefault()
+          onDone()
+        }}
+      >
+        <div className="flex flex-1 flex-col items-center justify-center pt-8 pb-6 short:pt-5">
+          <picture className="block h-[164px] w-[212px] rounded-grande bg-tarjeta p-4 short:h-[118px] short:w-[152px] short:p-3">
             <source srcSet={restaurant.logo.webp} type="image/webp" />
             <img
               src={restaurant.logo.png}
@@ -44,32 +58,44 @@ export function Welcome({ mesa, onDone }: WelcomeProps) {
               className="h-full w-full object-contain"
             />
           </picture>
-          <p className="mt-[42px] text-section font-normal">{t.welcome.greeting}</p>
-          <h1 className="mt-[18px] text-display">{restaurant.name}</h1>
+          <p className="mt-[42px] text-section font-normal short:mt-6">{t.welcome.greeting}</p>
+          <h1 id={titleId} className="mt-[18px] text-display short:mt-2">
+            {restaurant.name}
+          </h1>
           <p className="mt-4 inline-flex h-9 items-center rounded-completo bg-tarjeta px-4 text-dish text-verde">
             {fmt(t.welcome.table, { mesa })}
           </p>
           <p className="mt-4 text-body">{t.welcome.lead}</p>
+
+          <div className="mt-8 w-full text-left short:mt-6">
+            <label htmlFor={nameId} className="text-dish">
+              {t.welcome.nameLabel} <span className="font-normal text-blanco/80">{t.welcome.nameOptional}</span>
+            </label>
+            <input
+              id={nameId}
+              type="text"
+              value={customerName}
+              onChange={(e) => cartStore(mesa).getState().setCustomerName(e.target.value)}
+              placeholder={t.welcome.namePlaceholder}
+              aria-describedby={`${nameId}-h`}
+              autoComplete="given-name"
+              autoCapitalize="words"
+              maxLength={30}
+              enterKeyHint="go"
+              className="mt-2 h-12 w-full rounded-tarjeta bg-tarjeta px-3 text-body text-texto outline-none placeholder:text-texto-2 focus-visible:outline-3 focus-visible:outline-ambar"
+            />
+            <p id={`${nameId}-h`} className="mt-2 text-small text-blanco/80">
+              {t.welcome.nameHelp}
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-col items-center pb-4">
-          <div aria-hidden className="flex gap-2">
-            <span className="size-2 rounded-completo bg-ambar" />
-            <span className="size-2 rounded-completo bg-blanco/40" />
-            <span className="size-2 rounded-completo bg-blanco/40" />
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onDone()
-            }}
-            className="-mt-2 min-h-12 px-4 text-small text-blanco/90"
-          >
-            {t.welcome.hint}
-          </button>
+        <div className="pb-6">
+          <Button type="submit" variant="onDark" block>
+            {t.welcome.enter}
+          </Button>
         </div>
-      </div>
+      </form>
     </div>
   )
 }

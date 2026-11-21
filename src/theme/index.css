@@ -104,6 +104,9 @@
   }
 }
 
+/* Pantallas bajas (ej. 360 × 640): la portada se compacta para que el botón entre sin scroll. */
+@custom-variant short (@media (max-height: 700px));
+
 /* Contenedor de la app: 390 px de diseño, centrado hasta 480 px. */
 @utility app-shell {
   width: 100%;

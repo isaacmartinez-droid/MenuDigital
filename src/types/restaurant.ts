@@ -65,7 +65,6 @@ export interface RestaurantConfig {
   }
   /** Tiempos en milisegundos (salvo readyEstimateMin). */
   timings: {
-    welcomeMs: number
     undoToastMs: number
     processingMs: number
     cookingMs: number

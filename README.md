@@ -39,7 +39,8 @@ Para empezar de cero: cerrar la pestaña, o borrar el almacenamiento del sitio.
 
 ## Recorrido de la demo
 
-1. `/m/5?forzar=abierto` → bienvenida (solo la primera vez) → menú.
+1. `/m/5?forzar=abierto` → bienvenida (solo la primera vez): muestra la mesa y pide el nombre
+   (opcional) → **Entrar al menú**.
 2. **+** agrega con el acompañante por defecto; la foto abre el detalle.
 3. **Ver pedido** → nombre opcional → **Enviar a la cocina** (va directo, sin mesero).
 4. Seguimiento: Procesando → En el comal → ¡Ya está! → Entregada (tiempos en la config).

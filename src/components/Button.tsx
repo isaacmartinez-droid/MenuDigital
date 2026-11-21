@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cx } from '../lib/cx'
 
-type Variant = 'primary' | 'secondary' | 'pill'
+type Variant = 'primary' | 'secondary' | 'pill' | 'onDark'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -22,6 +22,8 @@ const variants: Record<Variant, string> = {
   // Acción secundaria a lo ancho ("Pedir algo más").
   secondary:
     'h-[52px] rounded-grande border border-borde bg-tarjeta text-button text-texto disabled:text-texto-2',
+  // Acción principal sobre fondo verde (portada): blanco con texto verde.
+  onDark: 'h-[52px] rounded-grande bg-blanco text-button text-verde focus-on-dark',
   // Pastilla blanca ("Llamar al mesero", "Ya vamos a pagar").
   pill: 'h-12 rounded-completo border border-borde bg-tarjeta text-small font-medium text-texto disabled:text-texto-2',
 }

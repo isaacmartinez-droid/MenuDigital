@@ -39,7 +39,6 @@
     "myDeviceNumber": 1
   },
   "timings": {
-    "welcomeMs": 1500,
     "undoToastMs": 4000,
     "processingMs": 3000,
     "cookingMs": 8000,
@@ -97,7 +96,10 @@
       "greeting": "Bienvenidos a",
       "table": "Estás en la Mesa {mesa}",
       "lead": "Pedí desde aquí y te lo llevamos a la mesa.",
-      "hint": "Solo la primera vez · tocá para entrar",
+      "nameLabel": "¿Cómo te llamás?",
+      "nameOptional": "(opcional)",
+      "namePlaceholder": "Tu nombre",
+      "nameHelp": "Si son varios en la mesa, así se sabe de quién es cada plato.",
       "enter": "Entrar al menú"
     },
     "invalidTable": {
