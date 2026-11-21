@@ -19,6 +19,7 @@ import { paths } from '../lib/useMesa'
 import { cartStore, dishQuantity, useCart } from '../store/cart'
 import { useUi } from '../store/ui'
 import { useIsDesktop } from '../lib/useMediaQuery'
+import { usePromoActive } from '../lib/promo'
 import { HomeDesktop } from './HomeDesktop'
 
 const { web } = restaurant
@@ -37,7 +38,7 @@ export function Home() {
   const today = useToday()
   const items = useCart(TAKEOUT, (s) => s.items)
   const bestSellers = bestSellersFor(today)
-  const promo = menu.promo
+  const promo = usePromoActive() ? menu.promo : undefined
   const goMenu = () => navigate(paths.menu(TAKEOUT))
   // Horario de hoy para la tablet: "Abierto hoy · 4:00 pm a 10:00 pm".
   const todayHours = hoursOn(today)
@@ -163,7 +164,7 @@ export function Home() {
             {/* Promo del día */}
             {promo && (
               <div className="px-4 tablet:px-8">
-                <PromoCard promo={promo} subtitle={promo.homeSubtitle} onClick={goMenu} />
+                <PromoCard promo={promo} subtitle={promo.subtitle} onClick={goMenu} />
               </div>
             )}
 

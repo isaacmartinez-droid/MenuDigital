@@ -12,7 +12,7 @@ import { fmt, t } from '../lib/text'
 import { useGoBack } from '../lib/useGoBack'
 import { useOpenState } from '../lib/useOpenState'
 import { paths } from '../lib/useMesa'
-import { cartTotal, lineTotal, useCart } from '../store/cart'
+import { cartTotal, lineDetails, lineTotal, useCart } from '../store/cart'
 import { isValidName, isValidPhone, useCustomer } from '../store/customer'
 import { useIsDesktop } from '../lib/useMediaQuery'
 import { SummaryDesktop } from './SummaryDesktop'
@@ -68,7 +68,12 @@ export function Summary() {
               {items.map((line) => (
                 <li key={line.lineId} className="flex gap-2 text-body">
                   <span className="shrink-0 text-texto-2">{line.quantity}×</span>
-                  <span className="min-w-0 flex-1 text-texto">{getDish(line.dishId)?.name}</span>
+                  <span className="min-w-0 flex-1 text-texto">
+                    {getDish(line.dishId)?.name}
+                    {lineDetails(line).length > 0 && (
+                      <span className="text-texto-2"> · {lineDetails(line).join(' · ')}</span>
+                    )}
+                  </span>
                   <span className="shrink-0 text-texto">{formatMoney(lineTotal(line))}</span>
                 </li>
               ))}

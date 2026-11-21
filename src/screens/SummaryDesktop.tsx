@@ -7,13 +7,13 @@ import { DesktopNav } from '../components/DesktopNav'
 import { PayOptions } from '../components/PayOptions'
 import { Toast } from '../components/Toast'
 import { TAKEOUT } from '../lib/channel'
-import { getDish, getExtra, getSide, restaurant } from '../lib/catalog'
+import { getDish, restaurant } from '../lib/catalog'
 import { formatMoney } from '../lib/money'
 import { fmt, t } from '../lib/text'
 import { useConfirmTakeout } from '../lib/useConfirmTakeout'
 import { useOpenState } from '../lib/useOpenState'
 import { paths } from '../lib/useMesa'
-import { cartTotal, lineTotal, useCart } from '../store/cart'
+import { cartTotal, lineDetails, lineTotal, useCart } from '../store/cart'
 import { checkCustomer } from '../store/customer'
 
 /**
@@ -62,11 +62,7 @@ export function SummaryDesktop() {
             <ul className="flex flex-col gap-2">
               {items.map((line) => {
                 const dish = getDish(line.dishId)
-                const details = [
-                  getSide(line.sideId)?.name,
-                  ...line.extraIds.map((id) => getExtra(id)?.shortName ?? getExtra(id)?.name),
-                  line.note,
-                ].filter(Boolean)
+                const details = lineDetails(line)
                 return (
                   <li key={line.lineId} className="flex gap-2 text-body">
                     <span className="shrink-0 text-texto-2">{line.quantity}×</span>

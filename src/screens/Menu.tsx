@@ -14,6 +14,7 @@ import { WhatsAppButton } from '../components/WhatsAppButton'
 import { DesktopNav } from '../components/DesktopNav'
 import { SideCart } from '../components/SideCart'
 import { useIsDesktop } from '../lib/useMediaQuery'
+import { promoAllows, usePromoActive } from '../lib/promo'
 import { CartBar, BottomDock, DockSpacer } from '../components/CartBar'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -57,6 +58,8 @@ export function Menu() {
   const desktop = useIsDesktop() && takeout
   // Alto de lo que queda fijo arriba al saltar a una sección: las pestañas, o la barra de navegación.
   const stickyTop = desktop ? 96 : TABS_HEIGHT + 8
+  // Promo del día: solo en la web y en su horario (promo.hours).
+  const promoActive = usePromoActive()
   const navigate = useNavigate()
   const items = useCart(mesa, (s) => s.items)
   const openState = useOpenState()
@@ -138,10 +141,13 @@ export function Menu() {
     if (!q) return []
     // Solo lo que se puede pedir hoy (los combos de otros días no aparecen).
     const found = menu.dishes.filter(
-      (d) => isOnDay(d, today) && normalize(`${d.name} ${d.shortDescription} ${d.includes ?? ''}`).includes(q),
+      (d) =>
+        isOnDay(d, today) &&
+        promoAllows(d, takeout, promoActive) &&
+        normalize(`${d.name} ${d.shortDescription} ${d.includes ?? ''}`).includes(q),
     )
     return [...found.filter((d) => d.available), ...found.filter((d) => !d.available)]
-  }, [query, today])
+  }, [query, today, takeout, promoActive])
 
   // Cuando el buscador queda fuera de vista, las pestañas fijas muestran una lupa que vuelve a él.
   const searchRef = useRef<HTMLDivElement>(null)
@@ -179,9 +185,10 @@ export function Menu() {
 
   const count = countItems(items)
   const total = cartTotal(items)
-  const combos = combosFor(today)
+  // La promo es solo de la web y en su horario (en la mesa no aparece ni en Combos).
+  const combos = combosFor(today).filter((d) => promoAllows(d, takeout, promoActive))
   const bestSellers = bestSellersFor(today)
-  const promo = takeout ? menu.promo : undefined
+  const promo = takeout && promoActive ? menu.promo : undefined
   const promoDish = promo ? getDish(promo.dishId) : undefined
   // Búsqueda sin resultados: se sugieren los más vendidos que se pueden pedir hoy.
   const suggestions = bestSellers.filter((d) => d.available && isOnDay(d, today)).slice(0, 4)
@@ -411,7 +418,8 @@ export function Menu() {
                     </h2>
                     {/* D2 (computadora): grilla de 3, con fotos más altas. */}
                     <div className="mt-3 grid grid-cols-4 gap-3 desktop:mt-4 desktop:grid-cols-3 desktop:gap-4">
-                      {bestSellers.map((dish) => (
+                      {/* En computadora la grilla es de 3: se muestran los 3 primeros (como en el Figma). */}
+                      {(desktop ? bestSellers.slice(0, 3) : bestSellers).map((dish) => (
                         <DishCard
                           key={dish.id}
                           variant="carousel"

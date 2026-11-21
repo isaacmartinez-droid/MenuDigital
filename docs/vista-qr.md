@@ -675,8 +675,8 @@ Los componentes propios de la web (`PromoCard`, `TakeoutTicket`) están en
   - **Disponibilidad y reseñas:** `days`, `available`, `rating` y `reviews`.
   - **`replaceable`:** las partes que pueden agotarse, con sus reemplazos.
 - **`bestSellers`:** `fritanga-tradicional`, `enchilada` y `combo-para-dos`.
-- **`promo`** (solo web) y el plato **`promo-2-enchiladas`** (C$ 160, en combos, con la
-  etiqueta "Promo"), que también se ve en "Combos especiales" de la mesa.
+- **`promo`** (solo web, de 4 a 7 pm según `promo.hours`) y el plato **`promo-2-enchiladas`**
+  (C$ 160, en combos, con la etiqueta "Promo"). En la mesa no aparece.
 - **`suggestedDrinks`:** `fresco-de-cacao` y `chicha`.
 - **Agotados hoy** (`available: false`): fritanga de cerdo y tajadas con queso.
 

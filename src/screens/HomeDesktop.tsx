@@ -15,6 +15,7 @@ import { cx } from '../lib/cx'
 import { hoursOn, scheduleLines } from '../lib/hours'
 import { fmt, t } from '../lib/text'
 import { useOpenState } from '../lib/useOpenState'
+import { usePromoActive } from '../lib/promo'
 import { paths } from '../lib/useMesa'
 import { whatsappDisplay, whatsappHref } from '../lib/whatsapp'
 import { cartStore, dishQuantity, useCart } from '../store/cart'
@@ -32,7 +33,7 @@ export function HomeDesktop({ quickAdd }: { quickAdd: (dish: Dish) => void }) {
   const today = useToday()
   const items = useCart(TAKEOUT, (s) => s.items)
   const bestSellers = bestSellersFor(today).slice(0, 4)
-  const promo = menu.promo
+  const promo = usePromoActive() ? menu.promo : undefined
   const todayHours = hoursOn(today)
   const goMenu = () => navigate(paths.menu(TAKEOUT))
   const linkClass = 'inline-flex min-h-11 items-center text-dish text-verde hover:underline'
@@ -68,7 +69,7 @@ export function HomeDesktop({ quickAdd }: { quickAdd: (dish: Dish) => void }) {
             </div>
             {promo && (
               <div className="w-full max-w-[560px]">
-                <PromoCard promo={promo} subtitle={promo.homeSubtitle} onClick={goMenu} />
+                <PromoCard promo={promo} subtitle={promo.subtitle} onClick={goMenu} />
               </div>
             )}
           </div>

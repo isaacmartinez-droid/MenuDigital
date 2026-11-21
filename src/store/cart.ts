@@ -1,6 +1,6 @@
 import { useStore } from 'zustand'
 import type { CartItem } from '../types/order'
-import { getDish, restaurant, unitPrice } from '../lib/catalog'
+import { getDish, getExtra, getSide, restaurant, unitPrice } from '../lib/catalog'
 import { newId } from '../lib/storage'
 import { tableStoreFactory } from './tableStore'
 
@@ -67,6 +67,14 @@ export const lineTotal = (item: CartItem) => {
 }
 
 export const cartTotal = (items: CartItem[]) => items.reduce((sum, i) => sum + lineTotal(i), 0)
+
+/** Detalle de una línea: acompañante, extras y nota ("Gallo pinto", "Queso extra", "sin repollo"). */
+export const lineDetails = (item: CartItem): string[] =>
+  [
+    getSide(item.sideId)?.name,
+    ...item.extraIds.map((id) => getExtra(id)?.shortName ?? getExtra(id)?.name),
+    item.note?.trim(),
+  ].filter((part): part is string => Boolean(part))
 
 /** Cantidad de un plato sumando todas sus líneas. */
 export const dishQuantity = (items: CartItem[], dishId: string) =>

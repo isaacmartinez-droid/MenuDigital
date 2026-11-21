@@ -30,6 +30,7 @@ import { useGoBack } from '../lib/useGoBack'
 import { paths, useMesa } from '../lib/useMesa'
 import { isTakeout } from '../lib/channel'
 import { cx } from '../lib/cx'
+import { promoAllows, usePromoActive } from '../lib/promo'
 import { cartStore } from '../store/cart'
 import { useUi } from '../store/ui'
 
@@ -38,8 +39,8 @@ import { useUi } from '../store/ui'
  * otro día, los combos de hoy; para un agotado, platos de su misma categoría.
  * Si no alcanza, se completa con los más vendidos.
  */
-function alternativesFor(dish: Dish, today: number): Dish[] {
-  const orderable = (d: Dish) => d.id !== dish.id && d.available && isOnDay(d, today)
+function alternativesFor(dish: Dish, today: number, allowed: (d: Dish) => boolean): Dish[] {
+  const orderable = (d: Dish) => d.id !== dish.id && d.available && isOnDay(d, today) && allowed(d)
   const pool = isOnDay(dish, today) ? dishesByCategory(dish.category) : combosFor(today)
   const picks = pool.filter(orderable)
   const fill = menu.bestSellers
@@ -104,6 +105,7 @@ export function DishDetail() {
   const editing = editingId ? cartStore(mesa).getState().items.find((i) => i.lineId === editingId) : undefined
   const goBack = useGoBack(editing ? paths.order(mesa) : paths.menu(mesa))
   const openState = useOpenState()
+  const promoActive = usePromoActive()
   const today = useToday()
   const sideGroup = useId()
   const extrasGroup = useId()
@@ -140,12 +142,15 @@ export function DishDetail() {
   const tag = dayBadge(dish, today) ?? dishTags(dish)[0]
   const total = unitPrice(dish, extraIds) * quantity
   const onDay = isOnDay(dish, today)
-  const canAdd = dish.available && openState.open && onDay
+  // La promo: solo en la web y en su horario.
+  const allowed = (d: Dish) => promoAllows(d, takeout, promoActive)
+  const promoOk = allowed(dish)
+  const canAdd = dish.available && openState.open && onDay && promoOk
   // Reseñas de menu.json más las que dejan los clientes al pagar (promedio recalculado).
   const { written: reviews, rating } = reviewsFor(dish)
   // Agotado o combo de otro día: en vez del formulario, el motivo y dos alternativas.
-  const unavailable = !dish.available || !onDay
-  const alternatives = unavailable ? alternativesFor(dish, today) : []
+  const unavailable = !dish.available || !onDay || !promoOk
+  const alternatives = unavailable ? alternativesFor(dish, today, allowed) : []
   const notePlaceholder =
     menu.categories.find((c) => c.id === dish.category)?.notePlaceholder ?? t.detail.notePlaceholder
 
@@ -254,7 +259,11 @@ export function DishDetail() {
           {unavailable && (
             <section className="mt-4 rounded-grande bg-fondo px-3.5 pt-3 pb-3" aria-labelledby={`${noteId}-u`}>
               <p id={`${noteId}-u`} className="text-dish text-texto">
-                {!dish.available ? t.detail.unavailableSoldOut : fmt(t.detail.unavailableDay, { days: daysLabel(dish.days ?? []) })}
+                {!dish.available
+                  ? t.detail.unavailableSoldOut
+                  : !promoOk
+                    ? t.detail.unavailablePromo
+                    : fmt(t.detail.unavailableDay, { days: daysLabel(dish.days ?? []) })}
                 {alternatives.length > 0 && (
                   <span className="font-normal text-texto-2">
                     {' '}

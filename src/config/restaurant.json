@@ -218,6 +218,7 @@
       "ratingLabel": "Calificación {avg} de 5, {n} {word}",
       "unavailableDay": "Este combo sale solo los {days}.",
       "unavailableSoldOut": "Se acabó por hoy.",
+      "unavailablePromo": "Esta promo es solo para pedidos en línea, de 4 a 7 pm.",
       "alternativesDay": "Hoy podés pedir:",
       "alternativesSoldOut": "Te puede gustar:",
       "seeMenu": "Ver el menú",

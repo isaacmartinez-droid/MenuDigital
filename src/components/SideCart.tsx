@@ -2,11 +2,11 @@ import { useNavigate } from 'react-router'
 import { CupSoda } from 'lucide-react'
 import type { Dish } from '../types/menu'
 import { TAKEOUT } from '../lib/channel'
-import { getDish, getExtra, getSide, menu } from '../lib/catalog'
+import { getDish, menu } from '../lib/catalog'
 import { formatMoney } from '../lib/money'
 import { fmt, t } from '../lib/text'
 import { paths } from '../lib/useMesa'
-import { cartStore, cartTotal, lineTotal, useCart } from '../store/cart'
+import { cartStore, cartTotal, lineDetails, lineTotal, useCart } from '../store/cart'
 import { Button } from './Button'
 import { Photo } from './Photo'
 import { AddButton, QuantityStepper } from './QuantityStepper'
@@ -46,11 +46,7 @@ export function SideCart({ canOrder }: { canOrder: boolean }) {
           {items.map((line) => {
             const dish = getDish(line.dishId)
             if (!dish) return null
-            const details = [
-              getSide(line.sideId)?.name,
-              ...line.extraIds.map((id) => getExtra(id)?.shortName ?? getExtra(id)?.name),
-              line.note,
-            ].filter(Boolean)
+            const details = lineDetails(line)
             return (
               <li key={line.lineId} className="flex flex-col gap-2 py-3 first:pt-0">
                 <div className="flex justify-between gap-3">

@@ -6,8 +6,8 @@ con la vista QR, la configuración y lo que falta. La vista de mesa está en
 [vista-qr.md](vista-qr.md); cómo correr el proyecto, en el [README](../README.md).
 
 - **Rama:** `plantilla-mesa` (la misma de la vista QR), todavía sin PR a `main`.
-- **Estado:** en curso. Están hechos el celular (etapas a a d), la tablet (e) y la computadora
-  (f); falta la ronda de correcciones (g).
+- **Estado:** terminada como demo (etapas a a g): celular, tablet y computadora, con la ronda
+  de correcciones hecha. Todo simulado en el navegador.
 
 ## Índice
 
@@ -86,7 +86,7 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 | d | W10 Calificación y W10b reseña en Google, botón "Calificá tu comida" en W8b; promo con su precio y página no encontrada | Hecha |
 | e | Tablet (T1–T5) | Hecha |
 | f | Computadora (D1–D5) | Hecha |
-| g | Revisión y correcciones | Pendiente |
+| g | Revisión y correcciones (ver 12) | Hecha |
 
 ## 4. Rutas
 
@@ -155,7 +155,8 @@ W1 Inicio ──→ W3 Menú ──→ Detalle
   - **Domicilio** · "Próximamente" (en gris) → W9.
   - Debajo: "¿Estás en el local? Escaneá el QR de tu mesa: es más rápido."
 - **Promo del día** (`PromoCard`): tarjeta verde con "Promo", "2 enchiladas por C$ 160",
-  "Solo hoy, de 4 a 7 pm" y foto → menú. La promo es un plato real con su precio (ver 6.3).
+  "Hoy de 4 a 7 pm" y foto → menú. La promo es un plato real con su precio y solo se ve en su
+  horario (ver 6.3).
 - **Los más vendidos:** el mismo carrusel de la mesa, con **"Ver menú →"** a la derecha del
   título. Tocar una tarjeta abre el detalle; el **+** agrega el plato y lleva al menú, donde
   aparece "Agregaste… · Deshacer".
@@ -174,7 +175,11 @@ Es el mismo menú de la mesa, con estos cambios:
 - **Promo del día** arriba de "Los más vendidos", con "Hoy de 4 a 7 pm". Abre el detalle del
   plato de la promo (`promo.dishId` → **"Promo: 2 enchiladas", C$ 160**, en la categoría
   combos, con la etiqueta "Promo"), así **el carrito cobra lo mismo que anuncia la tarjeta**.
-  Como es un plato del menú, también aparece en "Combos especiales" (en la mesa y en la web).
+  - **Solo en su horario** (`promo.hours`, de 4 a 7 pm en la zona del local): fuera de él no se
+    ven la tarjeta ni el plato. Si alguien abre su link, ve "Esta promo es solo para pedidos en
+    línea, de 4 a 7 pm." y dos alternativas.
+  - **Solo en la web:** en la mesa no aparece (ni en "Combos especiales" ni en la búsqueda).
+  - Con `?forzar=abierto` se ve a cualquier hora, para presentar la demo.
 - **Escribinos** flotante, siempre.
 - La barra de orden en curso, cuando está lista, dice "Tu orden FN-0142 está lista · pasá a
   recogerla".
@@ -215,7 +220,8 @@ Igual a la mesa; solo cambian los links (vuelve a `/menu` y edita líneas en `/p
 ### 6.7 W6 Resumen y pago (`Summary.tsx`)
 
 - Encabezado **"Resumen" · "Para llevar · a nombre de Ana"**.
-- **Lo que pediste:** "1× Enchilada · C$ 90", una línea por plato, y **Total**.
+- **Lo que pediste:** "1× Fritanga tradicional · Gallo pinto · C$ 220", una línea por plato con
+  su acompañante, extras y nota, y **Total**.
 - **¿Cómo pagás?**
   - **Pagás al recoger** · "Efectivo o tarjeta en el local" (marcada);
   - **Tarjeta desde la app** y **Transferencia**, deshabilitadas con la etiqueta
@@ -441,8 +447,8 @@ secciones (`menu`, `order`, `tracking`…).
 |---|---|
 | `label` | Promo |
 | `title` | 2 enchiladas por C$ 160 |
-| `subtitle` | Hoy de 4 a 7 pm (en el menú) |
-| `homeSubtitle` | Solo hoy, de 4 a 7 pm (en el inicio) |
+| `subtitle` | Hoy de 4 a 7 pm (el mismo en el inicio y en el menú) |
+| `hours` | `{ "from": "16:00", "to": "19:00" }`: fuera de ese horario la promo no se ve ni se puede pedir |
 | `image` | `/img/enchilada.webp` |
 | `dishId` | `promo-2-enchiladas` (el plato de la promo, C$ 160, que abre en el menú) |
 
@@ -522,16 +528,20 @@ dos cosas juntas (texto de `promo` y plato).
 | Tu pedido con la fila "Total" | Total en el botón Continuar | Viene de la corrección de mesa |
 | Confirmación por WhatsApp sin indicar qué pasa sin señal | Aviso de error y volver a confirmar | Para llevar no puede quedar en espera sin que el cliente sepa |
 
-**Anotado para la ronda de correcciones (etapa g):**
-- La dirección dice "Dirección por confirmar"; el Figma tiene "[TEXTO PENDIENTE: dirección]".
-- El **+** de los más vendidos en el inicio agrega y lleva al menú; el Figma no define qué hace.
-- La promo tiene dos textos distintos en el Figma ("Solo hoy, de 4 a 7 pm" en el inicio y "Hoy
-  de 4 a 7 pm" en el menú).
-- El horario de la promo ("de 4 a 7 pm") no se controla: el plato se puede pedir a cualquier
-  hora y también aparece en "Combos especiales" de la mesa. Si hace falta, sumar un horario a
-  los platos (como `days`).
-- El Resumen muestra solo nombre y precio de cada plato, sin acompañante ni notas (como el
-  Figma); W7 y W8 sí los muestran.
+**Ronda de correcciones (etapa g), aprobada por el cliente:**
+
+| # | Qué había | Cómo quedó |
+|---|---|---|
+| 1 | La promo decía "Solo hoy, de 4 a 7 pm" en el inicio y "Hoy de 4 a 7 pm" en el menú | Un solo texto: "Hoy de 4 a 7 pm" |
+| 2 | La promo se podía pedir a cualquier hora y aparecía en los combos de la mesa | Solo de 4 a 7 pm (`promo.hours`) y solo en la web; fuera de eso, su link explica por qué y ofrece alternativas (`lib/promo.ts`) |
+| 3 | El Resumen del celular (W6) mostraba solo nombre y precio | Muestra también acompañante, extras y nota (`lineDetails`, compartido con el carrito lateral y D4) |
+| 4 | En el menú de computadora, la grilla de 3 tenía 4 platos y el cuarto quedaba solo | Se muestran los 3 primeros, como en el Figma |
+
+**Revisado y dejado como está (decisión del cliente):**
+- El **+** de los más vendidos en el inicio agrega el plato y lleva al menú, con el aviso
+  "Agregaste… · Deshacer".
+- La tablet (T1) no tiene "¿Cómo lo querés?" ni la tarjeta de horario, como en el Figma.
+- La dirección dice "Dirección por confirmar" hasta tener la real.
 - El estado de la portada usa la hora corta ("hasta 10 pm") y el encabezado del menú la larga
   ("cierra 10:00 pm").
 
@@ -566,7 +576,8 @@ dos cosas juntas (texto de `promo` y plato).
 ## 15. Pendiente
 
 **De la web:**
-- Etapa g: revisión y correcciones (ver la sección 12).
+- Ninguna etapa del Figma pendiente. Lo que sigue es el sistema real (backend): pedidos que
+  lleguen de verdad, pantallas de cocina y caja y panel del dueño.
 
 **Del cliente:**
 - Dirección, número de WhatsApp y enlace real del perfil de Google (con su calificación,

@@ -124,10 +124,13 @@ export interface Promo {
   /** Etiqueta ("Promo"). */
   label: string
   title: string
-  /** Texto de apoyo en el menú ("Hoy de 4 a 7 pm"). */
+  /** Texto de apoyo ("Hoy de 4 a 7 pm"), igual en el inicio y en el menú. */
   subtitle: string
-  /** Texto de apoyo en el inicio ("Solo hoy, de 4 a 7 pm"). */
-  homeSubtitle: string
+  /**
+   * Horario de la promo (HH:mm, zona del local). Fuera de él la tarjeta no se muestra y el
+   * plato no se puede pedir. La promo es solo de la web para llevar: en la mesa no aparece.
+   */
+  hours: { from: string; to: string }
   image: string
   /** Plato que abre la promo en el menú. */
   dishId: string

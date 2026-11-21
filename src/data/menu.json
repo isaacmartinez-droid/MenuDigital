@@ -297,7 +297,7 @@
     "label": "Promo",
     "title": "2 enchiladas por C$ 160",
     "subtitle": "Hoy de 4 a 7 pm",
-    "homeSubtitle": "Solo hoy, de 4 a 7 pm",
+    "hours": { "from": "16:00", "to": "19:00" },
     "image": "/img/enchilada.webp",
     "dishId": "promo-2-enchiladas"
   }
