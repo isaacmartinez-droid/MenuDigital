@@ -1,7 +1,18 @@
-import type { Comanda, ComandaStatus } from '../types/order'
+import type { Comanda, ComandaItem, ComandaStatus } from '../types/order'
 import { restaurant } from './catalog'
 import { formatClock, zonedNow } from './schedule'
-import { t } from './text'
+import { fmt, t } from './text'
+
+/** Detalle de un plato pedido: "con gallo pinto · Queso frito extra · sin repollo". */
+export function itemDetails(item: ComandaItem): string {
+  return [
+    item.sideName ? fmt(t.tracking.withSide, { side: item.sideName.toLowerCase() }) : '',
+    ...item.extras.map((e) => e.name),
+    item.note ?? '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
 
 const ORDER: ComandaStatus[] = ['recibida', 'en-el-comal', 'lista', 'entregada']
 

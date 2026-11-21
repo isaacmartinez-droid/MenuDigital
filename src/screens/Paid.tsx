@@ -47,12 +47,25 @@ export function Paid() {
               <Row label={t.paid.tip} value={formatMoney(receipt.tip)} />
             </>
           )}
-          <Row label={fmt(t.paid.table, { mesa: receipt.tableId })} value={formatMoney(receipt.total)} />
-          <Row label={t.paid.method} value={receipt.method} />
+          <Row
+            label={fmt(receipt.scope === 'mine' ? t.paid.yourPart : t.paid.table, { mesa: receipt.tableId })}
+            value={formatMoney(receipt.total)}
+          />
+          <Row
+            label={t.paid.method}
+            value={
+              receipt.method === 'efectivo'
+                ? t.bill.cash
+                : receipt.method === 'tarjeta'
+                  ? t.bill.card
+                  : restaurant.demo.paymentMethod
+            }
+          />
+          {receipt.change !== null && <Row label={t.paid.change} value={formatMoney(receipt.change)} />}
           <Row label={t.paid.cashier} value={fmt(t.paid.cashierValue, { cashier: receipt.cashier })} />
         </dl>
 
-        <p className="mt-4 px-2 text-small text-texto-2">{t.paid.closedNote}</p>
+        <p className="mt-4 px-2 text-small text-texto-2">{receipt.scope === 'mine' ? t.paid.closedNoteMine : t.paid.closedNote}</p>
       </main>
     </div>
   )

@@ -51,8 +51,10 @@ Para empezar de cero: cerrar la pestaña, o borrar el almacenamiento del sitio.
    cuenta de la mesa. Mientras haya una orden en curso, el menú muestra una barra para volver a
    ella; al quedar lista, el teléfono vibra (Android) y la pestaña dice "¡Ya está!".
 5. **Llamar al mesero**, **Pedir algo más** (otra comanda, misma cuenta) o **Ya vamos a pagar**.
-6. Cuenta de la mesa por persona → **Avisar a caja** → a los 5 s, cuenta pagada y la mesa se
-   limpia (los próximos clientes no ven estos pedidos).
+6. **Tu cuenta**: lo tuyo con el detalle de cada plato → **¿Qué vas a pagar?** (solo lo mío o
+   toda la mesa) → propina → **¿Cómo pagás?** (opcional; con efectivo, con cuánto, para el
+   vuelto) → **Avisar a caja** → a los 5 s, cuenta pagada y el teléfono se desconecta de la mesa
+   (los próximos clientes no ven estos pedidos).
 
 ## Cambiar de restaurante
 

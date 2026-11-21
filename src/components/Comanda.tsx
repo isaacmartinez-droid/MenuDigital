@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
-import type { Comanda as ComandaModel, ComandaItem } from '../types/order'
+import type { Comanda as ComandaModel } from '../types/order'
 import { formatMoney } from '../lib/money'
 import { fmt, t } from '../lib/text'
+import { itemDetails } from '../lib/comandaStatus'
 
 interface ComandaProps {
   comanda: ComandaModel
@@ -11,17 +12,6 @@ interface ComandaProps {
   aside?: ReactNode
   /** Texto del pie junto al total. Por defecto "Total de esta orden". */
   footnote?: string
-}
-
-/** "con gallo pinto · Queso extra · sin repollo" */
-function itemDetails(item: ComandaItem): string {
-  return [
-    item.sideName ? fmt(t.tracking.withSide, { side: item.sideName.toLowerCase() }) : '',
-    ...item.extras.map((e) => e.name),
-    item.note ?? '',
-  ]
-    .filter(Boolean)
-    .join(' · ')
 }
 
 /**

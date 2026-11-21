@@ -6,7 +6,7 @@
  * MAÑANA: cada función hace fetch al backend con la misma firma, y las
  * pantallas no cambian. Los puntos a reemplazar están marcados con "API real:".
  */
-import type { Comanda, ComandaItem, ComandaStatus, SplitMode, Substitution, TipChoice } from '../types/order'
+import type { BillRequest, Comanda, ComandaItem, ComandaStatus, PayMethod, PayScope, Substitution } from '../types/order'
 import { getDish, getExtra, getSide, restaurant, unitPrice } from './catalog'
 import { tipAmount } from './money'
 import { readDemoFlags } from './demoFlags'
@@ -32,13 +32,17 @@ export interface NewComanda {
 
 export interface Receipt {
   tableId: string
-  /** Lo consumido por la mesa. */
+  /** "mine": pagó solo lo suyo; "table": pagó toda la mesa. */
+  scope: PayScope
+  /** Lo consumido (lo suyo o la mesa, según scope). */
   subtotal: number
   /** Propina voluntaria (0 si no dejaron). */
   tip: number
   /** subtotal + propina */
   total: number
-  method: string
+  method: PayMethod | null
+  /** Vuelto en C$ si pagó en efectivo con más del total. */
+  change: number | null
   cashier: string
   paidAt: string
 }
@@ -62,8 +66,8 @@ async function roundTrip<T>(fn: () => T, ms: number = timings.apiLatencyMs): Pro
 interface ServerTable {
   comandas: Comanda[]
   matesSeeded: boolean
-  /** Propina elegida al avisar a caja (se calcula sobre el consumo al cobrar). */
-  tip?: TipChoice
+  /** Lo que se pidió al avisar a caja (la propina se calcula al cobrar). */
+  bill?: BillRequest
 }
 
 const serverKey = (tableId: string) => tableKey(tableId, 'servidor')
@@ -217,14 +221,14 @@ export function watchWaiterCall(calledAt: number, onAck: (waiter: string) => voi
 }
 
 /**
- * Avisa a caja que la mesa va a pagar, con cómo pagan y la propina elegida.
- * API real: POST /api/mesas/:mesa/cuenta/solicitar { modo, propina }
+ * Avisa a caja que este teléfono va a pagar: solo lo suyo o toda la mesa, con
+ * la propina y, si lo dijo, cómo paga (con efectivo, con cuánto, para el vuelto).
+ * API real: POST /api/mesas/:mesa/cuenta/solicitar { alcance, propina, metodo, efectivo }
  */
-export async function requestBill(tableId: string, split: SplitMode, tip: TipChoice): Promise<{ cashier: string }> {
-  void split
+export async function requestBill(tableId: string, request: BillRequest): Promise<{ cashier: string }> {
   return roundTrip(() => {
     const state = loadServer(tableId)
-    saveServer(tableId, { ...state, tip })
+    saveServer(tableId, { ...state, bill: request })
     return { cashier: staff.cashier }
   })
 }
@@ -237,14 +241,21 @@ export async function waitForPayment(tableId: string, sinceMs: number): Promise<
   const remaining = Math.max(0, sinceMs + timings.billPaidMs - Date.now())
   await wait(remaining)
   const state = loadServer(tableId)
-  const subtotal = state.comandas.reduce((s, c) => s + c.total, 0)
-  const tip = state.tip ? tipAmount(subtotal, state.tip) : 0
+  const scope = state.bill?.scope ?? 'table'
+  const paidComandas = scope === 'mine' ? state.comandas.filter((c) => c.mine) : state.comandas
+  const subtotal = paidComandas.reduce((s, c) => s + c.total, 0)
+  const tip = state.bill ? tipAmount(subtotal, state.bill.tip) : 0
+  const total = subtotal + tip
+  const method = state.bill?.method ?? null
+  const cash = state.bill?.cashGiven ?? null
   return {
     tableId,
+    scope,
     subtotal,
     tip,
-    total: subtotal + tip,
-    method: restaurant.demo.paymentMethod,
+    total,
+    method,
+    change: method === 'efectivo' && cash && cash > total ? cash - total : null,
     cashier: staff.cashier,
     paidAt: new Date().toISOString(),
   }

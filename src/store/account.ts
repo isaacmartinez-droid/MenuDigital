@@ -1,5 +1,5 @@
 import { useStore } from 'zustand'
-import type { SplitMode, TipChoice } from '../types/order'
+import type { PayMethod, PayScope, TipChoice } from '../types/order'
 import { restaurant } from '../lib/catalog'
 import { tableStoreFactory } from './tableStore'
 
@@ -21,9 +21,13 @@ interface AccountState {
   waiterCall: WaiterCall | null
   ratings: Record<string, number>
   ratingsSkipped: boolean
-  split: SplitMode
+  /** Qué paga este teléfono: solo lo suyo (por defecto) o toda la mesa. */
+  payScope: PayScope
   /** Viene marcada la sugerida de la config; es voluntaria. */
   tip: TipChoice
+  /** Cómo va a pagar (opcional) y, con efectivo, con cuánto. */
+  payMethod: PayMethod | null
+  cashGiven: number | null
   billRequestedAt: number | null
   cashier: string | null
   startWaiterCall: (reason: string) => void
@@ -31,8 +35,10 @@ interface AccountState {
   cancelWaiterCall: () => void
   rate: (dishId: string, stars: number) => void
   skipRatings: () => void
-  setSplit: (split: SplitMode) => void
+  setPayScope: (scope: PayScope) => void
   setTip: (tip: TipChoice) => void
+  setPayMethod: (method: PayMethod | null) => void
+  setCashGiven: (amount: number | null) => void
   markBillRequested: (cashier: string) => void
 }
 
@@ -40,8 +46,10 @@ const store = tableStoreFactory<AccountState>('cuenta', () => (set, get) => ({
   waiterCall: null,
   ratings: {},
   ratingsSkipped: false,
-  split: 'junto',
+  payScope: 'mine',
   tip: { kind: 'percent', percent: restaurant.tip.suggested },
+  payMethod: null,
+  cashGiven: null,
   billRequestedAt: null,
   cashier: null,
   startWaiterCall: (reason) => set({ waiterCall: { at: Date.now(), reason } }),
@@ -52,8 +60,10 @@ const store = tableStoreFactory<AccountState>('cuenta', () => (set, get) => ({
   cancelWaiterCall: () => set({ waiterCall: null }),
   rate: (dishId, stars) => set({ ratings: { ...get().ratings, [dishId]: stars } }),
   skipRatings: () => set({ ratingsSkipped: true }),
-  setSplit: (split) => set({ split }),
+  setPayScope: (payScope) => set({ payScope }),
   setTip: (tip) => set({ tip }),
+  setPayMethod: (payMethod) => set(payMethod === 'efectivo' ? { payMethod } : { payMethod, cashGiven: null }),
+  setCashGiven: (cashGiven) => set({ cashGiven }),
   markBillRequested: (cashier) => set({ billRequestedAt: Date.now(), cashier }),
 }))
 

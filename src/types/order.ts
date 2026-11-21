@@ -78,7 +78,23 @@ export interface PendingComanda {
 
 export type WaiterReason = string
 
-export type SplitMode = 'junto' | 'separado'
+/**
+ * Qué paga este teléfono. Cada persona pide desde su teléfono, así que lo normal
+ * es "solo lo mío"; "toda la mesa" es cuando uno paga por todos.
+ */
+export type PayScope = 'mine' | 'table'
+
+export type PayMethod = 'efectivo' | 'tarjeta'
+
+/** Lo que se le manda a caja al avisar. */
+export interface BillRequest {
+  scope: PayScope
+  tip: TipChoice
+  /** Opcional: para que caja se prepare (con efectivo, el vuelto). */
+  method: PayMethod | null
+  /** Con cuánto paga en efectivo, en C$ (opcional). */
+  cashGiven: number | null
+}
 
 /** Propina elegida para la cuenta de la mesa (voluntaria). */
 export type TipChoice =
