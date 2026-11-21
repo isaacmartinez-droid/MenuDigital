@@ -22,12 +22,15 @@ export function Header({ name, logo, open, statusText, tableText }: HeaderProps)
       </picture>
       <div className="min-w-0 flex-1">
         <h1 className="truncate text-section text-texto">{name}</h1>
-        <p className="mt-0.5 flex items-center gap-1.5 text-small text-texto-2">
-          <span aria-hidden className={cx('size-2 shrink-0 rounded-completo', open ? 'bg-verde' : 'bg-promo')} />
-          <span className="truncate">{statusText}</span>
+        <p className="mt-0.5 flex items-start gap-[5px] text-small text-texto-2">
+          <span
+            aria-hidden
+            className={cx('mt-1 size-2 shrink-0 rounded-completo', open ? 'bg-verde' : 'bg-promo')}
+          />
+          <span>{statusText}</span>
         </p>
       </div>
-      <span className="mt-2 inline-flex h-[31px] shrink-0 items-center self-start rounded-completo bg-verde-suave px-3 text-small font-medium text-verde">
+      <span className="mt-2 -ml-2 inline-flex h-[31px] shrink-0 items-center self-start rounded-completo bg-verde-suave px-3 text-small font-medium text-verde">
         {tableText}
       </span>
     </header>

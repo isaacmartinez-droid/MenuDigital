@@ -121,7 +121,7 @@
       "viewOrder": "Ver pedido · {n} {platos}",
       "added": "Agregaste {dish}",
       "addedWithSide": "Con {side} · lo cambiás en tu pedido",
-      "addedPlain": "Lo cambiás en tu pedido",
+      "addedPlain": "Ya está en tu pedido",
       "removed": "Quitamos {dish}"
     },
     "closed": {

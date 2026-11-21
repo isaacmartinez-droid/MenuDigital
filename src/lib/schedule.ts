@@ -59,7 +59,12 @@ export function getOpenState(ranges: ScheduleRange[], timeZone: string, date: Da
     }
   }
 
-  // Próxima apertura en los próximos 7 días.
+  return { open: false, opensAt: nextOpening(ranges, timeZone, date) }
+}
+
+/** Próxima hora de apertura posterior a "ahora" (hoy más tarde o un día siguiente). */
+export function nextOpening(ranges: ScheduleRange[], timeZone: string, date: Date = new Date()): string | undefined {
+  const { day, minutes } = zonedNow(timeZone, date)
   for (let offset = 0; offset <= 7; offset++) {
     const d = (day + offset) % 7
     const opens = ranges
@@ -67,7 +72,14 @@ export function getOpenState(ranges: ScheduleRange[], timeZone: string, date: Da
       .map((r) => toMinutes(r.open))
       .filter((open) => offset > 0 || open > minutes)
       .sort((a, b) => a - b)
-    if (opens.length) return { open: false, opensAt: formatClock(opens[0]) }
+    if (opens.length) return formatClock(opens[0])
   }
-  return { open: false }
+  return undefined
+}
+
+/** Hora de cierre de hoy (la primera franja del día), para forzar "abierto" en la demo. */
+export function todayClosing(ranges: ScheduleRange[], timeZone: string, date: Date = new Date()): string | undefined {
+  const { day } = zonedNow(timeZone, date)
+  const range = ranges.find((r) => r.days.includes(day)) ?? ranges[0]
+  return range ? formatClock(toMinutes(range.close)) : undefined
 }
