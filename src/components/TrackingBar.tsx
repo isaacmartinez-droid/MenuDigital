@@ -11,8 +11,10 @@ interface TrackingBarProps {
 }
 
 /**
- * Barra horizontal de 4 tramos: hechos en verde, el actual en ámbar,
- * pendientes en color borde. "Entregada" marca los 4 como hechos.
+ * Barra horizontal de 4 tramos: hechos en verde, pendientes en color borde y
+ * el actual "trabajando": un tramo ámbar que avanza una y otra vez, y el ícono
+ * con un pulso suave. Con "reducir movimiento", el tramo actual queda a medio
+ * llenar y sin pulso. "Entregada" marca los 4 como hechos.
  */
 export function TrackingBar({ status }: TrackingBarProps) {
   const current = ORDER.indexOf(status)
@@ -27,12 +29,19 @@ export function TrackingBar({ status }: TrackingBarProps) {
           <span
             key={step}
             className={cx(
-              'h-1.5 flex-1 rounded-completo transition-colors duration-500',
+              'relative h-1.5 flex-1 overflow-hidden rounded-completo transition-colors duration-500',
               state(i) === 'done' && 'bg-verde',
-              state(i) === 'current' && 'bg-ambar',
+              state(i) === 'current' && 'bg-ambar-suave',
               state(i) === 'pending' && 'bg-borde',
             )}
-          />
+          >
+            {state(i) === 'current' && (
+              <span
+                data-progress
+                className="absolute inset-y-0 left-0 w-1/2 rounded-completo bg-ambar motion-safe:w-2/5 motion-safe:animate-progress"
+              />
+            )}
+          </span>
         ))}
       </div>
       <ol className="mt-4 grid grid-cols-4" aria-label={t.tracking.stepsLabel}>
@@ -48,13 +57,16 @@ export function TrackingBar({ status }: TrackingBarProps) {
               <span
                 aria-hidden
                 className={cx(
-                  'grid size-8 place-items-center rounded-completo transition-colors duration-500',
+                  'relative grid size-8 place-items-center rounded-completo transition-colors duration-500',
                   s === 'done' && 'bg-verde text-blanco',
                   s === 'current' && 'bg-ambar-suave text-texto',
                   s === 'pending' && 'bg-fondo text-texto-2',
                 )}
               >
-                <Icon size={s === 'done' ? 22 : 18} strokeWidth={2.25} />
+                {s === 'current' && (
+                  <span className="absolute inset-0 hidden rounded-completo bg-ambar/50 motion-safe:block motion-safe:animate-ping-soft" />
+                )}
+                <Icon size={s === 'done' ? 22 : 18} strokeWidth={2.25} className="relative" />
               </span>
               <span className={cx('text-small', s === 'pending' ? 'text-texto-2' : 'text-texto')}>
                 {labels[i]}

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { ChevronRight, Plus } from 'lucide-react'
+import { BellRing, ChevronRight, Plus } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { formatMoney } from '../lib/money'
 import { useNow } from '../lib/useNow'
-import { etaMinutes, sentAtClock, statusLabel } from '../lib/comandaStatus'
+import { etaFor, sentAtClock, statusLabel } from '../lib/comandaStatus'
+import { enableNotifications, notificationPermission } from '../lib/notifications'
+import { readItem, tableKey, writeItem } from '../lib/storage'
 import type { Substitute } from '../types/menu'
 import type { Comanda as ComandaModel } from '../types/order'
 import { Header } from '../components/Header'
@@ -73,6 +75,15 @@ export function Tracking() {
   const waiter = useWaiter(mesa)
   const online = useOnline()
   const [waiterSheet, setWaiterSheet] = useState(false)
+  const [notifyPerm, setNotifyPerm] = useState(notificationPermission)
+  const [notifyDismissed, setNotifyDismissed] = useState(() => readItem('session', tableKey(mesa, 'avisos')) === 'no')
+  const [notifyJustOn, setNotifyJustOn] = useState(false)
+
+  useEffect(() => {
+    if (!notifyJustOn) return
+    const id = window.setTimeout(() => setNotifyJustOn(false), 4000)
+    return () => window.clearTimeout(id)
+  }, [notifyJustOn])
 
   const soldOut = findReplaceable(comanda)
   const alreadyReplaced = Boolean(
@@ -105,11 +116,14 @@ export function Tracking() {
 
   const status = comanda.status
   const sentAt = fmt(t.tracking.sentAt, { time: sentAtClock(comanda) })
+  // Mientras se prepara: hora estimada en rango, como las apps de delivery.
+  const inProgress = status === 'recibida' || status === 'en-el-comal'
+  const eta = etaFor(comanda, now)
   const headline = {
     recibida: { title: t.tracking.processingTitle, body: `${t.tracking.processingBody} · ${sentAt}` },
     'en-el-comal': {
       title: t.tracking.cookingTitle,
-      body: `${fmt(t.tracking.cookingBody, { min: etaMinutes(comanda, now) })} · ${sentAt}`,
+      body: `${fmt(t.tracking.etaIn, { from: eta.minFrom, to: eta.minTo })} · ${sentAt}`,
     },
     lista: { title: t.tracking.readyTitle, body: fmt(t.tracking.readyBody, { mesa }) },
     entregada: { title: t.tracking.deliveredTitle, body: t.tracking.deliveredBody },
@@ -178,8 +192,14 @@ export function Tracking() {
         )}
 
         <section className="rounded-grande border border-borde bg-tarjeta px-4 pt-4 pb-4" aria-labelledby="estado">
+          {inProgress && (
+            <div className="mb-2.5">
+              <p className="text-small text-texto-2">{t.tracking.etaLabel}</p>
+              <p className="text-title-lg text-texto tabular-nums">{eta.range}</p>
+            </div>
+          )}
           <div aria-live="polite">
-            <h1 id="estado" className="text-title text-texto">
+            <h1 id="estado" className={cx('text-texto', inProgress ? 'text-section' : 'text-title')}>
               {headline.title}
             </h1>
             <p className="mt-1 text-body text-texto-2">{headline.body}</p>
@@ -188,6 +208,47 @@ export function Tracking() {
             <TrackingBar status={status} />
           </div>
         </section>
+
+        {/* Ofrece los avisos del sistema mientras la orden no se entregó (una vez por sesión). */}
+        {status !== 'entregada' && notifyPerm === 'default' && !notifyDismissed && (
+          <section aria-labelledby="avisos" className="mt-3 flex gap-3 rounded-grande border border-borde bg-tarjeta p-4">
+            <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-completo bg-verde-suave text-verde">
+              <BellRing size={20} strokeWidth={2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 id="avisos" className="text-dish text-texto">
+                {t.tracking.notifyAskTitle}
+              </h2>
+              <p className="mt-0.5 text-small text-texto-2">{t.tracking.notifyAskBody}</p>
+              <div className="mt-3 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const permission = await enableNotifications()
+                    setNotifyPerm(permission)
+                    if (permission === 'granted') setNotifyJustOn(true)
+                  }}
+                  className="focus-on-dark h-11 rounded-completo bg-verde px-4 text-small font-semibold text-blanco"
+                >
+                  {t.tracking.notifyAskYes}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    writeItem('session', tableKey(mesa, 'avisos'), 'no')
+                    setNotifyDismissed(true)
+                  }}
+                  className="h-11 px-3 text-small font-medium text-texto-2"
+                >
+                  {t.tracking.notifyAskNo}
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+        {notifyJustOn && (
+          <NoticeBanner role="status" tone="positivo" title={t.tracking.notifyOn} className="mt-3" />
+        )}
 
         <div className="mt-3">
           <Comanda comanda={comanda} heading={fmt(t.tracking.yourOrder, { name: comanda.customerName })} />

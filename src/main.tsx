@@ -13,8 +13,11 @@ import './theme/index.css'
 import { applyTheme } from './theme/applyTheme'
 import { restaurant } from './lib/catalog'
 import { prefetchScreens, router } from './router'
+import { registerNotificationWorker } from './lib/notifications'
 
 applyTheme(restaurant)
+// Avisos del seguimiento: al tocar uno, la app va a esa orden sin recargar.
+registerNotificationWorker((url) => void router.navigate(url))
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -3,6 +3,7 @@ import { Outlet, ScrollRestoration, useNavigate, useParams } from 'react-router'
 import { isValidTable, restaurant } from '../lib/catalog'
 import { waitForPayment, watchComanda } from '../lib/api'
 import { fmt, t } from '../lib/text'
+import { notifyStatus } from '../lib/notifications'
 import { comandasStore, useComandas } from '../store/comandas'
 import { closeTable } from '../lib/closeTable'
 import { submitCart } from '../lib/orderFlow'
@@ -100,6 +101,8 @@ function useKitchenUpdates(mesa: string) {
       const before = new Map(prev.comandas.map((c) => [c.id, c.status]))
       for (const c of state.comandas) {
         if (!c.mine || before.get(c.id) === c.status || !before.has(c.id)) continue
+        // Aviso del sistema en cada paso (si el cliente lo activó y el paso está en la config).
+        void notifyStatus(c, c.status, mesa)
         if (c.status === 'lista') {
           try {
             navigator.vibrate?.([200, 100, 200])
@@ -116,5 +119,5 @@ function useKitchenUpdates(mesa: string) {
       unsubscribe()
       document.title = originalTitle
     }
-  }, [store])
+  }, [store, mesa])
 }

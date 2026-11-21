@@ -50,6 +50,13 @@ Para empezar de cero: cerrar la pestaña, o borrar el almacenamiento del sitio.
    la hora del pedido, los minutos que faltan, el detalle de cada plato, tus otras órdenes y la
    cuenta de la mesa. Mientras haya una orden en curso, el menú muestra una barra para volver a
    ella; al quedar lista, el teléfono vibra (Android) y la pestaña dice "¡Ya está!".
+   Arriba se ve la hora estimada en rango ("Lista entre 7:57 – 8:02 pm", `timings.readyEstimateMin`
+   y `timings.etaRangeMin`) y la barra del paso actual se mueve.
+   **Avisos en cada paso:** el seguimiento ofrece "Activar avisos"; con permiso, llega una
+   notificación al pasar a los pasos de `notifications.statuses` (en el comal, lista, entregada).
+   Necesitan https o `localhost` (por la IP de la red local no aparecen) y la página abierta,
+   aunque sea en segundo plano; para recibirlas con el navegador cerrado hace falta un backend
+   con notificaciones push. En iPhone solo funcionan con la app agregada a la pantalla de inicio.
 5. **Llamar al mesero**, **Pedir algo más** (otra comanda, misma cuenta) o **Ya vamos a pagar**.
 6. **Tu cuenta**: lo tuyo con el detalle de cada plato → **¿Qué vas a pagar?** (solo lo mío o
    toda la mesa) → propina → **¿Cómo pagás?** (opcional; con efectivo, con cuánto, para el

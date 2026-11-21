@@ -32,6 +32,38 @@ export function etaMinutes(comanda: Comanda, now: number): number {
   return Math.max(1, Math.ceil(restaurant.timings.readyEstimateMin - elapsedMin))
 }
 
+/** "7:57 pm" y "8:02 pm" → "7:57 – 8:02 pm"; si cambia am/pm, se dejan los dos. */
+function clockRange(from: number, to: number): string {
+  const a = formatClock(from)
+  const b = formatClock(to)
+  return a.slice(-2) === b.slice(-2) ? `${a.slice(0, -3)} – ${b}` : `${a} – ${b}`
+}
+
+export interface Eta {
+  /** "7:57 – 8:02 pm" */
+  range: string
+  /** Minutos que faltan para el inicio y el fin del rango (mínimo 1). */
+  minFrom: number
+  minTo: number
+}
+
+/**
+ * Hora estimada en que la orden está lista, como rango: desde el envío más
+ * timings.readyEstimateMin, con timings.etaRangeMin de margen. Con API real la manda cocina.
+ */
+export function etaFor(comanda: Comanda, now: number): Eta {
+  const { readyEstimateMin, etaRangeMin } = restaurant.timings
+  const tz = restaurant.schedule.timezone
+  const readyAt = Date.parse(comanda.createdAt) + readyEstimateMin * 60_000
+  const fromMin = zonedNow(tz, new Date(readyAt)).minutes
+  const minFrom = Math.max(1, Math.ceil((readyAt - now) / 60_000))
+  return {
+    range: clockRange(fromMin, (fromMin + etaRangeMin) % 1440),
+    minFrom,
+    minTo: minFrom + etaRangeMin,
+  }
+}
+
 /** La orden de este teléfono que sigue en curso (la más reciente sin entregar), si hay. */
 export function activeComanda(comandas: Comanda[]): Comanda | undefined {
   return comandas

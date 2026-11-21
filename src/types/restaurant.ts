@@ -73,8 +73,15 @@ export interface RestaurantConfig {
     /** Número de "Teléfono N" de este dispositivo si no pone nombre. */
     myDeviceNumber: number
   }
-  /** Tiempos en milisegundos (salvo readyEstimateMin). */
+  /**
+   * Avisos del sistema (con permiso del cliente) cuando su orden pasa a estos
+   * pasos. "recibida" no hace falta: pasa al instante de enviar.
+   */
+  notifications: { statuses: string[] }
+  /** Tiempos en milisegundos (salvo readyEstimateMin y etaRangeMin, en minutos). */
   timings: {
+    /** Margen del rango de hora estimada: "7:57 – 8:02 pm". */
+    etaRangeMin: number
     /** Avance automático de "Los más vendidos". */
     carouselMs: number
     undoToastMs: number

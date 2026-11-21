@@ -40,7 +40,9 @@
     "firstComandaNumber": 142,
     "myDeviceNumber": 1
   },
+  "notifications": { "statuses": ["en-el-comal", "lista", "entregada"] },
   "timings": {
+    "etaRangeMin": 5,
     "carouselMs": 4000,
     "undoToastMs": 4000,
     "processingMs": 3000,
@@ -230,6 +232,19 @@
       "deliveredTitle": "¡Buen provecho!",
       "deliveredBody": "Que la disfrutés",
       "sentAt": "la pediste a las {time}",
+      "etaLabel": "Lista entre",
+      "etaIn": "En unos {from}–{to} min",
+      "notifyAskTitle": "¿Te avisamos en cada paso?",
+      "notifyAskBody": "Te llega un aviso cuando tu orden esté en el comal, cuando esté lista y cuando llegue a la mesa.",
+      "notifyAskYes": "Activar avisos",
+      "notifyAskNo": "Ahora no",
+      "notifyOn": "Listo: te avisamos en cada paso.",
+      "notify": {
+        "recibida": { "title": "Recibimos tu orden {id}", "body": "La cocina la recibe en un momento." },
+        "en-el-comal": { "title": "Tu orden {id} está en el comal", "body": "Lista en unos {min} min." },
+        "lista": { "title": "¡Tu orden {id} ya está!", "body": "Va para la Mesa {mesa}." },
+        "entregada": { "title": "¡Buen provecho!", "body": "Tu orden {id} ya está en la mesa." }
+      },
       "yourOrder": "Tu orden · {name}",
       "withSide": "con {side}",
       "orderTotal": "Total de esta orden",
