@@ -1,16 +1,22 @@
-import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
+import { createBrowserRouter, Navigate, useLocation, type RouteObject } from 'react-router'
 import { InvalidTable } from './screens/InvalidTable'
 import { MesaLayout } from './screens/MesaLayout'
 import { Menu } from './screens/Menu'
-import { Pending } from './screens/Pending'
+import { Bill } from './screens/Bill'
+import { Paid } from './screens/Paid'
 import { DishDetail } from './screens/DishDetail'
 import { Order } from './screens/Order'
 import { Tracking } from './screens/Tracking'
 import { ComponentsPreview } from './screens/ComponentsPreview'
 
+function RootRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={{ pathname: '/m/5', search }} replace />
+}
+
 const routes: RouteObject[] = [
-  // Demo: la raíz abre la Mesa 5.
-  { path: '/', element: <Navigate to="/m/5" replace /> },
+  // Demo: la raíz abre la Mesa 5 (conservando ?forzar=… y ?compas=…).
+  { path: '/', element: <RootRedirect /> },
   {
     path: '/m/:mesa',
     element: <MesaLayout />,
@@ -19,8 +25,8 @@ const routes: RouteObject[] = [
       { path: 'plato/:dishId', element: <DishDetail /> },
       { path: 'pedido', element: <Order /> },
       { path: 'orden/:comandaId', element: <Tracking /> },
-      { path: 'cuenta', element: <Pending title="Tu cuenta" stage="e)" /> },
-      { path: 'cuenta/pagada', element: <Pending title="Cuenta pagada" stage="e)" /> },
+      { path: 'cuenta', element: <Bill /> },
+      { path: 'cuenta/pagada', element: <Paid /> },
       { path: '*', element: <InvalidTable /> },
     ],
   },
