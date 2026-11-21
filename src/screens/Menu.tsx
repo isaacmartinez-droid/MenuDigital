@@ -26,6 +26,9 @@ import { useUi } from '../store/ui'
 import { useWaiter } from '../lib/useWaiter'
 import { useOnline } from '../lib/useOnline'
 import { useComandas } from '../store/comandas'
+import { BellRing, ChevronRight, Clock, Flame } from 'lucide-react'
+import { cx } from '../lib/cx'
+import { activeComanda, statusLabel } from '../lib/comandaStatus'
 import { Welcome } from './Welcome'
 
 type ToastState =
@@ -48,6 +51,7 @@ export function Menu() {
   const canOrder = openState.open
   // Mesa con cuenta abierta: aunque pase la hora de cierre, puede llamar al mesero y pagar.
   const hasAccount = useComandas(mesa, (s) => s.comandas.length > 0)
+  const active = useComandas(mesa, (s) => activeComanda(s.comandas))
   const today = useToday()
 
   // M0: solo la primera vez de esta sesión en esta mesa.
@@ -224,7 +228,34 @@ export function Menu() {
         />
 
         <main>
-          <div className="px-4">{slot}</div>
+          <div className="px-4">
+            {/* Orden en curso de este teléfono: un toque vuelve a su seguimiento. */}
+            {active && (
+              <button
+                type="button"
+                onClick={() => navigate(paths.tracking(mesa, active.id))}
+                className={cx(
+                  'mb-2 flex min-h-12 w-full items-center gap-2.5 rounded-tarjeta px-3 py-2 text-left text-small',
+                  active.status === 'lista' ? 'bg-ambar-suave text-texto-sobre-ambar' : 'bg-verde-suave text-verde',
+                )}
+              >
+                {active.status === 'lista' ? (
+                  <BellRing size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                ) : active.status === 'en-el-comal' ? (
+                  <Flame size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                ) : (
+                  <Clock size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+                )}
+                <span className="min-w-0 flex-1 font-semibold">
+                  {active.status === 'lista'
+                    ? fmt(t.tracking.activeBarReady, { id: active.id })
+                    : fmt(t.tracking.activeBar, { id: active.id, status: statusLabel(active.status).toLowerCase() })}
+                </span>
+                <ChevronRight size={18} strokeWidth={2} aria-hidden className="shrink-0" />
+              </button>
+            )}
+            {slot}
+          </div>
 
           <div className="mt-2 px-4">
             <SearchBar value={query} onChange={setQuery} />

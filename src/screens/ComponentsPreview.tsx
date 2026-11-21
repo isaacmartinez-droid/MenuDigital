@@ -120,8 +120,6 @@ export function ComponentsPreview() {
           <Comanda
             comanda={comanda}
             heading={fmt(t.tracking.yourOrder, { name: 'Ana' })}
-            pill={fmt(t.tracking.tablePill, { mesa: 5 })}
-            footnote={fmt(t.tracking.addsToTable, { mesa: 5 })}
           />
         </div>
       </Section>

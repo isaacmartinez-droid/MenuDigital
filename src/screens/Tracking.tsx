@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { Plus } from 'lucide-react'
+import { ChevronRight, Plus } from 'lucide-react'
+import { cx } from '../lib/cx'
+import { formatMoney } from '../lib/money'
+import { useNow } from '../lib/useNow'
+import { etaMinutes, sentAtClock, statusLabel } from '../lib/comandaStatus'
 import type { Substitute } from '../types/menu'
 import type { Comanda as ComandaModel } from '../types/order'
 import { Header } from '../components/Header'
@@ -22,7 +26,25 @@ import { useLiveComanda } from '../lib/useLiveComanda'
 import { useWaiter } from '../lib/useWaiter'
 import { useOnline } from '../lib/useOnline'
 import { paths, useMesa } from '../lib/useMesa'
-import { comandasStore } from '../store/comandas'
+import { comandasStore, useComandas } from '../store/comandas'
+
+/** Estado de una orden en pastilla: verde en curso, ámbar lista, gris entregada. */
+function StatusChip({ status }: { status: ComandaModel['status'] }) {
+  return (
+    <span
+      className={cx(
+        'inline-flex h-6 shrink-0 items-center rounded-completo px-2.5 text-small font-medium whitespace-nowrap',
+        status === 'entregada'
+          ? 'bg-borde text-texto-2'
+          : status === 'lista'
+            ? 'bg-ambar-suave text-texto-sobre-ambar'
+            : 'bg-verde-suave text-verde',
+      )}
+    >
+      {statusLabel(status)}
+    </span>
+  )
+}
 
 /** M4g: primer plato de la comanda con una parte que puede agotarse en cocina. */
 function findReplaceable(comanda: ComandaModel | undefined) {
@@ -43,6 +65,9 @@ export function Tracking() {
   const navigate = useNavigate()
   const { comandaId = '' } = useParams()
   const comanda = useLiveComanda(mesa, comandaId)
+  const comandas = useComandas(mesa, (s) => s.comandas)
+  // Reloj para que "Lista en unos N min" baje solo mientras no se entregó.
+  const now = useNow(30_000, comanda?.status !== 'entregada')
   const openState = useOpenState()
   const flags = useDemoFlags()
   const waiter = useWaiter(mesa)
@@ -79,16 +104,19 @@ export function Tracking() {
   }
 
   const status = comanda.status
+  const sentAt = fmt(t.tracking.sentAt, { time: sentAtClock(comanda) })
   const headline = {
-    recibida: { title: t.tracking.processingTitle, body: t.tracking.processingBody },
+    recibida: { title: t.tracking.processingTitle, body: `${t.tracking.processingBody} · ${sentAt}` },
     'en-el-comal': {
       title: t.tracking.cookingTitle,
-      body: fmt(t.tracking.cookingBody, { min: restaurant.timings.readyEstimateMin }),
+      body: `${fmt(t.tracking.cookingBody, { min: etaMinutes(comanda, now) })} · ${sentAt}`,
     },
     lista: { title: t.tracking.readyTitle, body: fmt(t.tracking.readyBody, { mesa }) },
     entregada: { title: t.tracking.deliveredTitle, body: t.tracking.deliveredBody },
   }[status]
-  const delivered = status === 'entregada'
+  // Las demás órdenes de este teléfono (la más reciente primero) y el total de toda la mesa.
+  const others = comandas.filter((c) => c.mine && c.id !== comanda.id).sort((a, b) => b.number - a.number)
+  const accountTotal = comandas.reduce((sum, c) => sum + c.total, 0)
 
   const closeSoldOut = () => {
     clearAgotado()
@@ -162,13 +190,50 @@ export function Tracking() {
         </section>
 
         <div className="mt-3">
-          <Comanda
-            comanda={comanda}
-            heading={fmt(t.tracking.yourOrder, { name: comanda.customerName })}
-            pill={fmt(delivered ? t.tracking.tablePillDelivered : t.tracking.tablePill, { mesa })}
-            footnote={fmt(t.tracking.addsToTable, { mesa })}
-          />
+          <Comanda comanda={comanda} heading={fmt(t.tracking.yourOrder, { name: comanda.customerName })} />
         </div>
+
+        {others.length > 0 && (
+          <section aria-labelledby="otras-ordenes" className="mt-4">
+            <h2 id="otras-ordenes" className="text-dish text-texto">
+              {t.tracking.otherOrders}
+            </h2>
+            <ul className="mt-2 divide-y divide-borde rounded-grande border border-borde bg-tarjeta">
+              {others.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(paths.tracking(mesa, c.id), { replace: true })}
+                    aria-label={`${fmt(t.tracking.openOrder, { id: c.id })} · ${statusLabel(c.status)}`}
+                    className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-dish text-texto">{c.id}</span>
+                      <span className="block truncate text-small text-texto-2">
+                        {c.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')}
+                      </span>
+                    </span>
+                    <StatusChip status={c.status} />
+                    <ChevronRight size={18} strokeWidth={2} aria-hidden className="shrink-0 text-texto-2" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <button
+          type="button"
+          onClick={() => navigate(paths.bill(mesa))}
+          className="mt-4 flex min-h-14 w-full items-center gap-3 rounded-grande border border-borde bg-tarjeta px-4 text-left"
+        >
+          <span className="min-w-0 flex-1 text-dish text-texto">{t.tracking.accountTitle}</span>
+          <span className="text-price text-texto">{formatMoney(accountTotal)}</span>
+          <span className="inline-flex items-center gap-0.5 text-small font-semibold text-verde">
+            {t.tracking.seeBill}
+            <ChevronRight size={16} strokeWidth={2.25} aria-hidden />
+          </span>
+        </button>
 
         <TableActions
           className="mt-3"
@@ -191,7 +256,6 @@ export function Tracking() {
             >
               {t.tracking.orderMore}
             </Button>
-            {!delivered && <p className="mt-2.5 text-center text-small text-texto-2">{t.tracking.orderMoreHelp}</p>}
           </div>
         </BottomDock>
       )}

@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { Outlet, ScrollRestoration, useNavigate, useParams } from 'react-router'
-import { isValidTable } from '../lib/catalog'
-import { waitForPayment } from '../lib/api'
+import { isValidTable, restaurant } from '../lib/catalog'
+import { waitForPayment, watchComanda } from '../lib/api'
+import { fmt, t } from '../lib/text'
+import { comandasStore, useComandas } from '../store/comandas'
 import { closeTable } from '../lib/closeTable'
 import { submitCart } from '../lib/orderFlow'
 import { useOnline } from '../lib/useOnline'
@@ -49,6 +51,8 @@ function TableSession({ mesa }: { mesa: string }) {
       })
   }, [online, pendingSend, mesa, navigate])
 
+  useKitchenUpdates(mesa)
+
   useEffect(() => {
     if (!billRequestedAt) return
     let cancelled = false
@@ -63,4 +67,54 @@ function TableSession({ mesa }: { mesa: string }) {
   }, [mesa, billRequestedAt, navigate])
 
   return null
+}
+
+/**
+ * Sigue en cocina todas las órdenes de este teléfono que no se entregaron
+ * (así el estado está al día en cualquier pantalla, también en la barra del
+ * menú). Cuando una pasa a "¡Ya está!", el teléfono vibra (donde se pueda) y
+ * la pestaña cambia de título hasta que se entrega.
+ */
+function useKitchenUpdates(mesa: string) {
+  const store = comandasStore(mesa)
+  // Clave estable: cambia solo cuando entra o sale una orden en curso.
+  const pending = useComandas(mesa, (s) =>
+    s.comandas
+      .filter((c) => c.mine && c.status !== 'entregada')
+      .map((c) => c.id)
+      .join(','),
+  )
+
+  useEffect(() => {
+    if (!pending) return
+    const stops = pending.split(',').map((id) => {
+      const comanda = store.getState().comandas.find((c) => c.id === id)
+      return comanda ? watchComanda(comanda, (status) => store.getState().setStatus(id, status)) : undefined
+    })
+    return () => stops.forEach((stop) => stop?.())
+  }, [store, pending])
+
+  useEffect(() => {
+    const originalTitle = document.title
+    const unsubscribe = store.subscribe((state, prev) => {
+      const before = new Map(prev.comandas.map((c) => [c.id, c.status]))
+      for (const c of state.comandas) {
+        if (!c.mine || before.get(c.id) === c.status || !before.has(c.id)) continue
+        if (c.status === 'lista') {
+          try {
+            navigator.vibrate?.([200, 100, 200])
+          } catch {
+            /* sin vibración en este teléfono */
+          }
+          document.title = fmt(t.tracking.readyTabTitle, { name: restaurant.name })
+        } else if (c.status === 'entregada') {
+          document.title = originalTitle
+        }
+      }
+    })
+    return () => {
+      unsubscribe()
+      document.title = originalTitle
+    }
+  }, [store])
 }

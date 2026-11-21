@@ -46,7 +46,10 @@ Para empezar de cero: cerrar la pestaña, o borrar el almacenamiento del sitio.
 3. **Ver pedido** → nombre opcional → **Enviar a la cocina** → hoja "¿Enviamos tu pedido?":
    **Sí, enviar** (va directo, sin mesero) o **Pedir algo más**, que vuelve al menú con el
    mismo pedido abierto para que salga todo junto en una sola comanda.
-4. Seguimiento: Procesando → En el comal → ¡Ya está! → Entregada (tiempos en la config).
+4. Seguimiento: Procesando → En el comal → ¡Ya está! → Entregada (tiempos en la config), con
+   la hora del pedido, los minutos que faltan, el detalle de cada plato, tus otras órdenes y la
+   cuenta de la mesa. Mientras haya una orden en curso, el menú muestra una barra para volver a
+   ella; al quedar lista, el teléfono vibra (Android) y la pestaña dice "¡Ya está!".
 5. **Llamar al mesero**, **Pedir algo más** (otra comanda, misma cuenta) o **Ya vamos a pagar**.
 6. Cuenta de la mesa por persona → **Avisar a caja** → a los 5 s, cuenta pagada y la mesa se
    limpia (los próximos clientes no ven estos pedidos).
