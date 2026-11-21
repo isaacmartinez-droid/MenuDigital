@@ -9,7 +9,7 @@ import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { BottomSheet } from '../components/BottomSheet'
 import { OptionCard } from '../components/OptionCard'
-import { TrackingBar } from '../components/TrackingBar'
+import { TrackingTimeline } from '../components/TrackingTimeline'
 import { Comanda } from '../components/Comanda'
 import { StarRating } from '../components/StarRating'
 import { Header, PageHeader } from '../components/Header'
@@ -113,7 +113,7 @@ export function ComponentsPreview() {
           <h2 className="text-title text-texto">{t.tracking.cookingTitle}</h2>
           <p className="mt-1 text-body text-texto-2">{fmt(t.tracking.cookingBody, { min: 15 })}</p>
           <div className="mt-5">
-            <TrackingBar status={status} />
+            <TrackingTimeline comanda={comanda} status={status} />
           </div>
         </div>
         <div className="mt-3">

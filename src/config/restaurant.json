@@ -248,13 +248,17 @@
       "removeLine": "Quitar {dish}"
     },
     "tracking": {
-      "steps": ["Recibida", "En el comal", "¡Ya está!", "Entregada"],
+      "steps": ["Recibida", "Cocinando", "Lista", "Entregada"],
+      "stepDone": "hecho",
+      "stepNow": "en curso",
+      "stepPending": "pendiente",
+      "now": "ahora",
       "stepsLabel": "Avance de tu orden",
       "processingTitle": "Estamos procesando tu orden",
       "processingBody": "La cocina la recibe en un momento",
-      "cookingTitle": "Tu orden está en el comal",
+      "cookingTitle": "Ya estamos cocinando tu pedido",
       "cookingBody": "Lista en unos {min} min",
-      "readyTitle": "¡Ya está! Va para tu mesa",
+      "readyTitle": "Tu comida está lista",
       "readyBody": "El mesero ya la lleva a la Mesa {mesa}",
       "deliveredTitle": "¡Buen provecho!",
       "deliveredBody": "Que la disfrutés",
@@ -262,14 +266,14 @@
       "etaLabel": "Lista entre",
       "etaIn": "En unos {from}–{to} min",
       "notifyAskTitle": "¿Te avisamos en cada paso?",
-      "notifyAskBody": "Te llega un aviso cuando tu orden esté en el comal, cuando esté lista y cuando llegue a la mesa.",
+      "notifyAskBody": "Te llega un aviso cuando empecemos a cocinar, cuando esté lista y cuando llegue a la mesa.",
       "notifyAskYes": "Activar avisos",
       "notifyAskNo": "Ahora no",
       "notifyOn": "Listo: te avisamos en cada paso.",
       "notify": {
         "recibida": { "title": "Recibimos tu orden {id}", "body": "La cocina la recibe en un momento." },
-        "en-el-comal": { "title": "Tu orden {id} está en el comal", "body": "Lista en unos {min} min." },
-        "lista": { "title": "¡Tu orden {id} ya está!", "body": "Va para la Mesa {mesa}." },
+        "en-el-comal": { "title": "Ya estamos cocinando tu orden {id}", "body": "Lista en unos {min} min." },
+        "lista": { "title": "Tu orden {id} está lista", "body": "Va para la Mesa {mesa}." },
         "entregada": { "title": "¡Buen provecho!", "body": "Tu orden {id} ya está en la mesa." }
       },
       "yourOrder": "Tu orden · {name}",
@@ -280,8 +284,8 @@
       "accountTitle": "Cuenta de la mesa",
       "seeBill": "Ver cuenta",
       "activeBar": "Tu orden {id} · {status}",
-      "activeBarReady": "¡Tu orden {id} ya está! Va para tu mesa",
-      "readyTabTitle": "¡Ya está! · {name}",
+      "activeBarReady": "Tu orden {id} está lista · va para tu mesa",
+      "readyTabTitle": "Tu comida está lista · {name}",
       "orderMore": "Pedir algo más",
       "pendingTitle": "Tu pedido está guardado",
       "pendingBody": "Se envía solito cuando vuelva la señal",
@@ -445,7 +449,10 @@
       "payCard": "Tarjeta desde la app",
       "payTransfer": "Transferencia",
       "confirm": "Confirmar pedido",
-      "confirming": "Enviando…"
+      "confirming": "Enviando…",
+      "readyBody": "Pasá a recogerla",
+      "pickedUp": "Recogida",
+      "activeBarReady": "Tu orden {id} está lista · pasá a recogerla"
     }
   }
 }

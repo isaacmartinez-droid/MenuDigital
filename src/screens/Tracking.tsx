@@ -10,7 +10,7 @@ import { readItem, tableKey, writeItem } from '../lib/storage'
 import type { Substitute } from '../types/menu'
 import type { Comanda as ComandaModel } from '../types/order'
 import { Header } from '../components/Header'
-import { TrackingBar } from '../components/TrackingBar'
+import { TrackingTimeline } from '../components/TrackingTimeline'
 import { Comanda } from '../components/Comanda'
 import { SoldOutSheet } from '../components/SoldOutSheet'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -24,6 +24,7 @@ import { useOpenState } from '../lib/useOpenState'
 import { useLiveComanda } from '../lib/useLiveComanda'
 import { useOnline } from '../lib/useOnline'
 import { paths, useMesa } from '../lib/useMesa'
+import { isTakeout } from '../lib/channel'
 import { comandasStore, useComandas } from '../store/comandas'
 
 /** Estado de una orden en pastilla: verde en curso, ámbar lista, gris entregada. */
@@ -60,6 +61,8 @@ function findReplaceable(comanda: ComandaModel | undefined) {
  */
 export function Tracking() {
   const mesa = useMesa()
+  // Para llevar no hay mesa ni cuenta de mesa: se paga al recoger.
+  const takeout = isTakeout(mesa)
   const navigate = useNavigate()
   const { comandaId = '' } = useParams()
   const comanda = useLiveComanda(mesa, comandaId)
@@ -119,7 +122,7 @@ export function Tracking() {
       title: t.tracking.cookingTitle,
       body: `${fmt(t.tracking.etaIn, { from: eta.minFrom, to: eta.minTo })} · ${sentAt}`,
     },
-    lista: { title: t.tracking.readyTitle, body: fmt(t.tracking.readyBody, { mesa }) },
+    lista: { title: t.tracking.readyTitle, body: takeout ? t.web.readyBody : fmt(t.tracking.readyBody, { mesa }) },
     entregada: { title: t.tracking.deliveredTitle, body: t.tracking.deliveredBody },
   }[status]
   // Las demás órdenes de este teléfono (la más reciente primero) y el total de toda la mesa.
@@ -167,7 +170,7 @@ export function Tracking() {
             ? fmt(t.status.open, { close: openState.closesAt ?? '' })
             : fmt(t.status.closed, { open: openState.opensAt ?? '' })
         }
-        tableText={tableLabel(mesa)}
+        tableText={takeout ? t.web.place : tableLabel(mesa)}
       />
 
       <main className="px-4 pt-2">
@@ -192,7 +195,7 @@ export function Tracking() {
             <p className="mt-1 text-body text-texto-2">{headline.body}</p>
           </div>
           <div className="mt-4">
-            <TrackingBar status={status} />
+            <TrackingTimeline comanda={comanda} status={status} takeout={takeout} />
           </div>
         </section>
 
@@ -270,18 +273,20 @@ export function Tracking() {
           </section>
         )}
 
-        <button
-          type="button"
-          onClick={() => navigate(paths.bill(mesa))}
-          className="mt-4 flex min-h-14 w-full items-center gap-3 rounded-grande border border-borde bg-tarjeta px-4 text-left"
-        >
-          <span className="min-w-0 flex-1 text-dish text-texto">{t.tracking.accountTitle}</span>
-          <span className="text-price text-texto">{formatMoney(accountTotal)}</span>
-          <span className="inline-flex items-center gap-0.5 text-small font-semibold text-verde">
-            {t.tracking.seeBill}
-            <ChevronRight size={16} strokeWidth={2.25} aria-hidden />
-          </span>
-        </button>
+        {!takeout && (
+          <button
+            type="button"
+            onClick={() => navigate(paths.bill(mesa))}
+            className="mt-4 flex min-h-14 w-full items-center gap-3 rounded-grande border border-borde bg-tarjeta px-4 text-left"
+          >
+            <span className="min-w-0 flex-1 text-dish text-texto">{t.tracking.accountTitle}</span>
+            <span className="text-price text-texto">{formatMoney(accountTotal)}</span>
+            <span className="inline-flex items-center gap-0.5 text-small font-semibold text-verde">
+              {t.tracking.seeBill}
+              <ChevronRight size={16} strokeWidth={2.25} aria-hidden />
+            </span>
+          </button>
+        )}
 
         {/* "Llamar al mesero" es el botón flotante; pagar, la fila "Cuenta de la mesa". */}
         <DockSpacer size={openState.open ? 'lg' : 'md'} />

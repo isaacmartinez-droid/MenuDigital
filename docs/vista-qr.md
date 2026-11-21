@@ -102,7 +102,7 @@ y, al final, avisa a caja cuánto y cómo va a pagar. **El pago siempre es en ca
 | `/m/:mesa/cuenta/pagada` | Cuenta pagada | `Paid.tsx` |
 | mesa o ruta que no existe | "Este QR no es válido" | `InvalidTable.tsx` |
 | error al cargar una pantalla | Pantalla amable con "Reintentar" | `RouteError.tsx` |
-| `/` | Redirige a `/m/5` conservando los flags (solo para la demo) | `RootRedirect.tsx` |
+| `/` y demás rutas sin `/m/` | Web para llevar (ver el README) | `WebLayout.tsx`, `Home.tsx`, … |
 | `/componentes` | Muestrario de componentes (solo en desarrollo) | `ComponentsPreview.tsx` |
 
 - Las mesas válidas salen de `restaurant.json → tables` (hoy, de la 1 a la 8).
@@ -168,7 +168,7 @@ y la cuenta pagada.
 4. Píldora **"Ya vamos a pagar"**, solo si este teléfono ya envió algo.
    *Decisión:* antes salía aunque no se hubiera pedido nada, o por pedidos de otros.
 
-**Barra de orden en curso:** "Tu orden FN-0142 · en el comal", mientras haya una orden sin
+**Barra de orden en curso:** "Tu orden FN-0142 · cocinando", mientras haya una orden sin
 entregar. Un toque abre su seguimiento.
 
 **Buscador (`SearchBar`):** "¿Qué se te antoja?".
@@ -302,8 +302,8 @@ Asados, Antojitos, Bebidas), con los agotados al final de cada una.
 | Paso | Titular |
 |---|---|
 | Recibida | "Estamos procesando tu orden · La cocina la recibe en un momento" |
-| En el comal | "Tu orden está en el comal · Lista en unos N min" |
-| Lista | "¡Ya está! Va para tu mesa · El mesero ya la lleva a la Mesa 5" |
+| Cocinando | "Ya estamos cocinando tu pedido · Lista en unos N min" |
+| Lista | "Tu comida está lista · El mesero ya la lleva a la Mesa 5" (en la web: "Pasá a recogerla") |
 | Entregada | "¡Buen provecho! · Que la disfrutés" |
 
 **Mientras se prepara:**
@@ -311,19 +311,29 @@ Asados, Antojitos, Bebidas), con los agotados al final de cada una.
   `readyEstimateMin` (15) da la hora y `etaRangeMin` (5) el margen.
 - Debajo, "En unos 15–20 min" (los minutos bajan con el tiempo) y la hora en que se pidió.
 
-**Barra de pasos (`TrackingBar`):** cuatro tramos con su ícono. El tramo actual tiene una
-barra que se mueve y un pulso en el ícono; con "reducir movimiento" quedan quietos.
+**Línea de tiempo (`TrackingTimeline`):** los cuatro pasos en vertical (Recibida, Cocinando,
+Lista y Entregada; en la web, Recogida), cada uno con su ícono y la hora en que pasó.
+- Los pasos hechos quedan en verde con su propio ícono (recibo, llama, campana o bolsa,
+  cubiertos o paquete), unidos por una línea.
+- El paso en curso va en ámbar, dice "ahora", tiene un pulso en el ícono y una barra que avanza;
+  con "reducir movimiento" quedan quietos.
+- Los que faltan van en gris; "Lista" muestra la hora estimada ("~7:57 pm").
+- Al entregarse queda como la historia del pedido, con la hora de cada paso.
+- En la demo los pasos duran segundos, así que las horas casi coinciden; con la cocina real
+  (que manda la hora de cada cambio) se separan.
+- *Decisión:* reemplazó a la barra horizontal con checks iguales, y "En el comal" y "¡Ya
+  está!" pasaron a "Cocinando" y "Lista", más claros para todos.
 
 **Avisos en cada paso:**
 - La tarjeta "¿Te avisamos en cada paso?" ofrece **Activar avisos** o **Ahora no**. "Ahora
   no" se recuerda en la pestaña.
-- Con permiso, llega una notificación del sistema al pasar a En el comal, Lista y Entregada
+- Con permiso, llega una notificación del sistema al pasar a Cocinando, Lista y Entregada ("Ya estamos cocinando tu orden FN-0142", "Tu orden FN-0142 está lista")
   (`notifications.statuses`). Llega una por orden, y la nueva reemplaza a la anterior.
 - Tocar la notificación abre ese seguimiento.
 - Se siguen **todas** las órdenes de este teléfono que no se entregaron, aunque estés en otra
   pantalla.
-- Al quedar lista, el teléfono vibra (en Android) y el título de la pestaña dice "¡Ya está!"
-  hasta que se entrega.
+- Al quedar lista, el teléfono vibra (en Android) y el título de la pestaña dice "Tu comida
+  está lista" hasta que se entrega.
 
 **Contenido:**
 - **La comanda (`Comanda`):** el número FN-0142 escrito a mano (Caveat), la pastilla de mesa,
@@ -550,7 +560,7 @@ Corre siempre, en cualquier pantalla de la mesa:
 | `StarRating` | Estrellas para calificar, usables con teclado |
 | `Tag` | Etiqueta de color (ámbar, promo, combo, agotado, oscuro, contorno) |
 | `Toast` | Aviso temporal con acción (Deshacer) |
-| `TrackingBar` | Barra de 4 pasos del seguimiento, con animación del paso actual |
+| `TrackingTimeline` | Línea de tiempo vertical del seguimiento: ícono y hora de cada paso, con animación del paso actual |
 | `WaiterBanner` | Tarjeta de estado del llamado al mesero |
 | `WaiterButton` | Botón flotante "Llamar al mesero" con su hoja y sus avisos |
 | `WaiterSheet` | Hoja "¿Qué necesitás?" |
@@ -563,7 +573,7 @@ Corre siempre, en cualquier pantalla de la mesa:
 | `api.ts` | Servidor simulado (ver 6.2) |
 | `catalog.ts` | Único lugar que lee los JSON: `restaurant`, `menu`, `getDish`, `getSide`, `getExtra`, `unitPrice`, `dishesByCategory`, `isValidTable` |
 | `closeTable.ts` | Borra la mesa del navegador y reinicia sus stores |
-| `comandaStatus.ts` | `itemDetails` (detalle de un plato), `statusLabel`, `sentAtClock`, `etaMinutes`, `etaFor` (rango de hora) y `activeComanda` |
+| `comandaStatus.ts` | `itemDetails` (detalle de un plato), `statusLabel`, `sentAtClock`, `etaMinutes`, `etaFor` (rango de hora), `stepClocks` (hora de cada paso) y `activeComanda` |
 | `combos.ts` | `isOnDay`, `dayBadge`, `combosFor(hoy)`, `onlyDaysText`, `daysLabel` y `useToday` |
 | `cx.ts` | Une clases CSS |
 | `demoFlags.ts` | Lee y guarda los flags de la demo (`readDemoFlags`, `useDemoFlags`, `wantsFreshTable`, `clearAgotado`) |
@@ -627,8 +637,8 @@ Corre siempre, en cualquier pantalla de la mesa:
 | `carouselMs` | 4000 | Avance del carrusel y espera después de tocarlo |
 | `undoToastMs` | 4000 | Cuánto dura el aviso con Deshacer |
 | `processingMs` | 3000 | Duración de "Procesando" |
-| `cookingMs` | 8000 | Duración de "En el comal" |
-| `readyMs` | 4000 | Duración de "¡Ya está!" hasta "Entregada" |
+| `cookingMs` | 8000 | Duración de "Cocinando" |
+| `readyMs` | 4000 | Duración de "Lista" hasta "Entregada" |
 | `readyEstimateMin` | 15 | Minutos estimados que se muestran |
 | `etaRangeMin` | 5 | Margen del rango de hora |
 | `waiterAckMs` | 3000 | Cuánto tarda "Carlos va en camino" |
@@ -773,6 +783,7 @@ Todas se tomaron con el cliente al revisar cada pantalla.
 | Se envía sin confirmar | Hoja "¿Enviamos tu pedido?" con Pedir algo más | Evitar envíos por error y juntar todo en una comanda |
 | Tu pedido como lista simple | Secciones con título, aviso de cuenta, hora estimada y nota editable | Es la pantalla de servicio |
 | "Lista en unos 15 min" | Hora en rango, barra animada y avisos en cada paso | Que se sepa cuándo está lista sin mirar la pantalla |
+| Barra de 4 pasos con checks, "En el comal" y "¡Ya está!" | Línea de tiempo con el ícono y la hora de cada paso; "Cocinando" y "Lista" | Los checks iguales no decían nada; los textos nuevos son más claros |
 | Botones del mesero dentro de algunas pantallas | Botón flotante en toda la app | Que esté siempre a mano |
 | Cuenta de toda la mesa, por persona | Lo tuyo primero, y elegís si pagás lo tuyo o toda la mesa | Cada persona paga desde su teléfono |
 | "¿Pagan juntos o cada quien lo suyo?" | "¿Qué vas a pagar?" con montos, y "¿Cómo pagás?" con vuelto | Más claro, y caja se prepara |

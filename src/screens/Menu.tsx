@@ -267,7 +267,7 @@ export function Menu() {
                 )}
                 <span className="min-w-0 flex-1 font-semibold">
                   {active.status === 'lista'
-                    ? fmt(t.tracking.activeBarReady, { id: active.id })
+                    ? fmt(takeout ? t.web.activeBarReady : t.tracking.activeBarReady, { id: active.id })
                     : fmt(t.tracking.activeBar, { id: active.id, status: statusLabel(active.status).toLowerCase() })}
                 </span>
                 <ChevronRight size={18} strokeWidth={2} aria-hidden className="shrink-0" />

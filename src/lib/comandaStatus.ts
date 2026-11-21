@@ -16,7 +16,7 @@ export function itemDetails(item: ComandaItem): string {
 
 const ORDER: ComandaStatus[] = ['recibida', 'en-el-comal', 'lista', 'entregada']
 
-/** "En el comal", "¡Ya está!"… (mismos nombres que los pasos de la barra). */
+/** "Cocinando", "Lista"… (mismos nombres que los pasos de la línea de tiempo). */
 export const statusLabel = (status: ComandaStatus): string => t.tracking.steps[ORDER.indexOf(status)] ?? status
 
 /** Hora en que se envió, en la zona del local: "7:42 pm". */
@@ -62,6 +62,26 @@ export function etaFor(comanda: Comanda, now: number): Eta {
     minFrom,
     minTo: minFrom + etaRangeMin,
   }
+}
+
+/**
+ * Hora de cada paso (recibida, cocinando, lista, entregada) para la línea de
+ * tiempo: la de los pasos ya pasados y, para "lista" todavía pendiente, la
+ * estimada ("~7:57 pm"). Hoy se calcula con los tiempos del simulador; con API
+ * real, cocina manda la hora de cada cambio.
+ */
+export function stepClocks(comanda: Comanda, status: ComandaStatus): (string | undefined)[] {
+  const { processingMs, cookingMs, readyMs, readyEstimateMin } = restaurant.timings
+  const tz = restaurant.schedule.timezone
+  const clock = (ms: number) => formatClock(zonedNow(tz, new Date(ms)).minutes)
+  const sent = Date.parse(comanda.createdAt)
+  const at = [sent, sent + processingMs, sent + processingMs + cookingMs, sent + processingMs + cookingMs + readyMs]
+  const current = ORDER.indexOf(status)
+  return at.map((ms, i) => {
+    if (i <= current) return clock(ms)
+    if (i === 2) return `~${clock(sent + readyEstimateMin * 60_000)}`
+    return undefined
+  })
 }
 
 /** La orden de este teléfono que sigue en curso (la más reciente sin entregar), si hay. */
