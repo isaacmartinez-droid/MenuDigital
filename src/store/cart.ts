@@ -42,6 +42,8 @@ interface CartState {
   setLineQuantity: (lineId: string, quantity: number) => AddResult
   /** Reemplaza una línea (al editarla desde el detalle). */
   replaceLine: (lineId: string, line: NewLine) => AddResult
+  /** Edita la nota de un plato desde "Tu pedido" (vacía = sin nota). */
+  setLineNote: (lineId: string, note: string) => void
   setCustomerName: (name: string) => void
   setKitchenNote: (note: string) => void
   /** Vacía el pedido después de enviarlo (el nombre y la nota se recuerdan). */
@@ -124,6 +126,9 @@ const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
     return { ok: true, lineId }
   },
 
+  // Se guarda tal cual mientras se escribe (sin recortar, para no comerse los espacios).
+  setLineNote: (lineId, note) =>
+    set({ items: get().items.map((i) => (i.lineId === lineId ? { ...i, note: note || undefined } : i)) }),
   replaceLine: (lineId, line) => {
     const { items } = get()
     const old = items.find((i) => i.lineId === lineId)

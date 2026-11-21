@@ -30,6 +30,8 @@ Se agregan a cualquier URL y quedan activos mientras la pestaña esté abierta.
 | `?forzar=cerrado` | Fuera de horario (M8): se ve el menú, sin + ni barra de pedido. Si la mesa ya pidió, siguen "Llamar al mesero" y "Ya vamos a pagar"; lo que no se puede es pedir algo más. |
 | `?forzar=abierto` | Abierto aunque sea fuera de horario (útil para presentar de día). |
 | `?forzar=agotado` | Sobre la comanda en curso, sale la hoja "Se acabó el maduro" (M4g). Se usa una vez. |
+| `?forzar=pago-rapido` | Después de "Avisar a caja", caja cobra a los 5 s (normalmente "Pasá a caja" queda 10 min, `timings.billPaidMs`). |
+| `?forzar=mesa-nueva` | Borra todo lo de esa mesa en este navegador (pedidos, cuenta, nombre) y empieza de cero, con portada. |
 | `?forzar=ninguno` | Quita todos los forzados y vuelve al horario real. |
 | `?compas=0` | Sin compañeros de mesa simulados (Carlos y Teléfono 3). Por defecto están. |
 | `?dia=martes` | El menú hace de cuenta que hoy es ese día, para ver los combos del día (`?dia=jueves`, `?dia=sabado` o `?dia=0`…`6`, con 0 = domingo). `?dia=hoy` vuelve al día real. |
@@ -62,7 +64,8 @@ Para empezar de cero: cerrar la pestaña, o borrar el almacenamiento del sitio.
    algo más** (otra comanda, misma cuenta) o **Ya vamos a pagar** (aparece cuando ya pidieron).
 6. **Tu cuenta**: lo tuyo con el detalle de cada plato → **¿Qué vas a pagar?** (solo lo mío o
    toda la mesa) → propina → **¿Cómo pagás?** (opcional; con efectivo, con cuánto, para el
-   vuelto) → **Avisar a caja** → a los 5 s, cuenta pagada y el teléfono se desconecta de la mesa
+   vuelto) → **Avisar a caja** → "Pasá a caja y decí Mesa 5" (10 min; con `?forzar=pago-rapido`,
+   5 s) → cuenta pagada y el teléfono se desconecta de la mesa
    (los próximos clientes no ven estos pedidos).
 
 ## Cambiar de restaurante

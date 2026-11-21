@@ -10,6 +10,9 @@ import { readItem, writeItem } from './storage'
  *   ?forzar=abierto   abierto aunque sea fuera de horario
  *   ?forzar=agotado   se acaba una parte del plato de la comanda en curso (M4g);
  *                     se usa una vez y no cambia el forzado abierto/cerrado
+ *   ?forzar=pago-rapido  caja cobra a los 5 s de avisar (en vez de timings.billPaidMs)
+ *   ?forzar=mesa-nueva   borra todo lo de esa mesa en este navegador y empieza de cero
+ *                        (lo hace MesaLayout; no se guarda)
  *   ?forzar=ninguno   quita todos los forzados
  *   ?compas=0         sin compañeros de mesa simulados (Carlos, Teléfono 3)
  *   ?dia=martes       el menú se comporta como si hoy fuera ese día (combos del día);
@@ -21,10 +24,16 @@ export interface DemoFlags {
   compas: boolean
   /** Día de la semana forzado (0 = domingo), o null para usar el real. */
   dia: number | null
+  /** Caja cobra a los 5 s (para presentar sin esperar). */
+  pagoRapido: boolean
 }
 
 const KEY = `${restaurant.id}:demo`
-const DEFAULTS: DemoFlags = { horario: null, agotado: false, compas: true, dia: null }
+const DEFAULTS: DemoFlags = { horario: null, agotado: false, compas: true, dia: null, pagoRapido: false }
+
+/** ?forzar=mesa-nueva: ¿hay que empezar la mesa de cero? */
+export const wantsFreshTable = (search: string): boolean =>
+  new URLSearchParams(search).getAll('forzar').includes('mesa-nueva')
 
 const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
 
@@ -56,10 +65,13 @@ export function readDemoFlags(search: string = window.location.search): DemoFlag
     changed = true
     if (value === 'cerrado' || value === 'abierto') flags.horario = value
     else if (value === 'agotado') flags.agotado = true
+    else if (value === 'pago-rapido') flags.pagoRapido = true
+    else if (value === 'mesa-nueva') continue
     else {
       flags.horario = null
       flags.agotado = false
       flags.dia = null
+      flags.pagoRapido = false
     }
   }
   if (params.has('dia')) {

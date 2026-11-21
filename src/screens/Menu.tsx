@@ -48,6 +48,8 @@ export function Menu() {
   const canOrder = openState.open
   // Mesa con cuenta abierta: aunque pase la hora de cierre, puede llamar al mesero y pagar.
   const hasAccount = useComandas(mesa, (s) => s.comandas.length > 0)
+  // "Ya vamos a pagar" solo cuando este teléfono ya envió algo (no por pedidos de otros).
+  const hasMine = useComandas(mesa, (s) => s.comandas.some((c) => c.mine))
   const active = useComandas(mesa, (s) => activeComanda(s.comandas))
   const today = useToday()
 
@@ -210,8 +212,8 @@ export function Menu() {
     )
   } else if (!online) {
     slot = <NoticeBanner role="status" tone="aviso" title={t.offline.title} body={t.offline.body} />
-  } else if (hasAccount) {
-    // "Llamar al mesero" es el botón flotante; acá queda pagar, solo si ya pidieron.
+  } else if (hasMine) {
+    // "Llamar al mesero" es el botón flotante; acá queda pagar, solo si este teléfono ya pidió.
     slot = (
       <Button
         variant="pill"

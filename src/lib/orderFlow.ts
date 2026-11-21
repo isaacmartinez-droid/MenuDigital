@@ -22,7 +22,7 @@ export function toComandaItems(items: CartItem[]): ComandaItem[] {
           const e = getExtra(id)
           return e ? [{ id: e.id, name: e.name, price: e.price }] : []
         }),
-        note: line.note,
+        note: line.note?.trim() || undefined,
         unitPrice: unit,
         lineTotal: unit * line.quantity,
       },

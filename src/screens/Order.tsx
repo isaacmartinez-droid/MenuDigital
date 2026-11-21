@@ -10,7 +10,7 @@ import { Button } from '../components/Button'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { BottomSheet } from '../components/BottomSheet'
-import { Clock, CupSoda, Pencil, Plus, ReceiptText } from 'lucide-react'
+import { ChevronRight, Clock, CupSoda, Pencil, Plus, ReceiptText, X } from 'lucide-react'
 import { useComandas } from '../store/comandas'
 import { getDish, getExtra, getSide, menu, restaurant } from '../lib/catalog'
 import { formatMoney } from '../lib/money'
@@ -42,6 +42,12 @@ export function Order() {
   const [skipName, setSkipName] = useState(false)
   const [sending, setSending] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  // Platos con nota: los que la tenían al entrar siguen visibles aunque se borre el texto
+  // escribiendo (para no perder el campo a mitad de la edición); la ✕ los quita.
+  const [shownNoteIds, setShownNoteIds] = useState<string[]>(() =>
+    cartStore(mesa).getState().items.filter((i) => i.note).map((i) => i.lineId),
+  )
+  const notedLines = items.filter((i) => i.note || shownNoteIds.includes(i.lineId))
   /** true mientras el campo de la nota tiene el foco; al salir, una nota escrita se ve guardada. */
   const [editingNote, setEditingNote] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -114,16 +120,27 @@ export function Order() {
           </div>
         ) : (
           <>
-            {/* Pedido que se suma a lo que la mesa ya pidió (misma cuenta). */}
+            {/* Lo que la mesa ya pidió antes y cómo queda la cuenta con este pedido; abre la cuenta. */}
             {accountSoFar > 0 && (
-              <div className="mb-3 flex items-center gap-2.5 rounded-tarjeta bg-verde-suave px-3 py-2.5 text-small text-verde">
+              <button
+                type="button"
+                onClick={() => navigate(paths.bill(mesa))}
+                className="mb-3 flex w-full items-center gap-2.5 rounded-tarjeta bg-verde-suave px-3 py-2.5 text-left text-small text-verde"
+              >
                 <ReceiptText size={18} strokeWidth={2} aria-hidden className="shrink-0" />
-                <p>
-                  <span className="font-semibold">{t.order.accountOpen}</span>
-                  {' · '}
-                  {fmt(t.order.accountSoFar, { total: formatMoney(accountSoFar) })}
-                </p>
-              </div>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">
+                    {fmt(t.order.accountOpen, { total: formatMoney(accountSoFar) })}
+                  </span>
+                  <span className="block text-texto">
+                    {fmt(t.order.accountWithThis, { total: formatMoney(accountSoFar + total) })}
+                  </span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-0.5 font-semibold">
+                  {t.order.accountSee}
+                  <ChevronRight size={16} strokeWidth={2.25} aria-hidden />
+                </span>
+              </button>
             )}
 
             <section aria-labelledby="tus-platos">
@@ -231,13 +248,59 @@ export function Order() {
               )}
             </section>
 
-            {/* Nota para la cocina: sin nota, campo para escribir; con nota ya escrita (en este
-                pedido o en uno anterior), se muestra guardada con "Editar" y "Quitar". */}
+            {/* Todas las notas en un solo lugar: las de cada plato (editables acá, con ✕ para
+                quitarlas) y la de todo el pedido (sin nota, campo; con nota, guardada con
+                "Editar" y "Quitar"). */}
             <section className="mt-5" aria-labelledby={`${nameId}-nota-t`}>
+              <h2 id={`${nameId}-nota-t`} className="text-dish text-texto">
+                {t.order.noteTitle} <span className="font-normal text-texto-2">{t.order.noteOptional}</span>
+              </h2>
+              {notedLines.length > 0 && (
+                <ul className="mt-2 space-y-2.5">
+                  {notedLines.map((line) => {
+                    const dishName = getDish(line.dishId)?.name ?? ''
+                    const inputId = `${nameId}-nota-${line.lineId}`
+                    return (
+                      <li key={line.lineId}>
+                        <label htmlFor={inputId} className="text-small font-semibold text-texto">
+                          {dishName}
+                        </label>
+                        <div className="mt-1 flex h-11 items-center rounded-tarjeta border border-borde bg-tarjeta has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-verde">
+                          <input
+                            id={inputId}
+                            type="text"
+                            value={line.note ?? ''}
+                            onChange={(e) => cart().setLineNote(line.lineId, e.target.value)}
+                            aria-label={fmt(t.order.noteFor, { dish: dishName })}
+                            placeholder={t.detail.notePlaceholder}
+                            maxLength={120}
+                            enterKeyHint="done"
+                            className="h-full min-w-0 flex-1 bg-transparent pl-3 text-body text-texto outline-none placeholder:text-texto-2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              cart().setLineNote(line.lineId, '')
+                              setShownNoteIds((ids) => ids.filter((id) => id !== line.lineId))
+                            }}
+                            aria-label={fmt(t.order.noteClear, { dish: dishName })}
+                            className="grid size-11 shrink-0 place-items-center text-texto-2"
+                          >
+                            <X size={18} strokeWidth={2} aria-hidden />
+                          </button>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
               {editingNote || !kitchenNote.trim() ? (
                 <>
-                  <label id={`${nameId}-nota-t`} htmlFor={`${nameId}-nota`} className="text-dish text-texto">
-                    {t.order.noteTitle} <span className="font-normal text-texto-2">{t.order.noteOptional}</span>
+                  <label
+                    htmlFor={`${nameId}-nota`}
+                    className={notedLines.length > 0 ? 'mt-3 block text-small font-semibold text-texto' : 'sr-only'}
+                  >
+                    {notedLines.length > 0 ? t.order.noteGeneral : t.order.noteTitle}
                   </label>
                   <textarea
                     id={`${nameId}-nota`}
@@ -259,9 +322,9 @@ export function Order() {
                 </>
               ) : (
                 <>
-                  <h2 id={`${nameId}-nota-t`} className="text-dish text-texto">
-                    {t.order.noteTitle}
-                  </h2>
+                  {notedLines.length > 0 && (
+                    <p className="mt-3 text-small font-semibold text-texto">{t.order.noteGeneral}</p>
+                  )}
                   <div className="mt-2 rounded-tarjeta border border-borde bg-tarjeta px-3 pt-2.5 pb-1">
                     <p className="text-body break-words text-texto">{kitchenNote.trim()}</p>
                     <div className="-mr-2 flex justify-end">
@@ -349,7 +412,10 @@ export function Order() {
             return (
               <li key={line.lineId} className="flex items-baseline gap-2 text-body">
                 <span className="w-6 shrink-0 text-texto-2">{line.quantity}×</span>
-                <span className="min-w-0 flex-1 text-texto">{dish.name}</span>
+                <span className="min-w-0 flex-1 text-texto">
+                  {dish.name}
+                  {line.note?.trim() && <span className="block text-small text-texto-2">{line.note.trim()}</span>}
+                </span>
                 <span className="shrink-0 text-texto">{formatMoney(lineTotal(line))}</span>
               </li>
             )
@@ -381,8 +447,8 @@ function OrderLine({ line, onQuantity, onChangeSide }: OrderLineProps) {
       const e = getExtra(id)
       return e?.shortName ?? e?.name ?? ''
     }),
-    line.note ?? '',
   ].filter(Boolean)
+  // La nota del plato no va acá: se ve y se edita en "Nota para la cocina".
 
   return (
     <li className="flex gap-3 py-3 first:pt-[13px]">

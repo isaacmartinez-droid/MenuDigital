@@ -239,7 +239,9 @@ export async function requestBill(tableId: string, request: BillRequest): Promis
  * API real: WebSocket con el evento "mesa cerrada".
  */
 export async function waitForPayment(tableId: string, sinceMs: number): Promise<Receipt> {
-  const remaining = Math.max(0, sinceMs + timings.billPaidMs - Date.now())
+  // "Pasá a caja" queda timings.billPaidMs (10 min); con ?forzar=pago-rapido, 5 s.
+  const delay = readDemoFlags().pagoRapido ? 5000 : timings.billPaidMs
+  const remaining = Math.max(0, sinceMs + delay - Date.now())
   await wait(remaining)
   const state = loadServer(tableId)
   const scope = state.bill?.scope ?? 'table'

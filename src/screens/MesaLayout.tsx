@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { wantsFreshTable } from '../lib/demoFlags'
 import { Outlet, ScrollRestoration, useLocation, useNavigate, useParams } from 'react-router'
 import { WaiterButton } from '../components/WaiterButton'
 import { useOpenState } from '../lib/useOpenState'
@@ -20,6 +21,31 @@ import { InvalidTable } from './InvalidTable'
 export function MesaLayout() {
   const { mesa } = useParams()
   if (!isValidTable(mesa)) return <InvalidTable />
+  return <MesaScreens key={mesa} mesa={mesa} />
+}
+
+function MesaScreens({ mesa }: { mesa: string }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Demo ?forzar=mesa-nueva: se borra todo lo de la mesa antes de que las pantallas la lean.
+  const [fresh] = useState(() => {
+    if (!wantsFreshTable(location.search)) return false
+    closeTable(mesa)
+    return true
+  })
+  // Después se saca el flag de la dirección (si no, cada recarga volvería a borrar).
+  useEffect(() => {
+    if (!fresh) return
+    const params = new URLSearchParams(location.search)
+    const others = params.getAll('forzar').filter((v) => v !== 'mesa-nueva')
+    params.delete('forzar')
+    others.forEach((v) => params.append('forzar', v))
+    const search = params.toString()
+    navigate({ pathname: location.pathname, search: search ? `?${search}` : '' }, { replace: true })
+    // Solo una vez, al entrar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <>
       <TableSession mesa={mesa} />
