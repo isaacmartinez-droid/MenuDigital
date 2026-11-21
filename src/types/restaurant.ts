@@ -65,6 +65,19 @@ export interface RestaurantConfig {
   /** ids de mesa válidos (lo que va en /m/:mesa). */
   tables: string[]
   whatsapp: { number: string; message: string }
+  /** Página web para llevar (W1 Inicio y W9 Domicilio). */
+  web: {
+    /** Foto de portada del inicio. */
+    cover: string
+    /** Dirección del local; vacía = "Dirección por confirmar". */
+    address: string
+    /** Link de "Cómo llegar" (Google Maps). */
+    mapsUrl: string
+    /** Calificación y reseñas de Google (de ejemplo hasta conectar el perfil real). */
+    google: { rating: number; count: number; url: string; reviews: { text: string; when: string }[] }
+    /** Costo de envío a domicilio (W9, todavía no activo). */
+    deliveryFee: number
+  }
   schedule: { timezone: string; ranges: ScheduleRange[] }
   ordering: {
     maxItemsPerComanda: number
@@ -82,6 +95,8 @@ export interface RestaurantConfig {
   timings: {
     /** Margen del rango de hora estimada: "7:57 – 8:02 pm". */
     etaRangeMin: number
+    /** W0 Bienvenida de la web: se quita sola después de este tiempo. */
+    webWelcomeMs: number
     /** Avance automático de "Los más vendidos". */
     carouselMs: number
     undoToastMs: number

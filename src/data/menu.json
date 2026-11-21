@@ -273,5 +273,13 @@
     }
   ],
   "bestSellers": ["fritanga-tradicional", "enchilada", "combo-para-dos"],
-  "suggestedDrinks": ["fresco-de-cacao", "chicha"]
+  "suggestedDrinks": ["fresco-de-cacao", "chicha"],
+  "promo": {
+    "label": "Promo",
+    "title": "2 enchiladas por C$ 160",
+    "subtitle": "Hoy de 4 a 7 pm",
+    "homeSubtitle": "Solo hoy, de 4 a 7 pm",
+    "image": "/img/enchilada.webp",
+    "dishId": "enchilada"
+  }
 }

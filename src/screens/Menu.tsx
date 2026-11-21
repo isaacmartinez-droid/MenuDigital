@@ -7,7 +7,10 @@ import { SearchBar } from '../components/SearchBar'
 import { CategoryTabs } from '../components/CategoryTabs'
 import { DishCard } from '../components/DishCard'
 import { Carousel } from '../components/Carousel'
-import { COMBOS_CATEGORY, combosFor, isOnDay, useToday } from '../lib/combos'
+import { COMBOS_CATEGORY, bestSellersFor, combosFor, isOnDay, useToday } from '../lib/combos'
+import { isTakeout } from '../lib/channel'
+import { PromoCard } from '../components/PromoCard'
+import { WhatsAppButton } from '../components/WhatsAppButton'
 import { CartBar, BottomDock, DockSpacer } from '../components/CartBar'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -39,9 +42,14 @@ const normalize = (s: string) =>
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
 
-/** M1 Menú (y M1b: agregado con un toque). */
+/**
+ * M1 Menú (y M1b: agregado con un toque). En la web es W3 Menú para llevar:
+ * "Para llevar" en el encabezado, promo del día, "Escribinos" por WhatsApp y
+ * nada de la mesa (portada con mesa, Ya vamos a pagar).
+ */
 export function Menu() {
   const mesa = useMesa()
+  const takeout = isTakeout(mesa)
   const navigate = useNavigate()
   const items = useCart(mesa, (s) => s.items)
   const openState = useOpenState()
@@ -53,9 +61,9 @@ export function Menu() {
   const active = useComandas(mesa, (s) => activeComanda(s.comandas))
   const today = useToday()
 
-  // M0: solo la primera vez de esta sesión en esta mesa.
+  // M0: solo la primera vez de esta sesión en esta mesa (la web tiene su propia bienvenida, W0).
   const welcomeKey = tableKey(mesa, 'bienvenida')
-  const [showWelcome, setShowWelcome] = useState(() => readItem('session', welcomeKey) !== '1')
+  const [showWelcome, setShowWelcome] = useState(() => !takeout && readItem('session', welcomeKey) !== '1')
   const finishWelcome = () => {
     writeItem('session', welcomeKey, '1')
     setShowWelcome(false)
@@ -154,14 +162,9 @@ export function Menu() {
   const count = countItems(items)
   const total = cartTotal(items)
   const combos = combosFor(today)
-  // "Los más vendidos": el combo de hoy va primero, después los de menu.json (sin repetir).
-  const todaysCombos = combos.filter((d) => d.available && d.days?.includes(today))
-  const bestSellers = [
-    ...todaysCombos,
-    ...menu.bestSellers
-      .map(getDish)
-      .filter((d): d is Dish => Boolean(d) && !todaysCombos.some((c) => c.id === d?.id)),
-  ]
+  const bestSellers = bestSellersFor(today)
+  const promo = takeout ? menu.promo : undefined
+  const promoDish = promo ? getDish(promo.dishId) : undefined
   // Búsqueda sin resultados: se sugieren los más vendidos que se pueden pedir hoy.
   const suggestions = bestSellers.filter((d) => d.available && isOnDay(d, today)).slice(0, 4)
   // Sin combos cargados, la categoría "combos" no tiene pestaña ni sección.
@@ -212,7 +215,7 @@ export function Menu() {
     )
   } else if (!online) {
     slot = <NoticeBanner role="status" tone="aviso" title={t.offline.title} body={t.offline.body} />
-  } else if (hasMine) {
+  } else if (hasMine && !takeout) {
     // "Llamar al mesero" es el botón flotante; acá queda pagar, solo si este teléfono ya pidió.
     slot = (
       <Button
@@ -240,7 +243,7 @@ export function Menu() {
               ? fmt(t.status.open, { close: openState.closesAt ?? '' })
               : fmt(t.status.closed, { open: openState.opensAt ?? '' })
           }
-          tableText={tableLabel(mesa)}
+          tableText={takeout ? t.web.place : tableLabel(mesa)}
         />
 
         <main>
@@ -319,6 +322,17 @@ export function Menu() {
                 onSearch={searchInView ? undefined : goToSearch}
               />
 
+              {/* W3: promo del día, arriba de los más vendidos. */}
+              {promo && (
+                <div className="mb-4 px-4">
+                  <PromoCard
+                    promo={promo}
+                    subtitle={promo.subtitle}
+                    onClick={() => (promoDish ? openDish(promoDish) : undefined)}
+                  />
+                </div>
+              )}
+
               {bestSellers.length > 0 && (
                 <Carousel
                   title={t.menu.bestSellers}
@@ -377,6 +391,9 @@ export function Menu() {
           </button>
         </BottomDock>
       )}
+
+      {/* Web: "Escribinos" por WhatsApp, siempre (en el QR no: el cliente está en el local). */}
+      {takeout && <WhatsAppButton />}
     </>
   )
 }

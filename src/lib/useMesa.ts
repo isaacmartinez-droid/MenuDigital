@@ -1,21 +1,28 @@
 import { useParams } from 'react-router'
+import { TAKEOUT, isTakeout } from './channel'
 
 /**
- * Id de la mesa actual. Solo se usa dentro de MesaLayout, que ya validó
- * que la mesa existe en la config.
+ * Id de la cuenta actual: el número de mesa dentro de /m/:mesa (MesaLayout ya
+ * validó que existe) o TAKEOUT en la web para llevar.
  */
 export function useMesa(): string {
   const { mesa } = useParams()
-  return mesa ?? ''
+  return mesa ?? TAKEOUT
 }
 
-/** Rutas del flujo de mesa. */
+/** Base de las rutas compartidas: "/m/5" en la mesa, "" en la web. */
+const base = (id: string) => (isTakeout(id) ? '' : `/m/${id}`)
+
+/** Rutas de las pantallas. Las compartidas sirven para la mesa y para la web. */
 export const paths = {
-  menu: (mesa: string) => `/m/${mesa}`,
-  dish: (mesa: string, dishId: string) => `/m/${mesa}/plato/${dishId}`,
-  editLine: (mesa: string, dishId: string, lineId: string) => `/m/${mesa}/plato/${dishId}?linea=${lineId}`,
-  order: (mesa: string) => `/m/${mesa}/pedido`,
-  tracking: (mesa: string, comandaId: string) => `/m/${mesa}/orden/${comandaId}`,
-  bill: (mesa: string) => `/m/${mesa}/cuenta`,
-  paid: (mesa: string) => `/m/${mesa}/cuenta/pagada`,
+  menu: (id: string) => (isTakeout(id) ? '/menu' : `/m/${id}`),
+  dish: (id: string, dishId: string) => `${base(id)}/plato/${dishId}`,
+  editLine: (id: string, dishId: string, lineId: string) => `${base(id)}/plato/${dishId}?linea=${lineId}`,
+  order: (id: string) => `${base(id)}/pedido`,
+  tracking: (id: string, comandaId: string) => `${base(id)}/orden/${comandaId}`,
+  bill: (id: string) => `/m/${id}/cuenta`,
+  paid: (id: string) => `/m/${id}/cuenta/pagada`,
+  /** Solo web. */
+  home: '/',
+  delivery: '/domicilio',
 }

@@ -2,7 +2,8 @@ import { createBrowserRouter, type RouteObject } from 'react-router'
 import { InvalidTable } from './screens/InvalidTable'
 import { MesaLayout } from './screens/MesaLayout'
 import { Menu } from './screens/Menu'
-import { RootRedirect } from './screens/RootRedirect'
+import { WebLayout } from './screens/WebLayout'
+import { Home } from './screens/Home'
 import { RouteError } from './screens/RouteError'
 
 /*
@@ -16,10 +17,24 @@ const screens = {
   tracking: () => import('./screens/Tracking'),
   bill: () => import('./screens/Bill'),
   paid: () => import('./screens/Paid'),
+  delivery: () => import('./screens/Delivery'),
 }
 
 const routes: RouteObject[] = [
-  { path: '/', element: <RootRedirect /> },
+  // Web para llevar: / es el inicio (W1); menú, detalle y pedido son las mismas pantallas de la mesa.
+  {
+    path: '/',
+    element: <WebLayout />,
+    errorElement: <RouteError />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: 'menu', element: <Menu /> },
+      { path: 'plato/:dishId', lazy: async () => ({ Component: (await screens.detail()).DishDetail }) },
+      { path: 'pedido', lazy: async () => ({ Component: (await screens.order()).Order }) },
+      { path: 'orden/:comandaId', lazy: async () => ({ Component: (await screens.tracking()).Tracking }) },
+      { path: 'domicilio', lazy: async () => ({ Component: (await screens.delivery()).Delivery }) },
+    ],
+  },
   {
     path: '/m/:mesa',
     element: <MesaLayout />,

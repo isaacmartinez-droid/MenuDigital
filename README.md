@@ -13,14 +13,19 @@ pendientes): [docs/vista-qr.md](docs/vista-qr.md). Forma de trabajo: [CLAUDE.md]
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 → abre la Mesa 5
+npm run dev        # http://localhost:5173 → web para llevar · /m/5 → Mesa 5
 npm run build      # verifica tipos y genera dist/
 npm run lint
 npm run preview    # sirve el build de producción
 ```
 
-Cada mesa tiene su URL: `/m/5` es la Mesa 5 (es lo que va en el QR). `/` redirige a `/m/5`
-para la demo. Una mesa que no está en la config muestra "Este QR no es válido".
+Hay dos canales en la misma app; la URL decide cuál:
+
+- **Mesa (QR):** cada mesa tiene su URL, `/m/5` es la Mesa 5 (es lo que va en el QR). Una mesa
+  que no está en la config muestra "Este QR no es válido".
+- **Web para llevar:** `/` es el inicio (la primera vez, con la bienvenida de 2 s), `/menu` el
+  menú, `/plato/<id>` el detalle, `/pedido` el pedido y `/domicilio` el domicilio (diseñado, no
+  activo). En desarrollo, para volver a ver la bienvenida, borrar el almacenamiento del sitio.
 
 En desarrollo, `/componentes` muestra el muestrario de componentes base.
 

@@ -43,6 +43,15 @@ export function combosFor(today: number): Dish[] {
     .sort((a, b) => rank(a) - rank(b))
 }
 
+/** "Los más vendidos": el combo de hoy va primero, después los de menu.json (sin repetir). */
+export function bestSellersFor(today: number): Dish[] {
+  const todays = combosFor(today).filter((d) => d.available && d.days?.includes(today))
+  const rest = menu.bestSellers
+    .map((id) => menu.dishes.find((d) => d.id === id))
+    .filter((d): d is Dish => Boolean(d) && !todays.some((c) => c.id === d?.id))
+  return [...todays, ...rest]
+}
+
 /** Día de la semana de hoy en la zona del local (o el de ?dia=). Se recalcula cada minuto. */
 export function useToday(): number {
   const { dia } = useDemoFlags()

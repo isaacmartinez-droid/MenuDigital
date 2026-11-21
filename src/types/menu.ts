@@ -116,4 +116,19 @@ export interface Menu {
   bestSellers: string[]
   /** ids de bebidas sugeridas en "Tu pedido". */
   suggestedDrinks: string[]
+  /** Promo del día de la web (inicio y menú para llevar). Sin promo, no se muestra. */
+  promo?: Promo
+}
+
+export interface Promo {
+  /** Etiqueta ("Promo"). */
+  label: string
+  title: string
+  /** Texto de apoyo en el menú ("Hoy de 4 a 7 pm"). */
+  subtitle: string
+  /** Texto de apoyo en el inicio ("Solo hoy, de 4 a 7 pm"). */
+  homeSubtitle: string
+  image: string
+  /** Plato que abre la promo en el menú. */
+  dishId: string
 }

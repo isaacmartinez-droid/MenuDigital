@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cx } from '../lib/cx'
 
-export type NoticeTone = 'positivo' | 'aviso'
+export type NoticeTone = 'positivo' | 'aviso' | 'pronto'
 
 interface NoticeBannerProps {
   tone: NoticeTone
@@ -24,6 +24,8 @@ const tones: Record<NoticeTone, { box: string; dot: string; title: string; body:
     title: 'text-texto-sobre-ambar',
     body: 'text-texto-sobre-ambar',
   },
+  // Azul: algo que todavía no está activo (domicilio "Próximamente").
+  pronto: { box: 'bg-combo-fondo', dot: 'bg-azul-logo', title: 'text-azul-logo', body: 'text-texto' },
 }
 
 /** Aviso en franja con punto de color, título y texto de apoyo. */

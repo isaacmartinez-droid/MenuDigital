@@ -1,4 +1,5 @@
 import { restaurant } from './catalog'
+import { TAKEOUT, isTakeout } from './channel'
 
 /**
  * Acceso a localStorage/sessionStorage que nunca rompe la app
@@ -38,8 +39,12 @@ export function removeItem(a: Area, key: string): void {
   }
 }
 
-/** Prefijo de todas las claves de una mesa: "fritanga-nica:mesa:5:" */
-export const tablePrefix = (tableId: string) => `${restaurant.id}:mesa:${tableId}:`
+/**
+ * Prefijo de todas las claves de una mesa ("fritanga-nica:mesa:5:") o del
+ * pedido web para llevar ("fritanga-nica:llevar:").
+ */
+export const tablePrefix = (tableId: string) =>
+  isTakeout(tableId) ? `${restaurant.id}:${TAKEOUT}:` : `${restaurant.id}:mesa:${tableId}:`
 
 /** Clave de una mesa: tableKey('5', 'pedido') → "fritanga-nica:mesa:5:pedido" */
 export const tableKey = (tableId: string, name: string) => `${tablePrefix(tableId)}${name}`

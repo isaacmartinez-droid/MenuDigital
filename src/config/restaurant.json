@@ -30,6 +30,22 @@
     "number": "50500000000",
     "message": "Hola, Fritanga Nica. Tengo una consulta."
   },
+  "web": {
+    "cover": "/img/combo-para-dos.webp",
+    "address": "",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Fritanga%20Nica%20Managua",
+    "google": {
+      "rating": 4.8,
+      "count": 120,
+      "url": "https://www.google.com/maps/search/?api=1&query=Fritanga%20Nica%20Managua",
+      "reviews": [
+        { "text": "La carne bien suave y el maduro en su punto. Volvemos seguro.", "when": "hace 2 semanas" },
+        { "text": "Rápido y sabroso. El combo para dos rinde bastante.", "when": "hace 1 mes" },
+        { "text": "Sabe a la fritanga de siempre. El gallo pinto, buenísimo.", "when": "hace 1 mes" }
+      ]
+    },
+    "deliveryFee": 50
+  },
   "schedule": {
     "timezone": "America/Managua",
     "ranges": [{ "days": [0, 1, 2, 3, 4, 5, 6], "open": "16:00", "close": "22:00" }]
@@ -43,6 +59,7 @@
   "notifications": { "statuses": ["en-el-comal", "lista", "entregada"] },
   "timings": {
     "etaRangeMin": 5,
+    "webWelcomeMs": 2000,
     "carouselMs": 4000,
     "undoToastMs": 4000,
     "processingMs": 3000,
@@ -365,6 +382,46 @@
       "cashierValue": "{cashier} · caja",
       "closedNote": "La mesa se cerró. Los próximos clientes empiezan una cuenta nueva y no ven estos pedidos.",
       "closedNoteMine": "Tu parte quedó pagada y este teléfono se desconectó de la mesa. Tus compañeros pagan lo suyo en caja."
+    },
+    "web": {
+      "place": "Para llevar",
+      "welcomeLead": "La fritanga de siempre, ahora en tu teléfono",
+      "welcomeHint": "Solo la primera vez · tocá para entrar",
+      "tagline": "Carne asada al carbón, gallo pinto y maduro. Como la de siempre.",
+      "openUntil": "Abierto · hasta {close}",
+      "closedUntil": "Cerrado · abrimos a las {open}",
+      "googleRating": "{rating} · {count} reseñas en Google (ejemplo)",
+      "googleStars": "{rating} de 5 estrellas en Google",
+      "howTitle": "¿Cómo lo querés?",
+      "takeoutTitle": "Para llevar",
+      "takeoutHint": "Recogés en el local",
+      "deliveryTitle": "Domicilio",
+      "soon": "Próximamente",
+      "qrHint": "¿Estás en el local? Escaneá el QR de tu mesa: es más rápido.",
+      "seeMenu": "Ver menú →",
+      "reviewsTitle": "Lo que dicen en Google",
+      "reviewAuthor": "Cliente de Google · {when}",
+      "reviewsNote": "Reseñas de ejemplo · se cargan de Google",
+      "seeAll": "Ver todas →",
+      "hoursTitle": "Horario",
+      "everyDay": "Todos los días",
+      "hoursRange": "{days} · {open} a {close}",
+      "whereTitle": "Dónde estamos",
+      "addressPending": "Dirección por confirmar",
+      "directions": "Cómo llegar",
+      "cta": "Ver menú y pedir",
+      "deliveryPageTitle": "Domicilio",
+      "deliverySubtitle": "Muy pronto",
+      "deliveryNoticeTitle": "Pronto vas a poder pedir a domicilio",
+      "deliveryNoticeBody": "Por ahora pedí para llevar o escribinos por WhatsApp.",
+      "deliveryAddress": "Dirección",
+      "deliveryAddressExample": "De la rotonda Rubenia 2 c. al lago, casa esquinera portón verde",
+      "deliveryReference": "Referencia",
+      "deliveryReferenceExample": "Frente a la pulpería La Bendición",
+      "deliveryMap": "Mapa (próximamente)",
+      "deliveryFee": "Costo de envío",
+      "deliveryCta": "Próximamente",
+      "newTab": "(se abre en otra pestaña)"
     }
   }
 }

@@ -14,6 +14,8 @@ interface CarouselProps {
   className?: string
   /** Cada cuánto avanza solo (config: timings.carouselMs). */
   intervalMs: number
+  /** Link a la derecha del título (en la web: "Ver menú →"). */
+  action?: ReactNode
   /** Una tarjeta por hijo; cada una con snap-start. */
   children: ReactNode
 }
@@ -44,7 +46,16 @@ function scrollToSlide(track: HTMLElement, index: number) {
  * mueve mientras el foco del teclado está adentro). El botón de pausa lo para
  * del todo (WCAG 2.2.2). Con "reducir movimiento" en el sistema no arranca solo.
  */
-export function Carousel({ title, titleId, subtitle, scrollMarginTop, className, intervalMs, children }: CarouselProps) {
+export function Carousel({
+  title,
+  titleId,
+  subtitle,
+  scrollMarginTop,
+  className,
+  intervalMs,
+  action,
+  children,
+}: CarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null)
   const activeRef = useRef(0)
   const count = Children.count(children)
@@ -105,6 +116,7 @@ export function Carousel({ title, titleId, subtitle, scrollMarginTop, className,
           </h2>
           {subtitle && <p className="mt-0.5 text-small text-texto-2">{subtitle}</p>}
         </div>
+        {action && <div className="ml-auto shrink-0">{action}</div>}
         {count > 1 && (
           <button
             type="button"
