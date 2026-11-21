@@ -46,7 +46,7 @@ interface PageHeaderProps {
 /** Encabezado de página interna: botón atrás, título grande y subtítulo ("Tu pedido · Mesa 5"). */
 export function PageHeader({ title, subtitle, onBack }: PageHeaderProps) {
   return (
-    <header className="flex items-center gap-3 px-4 pt-3.5 pb-3">
+    <header className="flex items-center gap-3 px-4 pt-3 pb-3">
       <button
         type="button"
         onClick={onBack}

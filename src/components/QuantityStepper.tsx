@@ -31,7 +31,8 @@ export function QuantityStepper({
       aria-label={fmt(t.common.quantity, { n: value, dish: itemName })}
       className={cx(
         'inline-flex shrink-0 items-center rounded-completo border border-borde bg-tarjeta',
-        size === 'sm' ? 'h-[38px] gap-1 pr-[3px] pl-1' : 'h-12 gap-2 pr-[7px] pl-2',
+        // Medidas de las capturas: 97 × 37 en listas, 112 × 46 en el detalle.
+        size === 'sm' ? 'h-[37px] pr-1 pl-[3px]' : 'h-12 pr-[7px] pl-2',
         className,
       )}
     >
@@ -44,7 +45,10 @@ export function QuantityStepper({
       >
         <Minus size={22} strokeWidth={2.5} aria-hidden />
       </button>
-      <span aria-live="polite" className="min-w-6 text-center text-button text-texto tabular-nums">
+      <span
+        aria-live="polite"
+        className={cx('text-center text-button text-texto tabular-nums', size === 'sm' ? 'w-7' : 'w-8')}
+      >
         {value}
       </span>
       <button
@@ -52,9 +56,12 @@ export function QuantityStepper({
         onClick={onIncrement}
         disabled={value >= max}
         aria-label={fmt(t.common.increase, { dish: itemName })}
-        className="relative grid size-8 place-items-center rounded-completo bg-verde text-blanco disabled:bg-borde before:absolute before:-inset-1.5 before:content-['']"
+        className={cx(
+          "relative grid place-items-center rounded-completo bg-verde text-blanco disabled:bg-borde before:absolute before:-inset-2 before:content-['']",
+          size === 'sm' ? 'size-7' : 'size-8',
+        )}
       >
-        <Plus size={22} strokeWidth={2.5} aria-hidden />
+        <Plus size={size === 'sm' ? 20 : 22} strokeWidth={2.5} aria-hidden />
       </button>
     </div>
   )

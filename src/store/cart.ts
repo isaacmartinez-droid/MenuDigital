@@ -23,6 +23,9 @@ interface CartState {
   items: CartItem[]
   /** Nombre que puso el cliente (se recuerda para la próxima comanda). */
   customerName: string
+  /** El cliente tocó "Enviar" sin señal: se envía solo cuando vuelva. */
+  pendingSend: boolean
+  setPendingSend: (pending: boolean) => void
   /** Agrega una línea; si ya existe una idéntica, suma cantidad. */
   add: (line: NewLine) => AddResult
   /** El + con un toque: acompañante por defecto, sin extras ni nota. */
@@ -63,6 +66,8 @@ export const dishQuantity = (items: CartItem[], dishId: string) =>
 const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
   items: [],
   customerName: '',
+  pendingSend: false,
+  setPendingSend: (pendingSend) => set({ pendingSend }),
 
   add: (line) => {
     const { items } = get()
@@ -131,7 +136,7 @@ const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
   },
 
   setCustomerName: (customerName) => set({ customerName }),
-  clear: () => set({ items: [] }),
+  clear: () => set({ items: [], pendingSend: false }),
 }))
 
 export const cartStore = carts.get

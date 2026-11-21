@@ -3,6 +3,8 @@ import { InvalidTable } from './screens/InvalidTable'
 import { MesaLayout } from './screens/MesaLayout'
 import { Menu } from './screens/Menu'
 import { Pending } from './screens/Pending'
+import { DishDetail } from './screens/DishDetail'
+import { Order } from './screens/Order'
 import { ComponentsPreview } from './screens/ComponentsPreview'
 
 const routes: RouteObject[] = [
@@ -13,8 +15,8 @@ const routes: RouteObject[] = [
     element: <MesaLayout />,
     children: [
       { index: true, element: <Menu /> },
-      { path: 'plato/:dishId', element: <Pending title="Detalle" stage="c)" /> },
-      { path: 'pedido', element: <Pending title="Tu pedido" stage="c)" /> },
+      { path: 'plato/:dishId', element: <DishDetail /> },
+      { path: 'pedido', element: <Order /> },
       { path: 'orden/:comandaId', element: <Pending title="Tu orden" stage="d)" /> },
       { path: 'cuenta', element: <Pending title="Tu cuenta" stage="e)" /> },
       { path: 'cuenta/pagada', element: <Pending title="Cuenta pagada" stage="e)" /> },

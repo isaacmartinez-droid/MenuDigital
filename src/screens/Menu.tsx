@@ -19,6 +19,7 @@ import { useScrollSpy } from '../lib/useScrollSpy'
 import { scrollBehavior } from '../lib/motion'
 import { paths, useMesa } from '../lib/useMesa'
 import { cartStore, cartTotal, countItems, dishQuantity, useCart } from '../store/cart'
+import { useUi } from '../store/ui'
 import { Welcome } from './Welcome'
 
 type ToastState =
@@ -49,7 +50,14 @@ export function Menu() {
   }
 
   // Aviso "Agregaste…" con Deshacer durante timings.undoToastMs.
-  const [toast, setToast] = useState<ToastState | null>(null)
+  // Si viene del detalle con un plato recién agregado, arranca mostrando ese aviso.
+  const [toast, setToast] = useState<ToastState | null>(() => {
+    const flash = useUi.getState().flash
+    return flash ? { kind: 'added', key: flash.lineId, ...flash } : null
+  })
+  useEffect(() => {
+    useUi.getState().takeFlash()
+  }, [])
   useEffect(() => {
     if (!toast) return
     const id = window.setTimeout(() => setToast(null), restaurant.timings.undoToastMs)
