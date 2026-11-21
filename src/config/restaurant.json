@@ -26,6 +26,7 @@
   "tip": { "percents": [10, 15], "suggested": 10 },
   "ratings": { "perDishMax": 2 },
   "tables": ["1", "2", "3", "4", "5", "6", "7", "8"],
+  "publicUrl": "https://menu-digital-one-sigma.vercel.app",
   "whatsapp": {
     "number": "50500000000",
     "message": "Hola, Fritanga Nica. Tengo una consulta."
@@ -131,6 +132,18 @@
     "invalidTable": {
       "title": "Este QR no es válido",
       "body": "No encontramos esta mesa. Pedile ayuda al mesero o escaneá el código de tu mesa."
+    },
+    "qr": {
+      "table": "Mesa {mesa}",
+      "scan": "Escaneá con la cámara",
+      "scanTable": "y pedí desde tu mesa",
+      "noApp": "Sin descargar nada · Pagás en caja",
+      "takeoutTitle": "Pedí para llevar",
+      "takeoutScan": "y pedí desde tu casa",
+      "takeoutNote": "Pagás al recoger",
+      "demoTitle": "Demo",
+      "demoNote": "QR de prueba: funciona a cualquier hora. Las placas reales llevan el link sin \"forzar\".",
+      "cut": "Cortar por la línea punteada"
     },
     "notFound": {
       "title": "Página no encontrada",

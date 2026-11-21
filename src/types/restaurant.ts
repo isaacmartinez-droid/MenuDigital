@@ -64,6 +64,8 @@ export interface RestaurantConfig {
   ratings: { perDishMax: number }
   /** ids de mesa válidos (lo que va en /m/:mesa). */
   tables: string[]
+  /** Dirección pública de la app (la de los QR de las placas, `npm run qr`). */
+  publicUrl: string
   whatsapp: { number: string; message: string }
   /** Página web para llevar (W1 Inicio y W9 Domicilio). */
   web: {

@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "preview": "vite preview",
-    "images": "node scripts/optimize-images.mjs"
+    "images": "node scripts/optimize-images.mjs",
+    "qr": "node scripts/qr.mjs"
   },
   "dependencies": {
     "@fontsource/caveat": "^5.3.0",
@@ -31,6 +32,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.8",
     "globals": "^17.14.0",
+    "qrcode": "^1.5.4",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3",

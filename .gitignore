@@ -8,3 +8,6 @@ dist
 *.pdf
 fritanga-img.zip
 prompt-claude-code-fritanga-mesa.md
+
+# QR y placas generados (npm run qr)
+qr/

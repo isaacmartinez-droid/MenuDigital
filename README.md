@@ -20,6 +20,7 @@ npm run dev        # http://localhost:5173 → web para llevar · /m/5 → Mesa 
 npm run build      # verifica tipos y genera dist/
 npm run lint
 npm run preview    # sirve el build de producción
+npm run qr         # genera los QR con la marca y las placas para imprimir (en qr/)
 ```
 
 Hay dos canales en la misma app; la URL decide cuál:
@@ -140,7 +141,31 @@ que tendría la respuesta de una API.
 1. Subir el repo a GitHub e importarlo en [vercel.com/new](https://vercel.com/new).
 2. Vercel detecta Vite; `vercel.json` ya define build (`npm run build`), salida (`dist`),
    las reescrituras para que `/m/5` y demás rutas funcionen al recargar, y caché de archivos.
-3. Cada mesa queda en `https://<dominio>/m/<mesa>`: ese es el link para generar los QR.
+3. Cada mesa queda en `https://<dominio>/m/<mesa>`: ese es el link de cada QR.
+
+Demo publicada: https://menu-digital-one-sigma.vercel.app/ (web) y
+https://menu-digital-one-sigma.vercel.app/m/5 (Mesa 5). Cada push a `main` se publica solo.
+
+## QR y placas de mesa
+
+```bash
+npm run qr
+```
+
+Lee `publicUrl`, `tables`, colores, logo y `texts.qr` de `restaurant.json` y escribe en `qr/`
+(no se sube al repo):
+
+- `placas-mesas.html`: una placa por mesa, dos por hoja carta, para recortar. Se abre en el
+  navegador y se imprime (o se guarda como PDF).
+- `hoja-demo.html`: Mesa 5 y "Pedí para llevar" con `?forzar=abierto` (la de mesa también con
+  `mesa-nueva`, así cada escaneo empieza de cero), para mostrarle la app al cliente a cualquier
+  hora. Las placas reales llevan el link limpio.
+- `mesa-<n>.svg`, `llevar.svg`, `demo-*.svg`: los QR sueltos, para usarlos en otro diseño.
+
+Los QR van en verde con los ojos en el azul del logo y el logo al centro. Usan corrección de
+errores H (30 %), así el logo no impide leerlos; se verificaron decodificándolos a distintos
+tamaños. Si cambia el dominio o las mesas, se cambia `publicUrl` o `tables` y se vuelve a
+correr.
 
 Con la CLI: `npx vercel` (vista previa) y `npx vercel --prod`.
 
@@ -148,7 +173,7 @@ Con la CLI: `npx vercel` (vista previa) y `npx vercel --prod`.
 
 ```
 public/img/            fotos (WebP) y logo
-scripts/               optimize-images.mjs (npm run images)
+scripts/               optimize-images.mjs (npm run images) y qr.mjs (npm run qr)
 src/
   config/restaurant.json
   data/menu.json

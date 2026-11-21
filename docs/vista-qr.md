@@ -90,6 +90,7 @@ y, al final, avisa a caja cuánto y cómo va a pagar. **El pago siempre es en ca
 | `npm run typecheck` | Solo revisa tipos |
 | `npm run preview` | Sirve el build |
 | `npm run images` | Genera la versión de 400 px de las fotos |
+| `npm run qr` | Genera los QR con la marca y las placas de mesa para imprimir (ver el README) |
 
 ## 2. Rutas
 
@@ -844,7 +845,8 @@ Todas se tomaron con el cliente al revisar cada pantalla.
 - **Para cambiar de restaurante:** solo los dos JSON y las fotos (ver el README).
 - **Para conectar una API:** solo `lib/api.ts` y `lib/catalog.ts` (ver el README).
 - **Para publicar:** Vercel, con `vercel.json` ya listo. Cada mesa queda en
-  `https://<dominio>/m/<mesa>`, y ese es el link de cada QR.
+  `https://<dominio>/m/<mesa>`, y ese es el link de cada QR. Las placas se generan con
+  `npm run qr` desde `publicUrl` (hoy https://menu-digital-one-sigma.vercel.app).
 - **Sin `gh` en esta PC:** los PR se crean a mano desde el link de comparación de GitHub.
 
 ## 17. Bugs corregidos
