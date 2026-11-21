@@ -43,7 +43,9 @@ Para empezar de cero: cerrar la pestaña, o borrar el almacenamiento del sitio.
 1. `/m/5?forzar=abierto` → bienvenida (solo la primera vez): muestra la mesa y pide el nombre
    (opcional) → **Entrar al menú**.
 2. **+** agrega con el acompañante por defecto; la foto abre el detalle.
-3. **Ver pedido** → nombre opcional → **Enviar a la cocina** (va directo, sin mesero).
+3. **Ver pedido** → nombre opcional → **Enviar a la cocina** → hoja "¿Enviamos tu pedido?":
+   **Sí, enviar** (va directo, sin mesero) o **Pedir algo más**, que vuelve al menú con el
+   mismo pedido abierto para que salga todo junto en una sola comanda.
 4. Seguimiento: Procesando → En el comal → ¡Ya está! → Entregada (tiempos en la config).
 5. **Llamar al mesero**, **Pedir algo más** (otra comanda, misma cuenta) o **Ya vamos a pagar**.
 6. Cuenta de la mesa por persona → **Avisar a caja** → a los 5 s, cuenta pagada y la mesa se

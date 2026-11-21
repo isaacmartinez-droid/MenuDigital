@@ -9,16 +9,18 @@ import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Button } from '../components/Button'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
+import { BottomSheet } from '../components/BottomSheet'
+import { Plus } from 'lucide-react'
 import { getDish, getExtra, getSide, menu, restaurant } from '../lib/catalog'
 import { formatMoney } from '../lib/money'
-import { fmt, t, tableLabel } from '../lib/text'
+import { fmt, platos, t, tableLabel } from '../lib/text'
 import { customerLabel, submitCart } from '../lib/orderFlow'
 import { newId } from '../lib/storage'
 import { useOnline } from '../lib/useOnline'
 import { useGoBack } from '../lib/useGoBack'
 import { useOpenState } from '../lib/useOpenState'
 import { paths, useMesa } from '../lib/useMesa'
-import { cartStore, cartTotal, lineTotal, useCart } from '../store/cart'
+import { cartStore, cartTotal, countItems, lineTotal, useCart } from '../store/cart'
 
 type Notice = { kind: 'limit' | 'error'; key: string }
 
@@ -35,6 +37,7 @@ export function Order() {
   const nameId = useId()
   const [skipName, setSkipName] = useState(false)
   const [sending, setSending] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
 
   useEffect(() => {
@@ -61,8 +64,12 @@ export function Order() {
     setSending(true)
     const result = await submitCart(mesa)
     setSending(false)
-    if (result.ok) navigate(paths.tracking(mesa, result.comanda.id), { replace: true })
-    else if (result.reason === 'limit') setNotice({ kind: 'limit', key: newId() })
+    if (result.ok) {
+      navigate(paths.tracking(mesa, result.comanda.id), { replace: true })
+      return
+    }
+    setConfirming(false)
+    if (result.reason === 'limit') setNotice({ kind: 'limit', key: newId() })
     else if (result.reason === 'server') setNotice({ kind: 'error', key: newId() })
     // 'offline': el carrito queda marcado y se muestra el aviso de señal.
   }
@@ -108,6 +115,18 @@ export function Order() {
                 />
               ))}
             </ul>
+
+            {/* Volver al menú con este mismo pedido abierto (lo agregado se suma acá). */}
+            {openState.open && (
+              <button
+                type="button"
+                onClick={goBack}
+                className="mt-1 -mb-2 inline-flex min-h-12 items-center gap-2 text-dish text-verde"
+              >
+                <Plus size={20} strokeWidth={2.25} aria-hidden />
+                {t.order.addMore}
+              </button>
+            )}
 
             {skipName && !customerName ? (
               <p className="mt-3 text-small text-texto-2">
@@ -187,7 +206,7 @@ export function Order() {
       {items.length > 0 && (
         <BottomDock>
           {openState.open ? (
-            <Button block onClick={send} disabled={sending} trailing={formatMoney(total)}>
+            <Button block onClick={() => setConfirming(true)} disabled={sending} trailing={formatMoney(total)}>
               {sending ? t.order.sending : t.order.send}
             </Button>
           ) : (
@@ -197,6 +216,54 @@ export function Order() {
           )}
         </BottomDock>
       )}
+
+      {/* Confirmación antes de mandar a cocina. "Pedir algo más" vuelve al menú con este
+          mismo pedido abierto: lo que se agregue sale todo junto en una sola comanda. */}
+      <BottomSheet
+        open={confirming && items.length > 0}
+        onClose={() => !sending && setConfirming(false)}
+        title={t.order.confirmTitle}
+        description={fmt(t.order.confirmSummary, {
+          n: countItems(items),
+          platos: platos(countItems(items)),
+          total: formatMoney(total),
+          name: customerLabel(customerName),
+        })}
+        footer={
+          <div className="space-y-2">
+            <Button block onClick={send} disabled={sending} trailing={formatMoney(total)}>
+              {sending ? t.order.sending : t.order.confirmSend}
+            </Button>
+            <Button
+              block
+              variant="secondary"
+              disabled={sending}
+              icon={<Plus size={22} strokeWidth={2} aria-hidden />}
+              onClick={() => {
+                setConfirming(false)
+                goBack()
+              }}
+            >
+              {t.order.confirmMore}
+            </Button>
+          </div>
+        }
+      >
+        <ul className="space-y-1.5">
+          {items.map((line) => {
+            const dish = getDish(line.dishId)
+            if (!dish) return null
+            return (
+              <li key={line.lineId} className="flex items-baseline gap-2 text-body">
+                <span className="w-6 shrink-0 text-texto-2">{line.quantity}×</span>
+                <span className="min-w-0 flex-1 text-texto">{dish.name}</span>
+                <span className="shrink-0 text-texto">{formatMoney(lineTotal(line))}</span>
+              </li>
+            )
+          })}
+        </ul>
+        <p className="mt-3 text-small text-texto-2">{t.order.confirmHelp}</p>
+      </BottomSheet>
     </div>
   )
 }
