@@ -10,6 +10,7 @@ Documentación completa (pantallas, decisiones, arquitectura, config y pendiente
 
 - Vista QR, pedido en mesa: [docs/vista-qr.md](docs/vista-qr.md).
 - Vista web, para llevar: [docs/vista-web.md](docs/vista-web.md).
+- Fotos provisorias (Unsplash) y cómo reemplazarlas: [docs/fotos-provisorias.md](docs/fotos-provisorias.md).
 - Forma de trabajo: [CLAUDE.md](CLAUDE.md).
 
 ## Cómo correrla

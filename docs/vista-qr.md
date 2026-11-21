@@ -904,11 +904,11 @@ No está en el repo; lo tiene el equipo.
 ## 19. Pendiente
 
 **Del cliente:**
-- **Fotos reales.** Hoy solo hay 3: fritanga tradicional, enchilada y combo para dos.
-  - **Sin foto (7):** pollo asado, vigorón, tajadas con queso, fresco de cacao, chicha,
-    pinolillo y gaseosa.
-  - **Con foto prestada de otro plato (6):** combo familiar, los 3 combos del día, fritanga de
-    cerdo y carne asada.
+- **Fotos reales.** Del restaurante hay 3: fritanga tradicional, enchilada y combo para dos.
+  - **Provisorias de Unsplash (9):** pollo asado, carne asada, gaseosa, fresco de cacao,
+    tajadas, combo familiar y los 3 combos del día (ver [fotos-provisorias.md](fotos-provisorias.md)).
+  - **Sin foto (3):** vigorón, chicha y pinolillo.
+  - **Con foto prestada (1):** fritanga de cerdo usa la de la fritanga tradicional.
 - **Confirmar los combos de ejemplo y sus precios.**
 - **Datos reales:** número de WhatsApp, dirección y enlace del perfil de Google.
 
