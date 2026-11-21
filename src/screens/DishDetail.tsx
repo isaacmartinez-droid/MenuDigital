@@ -299,21 +299,24 @@ export function DishDetail() {
           </div>
         )}
 
-        {reviews.length > 0 && (
-          <section className="mt-4 border-t border-borde pt-4" aria-labelledby={`${noteId}-r`}>
-            <div className="flex items-center justify-between gap-3">
-              <h2 id={`${noteId}-r`} className="text-dish text-texto">
-                {t.detail.reviews}
-              </h2>
+        {/* Reseñas: siempre la sección; sin reseñas, una invitación (sin estrellas vacías). */}
+        <section className="mt-4 border-t border-borde pt-4" aria-labelledby={`${noteId}-r`}>
+          <div className="flex items-center justify-between gap-3">
+            <h2 id={`${noteId}-r`} className="text-dish text-texto">
+              {t.detail.reviews}
+            </h2>
+            {dish.rating && reviews.length > 0 && (
               <span className="flex items-center gap-2">
-                {dish.rating && (
-                  <span className="text-small text-texto-2">
-                    {fmt(t.detail.reviewsCount, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}
-                  </span>
-                )}
-                <StarRating value={dish.rating?.average ?? 0} label={t.detail.reviews} size={18} />
+                <span className="text-small text-texto-2">
+                  {fmt(t.detail.reviewsCount, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}
+                </span>
+                <StarRating value={dish.rating.average} label={t.detail.reviews} size={18} />
               </span>
-            </div>
+            )}
+          </div>
+          {reviews.length === 0 ? (
+            <p className="mt-2 text-small text-texto-2">{t.detail.noReviews}</p>
+          ) : (
             <ul className="mt-3 space-y-3">
               {reviews.map((r) => (
                 <li key={r.id} className="rounded-tarjeta bg-fondo px-3 py-2.5">
@@ -325,8 +328,8 @@ export function DishDetail() {
                 </li>
               ))}
             </ul>
-          </section>
-        )}
+          )}
+        </section>
       </main>
 
       {limitHit && (

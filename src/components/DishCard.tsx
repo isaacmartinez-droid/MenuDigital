@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { Dish } from '../types/menu'
 import { cx } from '../lib/cx'
 import { dishTags } from '../lib/catalog'
@@ -25,6 +26,12 @@ interface DishCardProps {
   today?: number
 }
 
+/** Para botones dentro de una tarjeta que ya abre el detalle: evita abrirlo dos veces. */
+const only = (fn: () => void) => (e: MouseEvent) => {
+  e.stopPropagation()
+  fn()
+}
+
 /** Etiqueta del día y si se puede pedir hoy. */
 function dayInfo(dish: Dish, today: number | undefined) {
   if (today === undefined) return { badge: undefined, onDay: true }
@@ -46,17 +53,15 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }
   const listTags = badge
     ? [{ id: 'dia', ...badge }]
     : dishTags(dish).filter((tag) => tag.showInList)
-  const openLabel = fmt(t.menu.openDetail, { dish: dish.name })
-
   return (
-    <article className="flex gap-3 py-3.5" aria-label={dish.name}>
-      {soldOut ? (
-        <Photo src={dish.image} className="size-24 shrink-0 rounded-tarjeta" dimmed />
-      ) : (
-        <button type="button" onClick={onOpen} aria-label={openLabel} className="shrink-0 rounded-tarjeta">
-          <Photo src={dish.image} className="size-24 rounded-tarjeta" />
-        </button>
-      )}
+    // Toda la fila abre el detalle (también si está agotado: ahí se ofrecen alternativas).
+    // El nombre es el botón para teclado y lector de pantalla; el + no abre el detalle.
+    <article
+      onClick={onOpen}
+      className="flex cursor-pointer gap-3 py-3.5 transition-opacity duration-150 active:opacity-70"
+      aria-label={dish.name}
+    >
+      <Photo src={dish.image} className="size-24 shrink-0 rounded-tarjeta" dimmed={soldOut} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {listTags.length > 0 && (
@@ -69,13 +74,9 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }
           </div>
         )}
         <h3 className={cx('text-dish', soldOut ? 'text-texto-2' : 'text-texto')}>
-          {soldOut ? (
-            dish.name
-          ) : (
-            <button type="button" onClick={onOpen} className="text-left">
-              {dish.name}
-            </button>
-          )}
+          <button type="button" onClick={only(onOpen)} className="text-left">
+            {dish.name}
+          </button>
         </h3>
         <p className="mt-1 line-clamp-2 text-small text-texto-2">{dish.shortDescription}</p>
 
@@ -88,16 +89,13 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }
               {t.menu.soldOut}
             </Tag>
           ) : canOrder && onDay ? (
-            quantity > 0 ? (
-              <QuantityStepper
-                value={quantity}
-                onIncrement={onAdd}
-                onDecrement={onDecrement}
-                itemName={dish.name}
-              />
-            ) : (
-              <AddButton onClick={onAdd} label={fmt(t.menu.add, { dish: dish.name })} className="mb-1" />
-            )
+            <span onClick={(e) => e.stopPropagation()}>
+              {quantity > 0 ? (
+                <QuantityStepper value={quantity} onIncrement={onAdd} onDecrement={onDecrement} itemName={dish.name} />
+              ) : (
+                <AddButton onClick={onAdd} label={fmt(t.menu.add, { dish: dish.name })} className="mb-1" />
+              )}
+            </span>
           ) : null}
         </div>
       </div>
@@ -111,14 +109,15 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today }: DishCardPr
   const photoTag = badge ?? dishTags(dish)[0]
 
   return (
+    // Toda la tarjeta abre el detalle; la foto es el botón para teclado y lector de pantalla.
     <article
-      className="flex w-[224px] shrink-0 snap-start flex-col rounded-grande border border-borde bg-tarjeta p-2"
+      onClick={onOpen}
+      className="flex w-[224px] shrink-0 cursor-pointer snap-start flex-col rounded-grande border border-borde bg-tarjeta p-2 transition-opacity duration-150 active:opacity-80"
       aria-label={dish.name}
     >
       <button
         type="button"
-        onClick={onOpen}
-        disabled={soldOut}
+        onClick={only(onOpen)}
         aria-label={fmt(t.menu.openDetail, { dish: dish.name })}
         className="relative rounded-tarjeta"
       >
@@ -137,9 +136,8 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today }: DishCardPr
           </span>
         )}
       </button>
-      {/* Nombre y descripción cortada a 2 líneas: tocarlos abre el detalle para leer todo
-          (para teclado y lector de pantalla, el botón es la foto). */}
-      <div onClick={soldOut ? undefined : onOpen} className={cx('mt-3 px-1', !soldOut && 'cursor-pointer')}>
+      {/* Nombre y "qué trae" cortado a 2 líneas: tocar la tarjeta abre el detalle para leer todo. */}
+      <div className="mt-3 px-1">
         <h3 className={cx('truncate text-dish', soldOut ? 'text-texto-2' : 'text-texto')}>{dish.name}</h3>
         <p className="mt-1 line-clamp-2 min-h-[2lh] text-small text-texto-2">{dish.includes ?? dish.shortDescription}</p>
       </div>
@@ -150,7 +148,12 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today }: DishCardPr
         {soldOut ? (
           <Tag tone="agotado">{t.menu.soldOut}</Tag>
         ) : (
-          canOrder && onDay && <AddButton onClick={onAdd} label={fmt(t.menu.add, { dish: dish.name })} />
+          canOrder &&
+          onDay && (
+            <span onClick={(e) => e.stopPropagation()}>
+              <AddButton onClick={onAdd} label={fmt(t.menu.add, { dish: dish.name })} />
+            </span>
+          )
         )}
       </div>
     </article>
