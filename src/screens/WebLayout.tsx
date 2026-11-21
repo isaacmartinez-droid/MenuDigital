@@ -29,7 +29,8 @@ export function WebLayout() {
   return (
     <>
       {showWelcome && <WebWelcome onDone={finishWelcome} />}
-      <div inert={showWelcome || undefined}>
+      {/* .web activa la variante tablet: y el ancho de 834 px en tablet (ver index.css). */}
+      <div className="web" inert={showWelcome || undefined}>
         <Outlet />
       </div>
       <ScrollRestoration />

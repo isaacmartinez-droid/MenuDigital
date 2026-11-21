@@ -93,7 +93,7 @@ export function RateOrder() {
     <>
       <div className="app-shell">
         <PageHeader title={sent ? t.web.thanksTitle : t.web.rateTitle} onBack={goBack} />
-        <main className="flex flex-col gap-4 px-4 pt-2">
+        <main className="flex flex-col gap-4 px-4 pt-2 tablet:px-8">
           {sent ? (
             <>
               {/* W10b: lo calificado, el aviso y la invitación a Google. */}

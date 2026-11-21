@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { cx } from '../lib/cx'
+import { thumbOf } from '../lib/images'
 
 interface PhotoProps {
   src?: string
@@ -12,8 +13,6 @@ interface PhotoProps {
   dimmed?: boolean
 }
 
-/** "/img/enchilada.webp" → "/img/enchilada-400.webp" (la genera `npm run images`). */
-const thumbOf = (src: string) => (/\.webp$/i.test(src) ? src.replace(/\.webp$/i, '-400.webp') : src)
 
 /**
  * Foto de plato con espacio reservado: el contenedor tiene el tamaño y el

@@ -764,10 +764,28 @@ Definidos en `src/theme/index.css` (`@theme`). Los colores se sobrescriben desde
   - los cambios se anuncian con `aria-live` (avisos, contador, seguimiento);
   - las tarjetas tocables tienen un solo botón real (el nombre o la foto), para no repetir.
 - **Contraste:** el texto sobre ámbar usa `texto-sobre-ambar`.
-- **Fotos:** en WebP. La de 400 px (≈25 KB) va en las listas y la de 800 px solo en el
-  detalle, con respaldo a la original. Un plato sin foto muestra un fondo de espera.
-- **Carga:** el menú va en el paquete inicial y el resto de las pantallas se precarga en
-  segundo plano.
+- **Fotos:** en WebP. La de 400 px (≈25 KB) va en las listas, en la promo y en el carrusel, y
+  la de 800 px solo en el detalle y la portada, con respaldo a la original. Un plato sin foto
+  muestra un fondo de espera. Las dos primeras del carrusel del menú se piden con prioridad
+  (se ven al abrir); las demás, en diferido.
+- **Logo e íconos:** el encabezado usa `logo-192.webp` (6 KB, no el de 22 KB) y la pestaña y el
+  celular, `icon-32.png` (2 KB) e `icon-180.png` (10 KB), no el `logo.png` de 160 KB. Los
+  genera `npm run images`.
+- **Carga:**
+  - el menú va en el paquete inicial y el resto de las pantallas se precarga en segundo plano,
+    recién cuando la página terminó de cargar;
+  - las librerías van en un paquete aparte (`vendor`), que queda en caché entre versiones;
+  - el HTML precarga las fuentes Figtree 400, 600 y 700 y, solo en el inicio web, la foto de
+    portada (`vite.config.ts`).
+- **Medición** (celular con 4G lento y CPU 4 veces más lenta, sin caché; pintado principal):
+
+  | Pantalla | Antes | Después |
+  |---|---|---|
+  | Menú web | 4,5 s | 3,6 s |
+  | Mesa 5 | 4,5 s | 3,7 s |
+  | Inicio web | — | 3,7 s (con la portada completa) |
+
+  La primera medición del inicio no es comparable: la portada no había terminado de bajar.
 - **Calidad:** `npm run build` y `npm run lint` pasan sin errores.
 
 ## 13. Flags de la demo

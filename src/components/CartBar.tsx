@@ -23,12 +23,15 @@ export function BottomDock({ children, className }: DockProps) {
     ro?.observe(el)
     return () => {
       ro?.disconnect()
-      root.style.removeProperty('--dock-h')
+      // Puede haber otra barra montada (ej. el menú debajo del detalle en la web): queda la de ella.
+      const other = [...document.querySelectorAll<HTMLElement>('[data-dock]')].filter((d) => d !== el).at(-1)
+      if (other) root.style.setProperty('--dock-h', `${other.offsetHeight}px`)
+      else root.style.removeProperty('--dock-h')
     }
   }, [])
 
   return (
-    <div ref={ref} className={cx('bottom-dock z-30 border-t border-borde bg-tarjeta', className)}>
+    <div ref={ref} data-dock className={cx('bottom-dock z-30 border-t border-borde bg-tarjeta', className)}>
       <div className="px-4 pt-3 pb-3">{children}</div>
     </div>
   )

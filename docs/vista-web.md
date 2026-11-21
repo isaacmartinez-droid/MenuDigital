@@ -6,8 +6,8 @@ con la vista QR, la configuración y lo que falta. La vista de mesa está en
 [vista-qr.md](vista-qr.md); cómo correr el proyecto, en el [README](../README.md).
 
 - **Rama:** `plantilla-mesa` (la misma de la vista QR), todavía sin PR a `main`.
-- **Estado:** en curso. Está hecho todo lo de celular (etapas a a d); faltan tablet,
-  computadora y la ronda de correcciones.
+- **Estado:** en curso. Están hechos el celular (etapas a a d) y la tablet (etapa e); faltan
+  la computadora y la ronda de correcciones.
 
 ## Índice
 
@@ -51,7 +51,9 @@ es la mesa; el resto es la web. Cuando exista el backend, cada pedido llega con 
 (`mesa`, `llevar` o `mostrador`) y el backend decide qué hacer: la mesa va directo a cocina; la
 web queda "por confirmar" y avisa a caja y por WhatsApp.
 
-**Solo celular por ahora.** Tablet y computadora tienen diseño propio (etapas e y f).
+**Celular y tablet.** La tablet (desde 768 px) tiene su propio layout (ver 6.13); la
+computadora (etapa f) está pendiente. La mesa sigue siendo solo celular, aunque se abra en una
+tablet.
 
 ## 2. Forma de trabajo en la web
 
@@ -82,7 +84,7 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 | b | W4 Tu pedido, W5 Tus datos, W6 Resumen y pago | Hecha (`e9de11f`) |
 | c | W7 Confirmación, W8 y W8b Seguimiento | Hecha (`845f819`) |
 | d | W10 Calificación y W10b reseña en Google, botón "Calificá tu comida" en W8b; promo con su precio y página no encontrada | Hecha |
-| e | Tablet (T1–T5) | Pendiente |
+| e | Tablet (T1–T5) | Hecha |
 | f | Computadora (D1–D5) | Pendiente |
 | g | Revisión y correcciones | Pendiente |
 
@@ -92,7 +94,7 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 |---|---|---|
 | `/` | W1 Inicio (con W0 Bienvenida la primera vez) | `Home.tsx`, `WebWelcome.tsx` |
 | `/menu` | W3 Menú para llevar | `Menu.tsx` (compartido) |
-| `/plato/:dishId` | Detalle del plato | `DishDetail.tsx` (compartido) |
+| `/menu/plato/:dishId` | Detalle del plato, abierto encima del menú | `DishDetail.tsx` (compartido) |
 | `/pedido` | W4 Tu pedido | `Order.tsx` (compartido) |
 | `/datos` | W5 Tus datos | `CustomerData.tsx` |
 | `/resumen` | W6 Resumen y pago | `Summary.tsx` |
@@ -313,6 +315,27 @@ siguen mostrando "Este QR no es válido".
 - Lugar del mapa (gris con un pin) y **Costo de envío · C$ 50** (`web.deliveryFee`).
 - Barra de abajo: **Próximamente**, deshabilitado.
 
+### 6.13 Tablet (T1–T5)
+
+Desde 768 px de ancho la web usa el layout de tablet del Figma (834 × 1194). Es la misma app y
+las mismas rutas: cambia la disposición con la variante `tablet:` (ver sección 7).
+
+| Pantalla | Qué cambia |
+|---|---|
+| **T1 Inicio** | Portada de 420 px con el logo más grande abajo a la izquierda, sin texto encima. Debajo, **"Fritanga Nica"** y "Abierto hoy · 4:00 pm a 10:00 pm". Promo con foto de 180 px, **los más vendidos en grilla de 3** y **dos reseñas lado a lado**. Barra de abajo: **Cómo llegar** y **Ver menú y pedir**. Como en el Figma, no tiene "¿Cómo lo querés?" ni la tarjeta de horario y ubicación. |
+| **T2 Menú** | **Los más vendidos en grilla de 4** (en vez del carrusel) y **cada categoría en dos columnas**, con cada plato en su tarjeta. Promo con foto de 180 px. |
+| **T3 Detalle** | **Ventana de 640 px** centrada sobre el menú oscurecido, con la foto arriba, **✕** para cerrar (también tocando afuera o con Esc) y el contador y "Agregar" al pie de la ventana. El menú no pierde su lugar. |
+| **T4 Tu pedido** | Pedido, **"Tus datos"** (nombre y WhatsApp lado a lado, con "No necesitás cuenta. Te escribimos para confirmar antes de cocinar.") y **"¿Cómo pagás?"** en una sola pantalla. Subtítulo "Para llevar · pagás al recoger" y botón **Confirmar pedido**, que valida los datos y envía. |
+| **T5 Confirmación** | "Recibimos tu orden" y el texto arriba; **la comanda de papel y el seguimiento en vivo lado a lado** (la tarjeta de estado con la línea de tiempo). No pasa sola al seguimiento, porque ya lo muestra. Abajo, **Cómo llegar** y **Escribinos**. |
+
+Las demás pantallas (Tus datos, Resumen, Seguimiento, Calificación, Domicilio) no tienen diseño
+de tablet: se ven como en celular, más anchas y con márgenes de 32 px.
+
+**El detalle encima del menú (celular y tablet):** en la web el detalle es una ruta hija del
+menú (`/menu/plato/:dishId`). El menú queda montado debajo (inerte para el teclado) y no
+vuelve arriba al abrirlo ni al cerrarlo. En celular se ve igual que antes (pantalla completa);
+en tablet es la ventana de T3. Al agregar, vuelve al menú con el aviso "Agregaste…".
+
 ## 7. Cómo comparte código con la mesa
 
 - **El id de la cuenta.** Las pantallas compartidas usan `useMesa()`, que devuelve el número de
@@ -333,6 +356,16 @@ siguen mostrando "Este QR no es válido".
   no se suman los compañeros de mesa simulados y, sin señal, no queda en espera.
 - **Seguimiento en segundo plano:** `useKitchenUpdates` (antes dentro de `MesaLayout`) pasó a
   `lib/useKitchenUpdates.ts`; lo usan `MesaLayout` y `WebLayout`.
+- **Tablet:** la variante `tablet:` (`src/theme/index.css`) aplica desde 768 px y solo dentro
+  de `.web` (la clase que pone `WebLayout`); ahí también `--container-app` pasa a 834 px, así
+  la columna, las barras y los botones flotantes se ensanchan solos. La mesa no tiene `.web`:
+  no cambia.
+- **Piezas compartidas por W5, W6 y T4:** `CustomerFields` (nombre y WhatsApp, en una o dos
+  columnas), `PayOptions` (¿Cómo pagás?), `checkCustomer` (`store/customer.ts`, valida y lleva
+  el foco al campo con error) y `useConfirmTakeout` (`lib/useConfirmTakeout.ts`, envía y abre
+  la confirmación).
+- **`StatusCard`** (hora estimada, título y línea de tiempo) salió de `Tracking.tsx` y la usan el
+  seguimiento y T5.
 - **Lo que no usa la web:** `Welcome.tsx` (portada de mesa), `WaiterButton`, `Bill.tsx`,
   `Paid.tsx`, `TableSession`, propina y cuenta compartida.
 
@@ -425,8 +458,16 @@ dos cosas juntas (texto de `promo` y plato).
 | `src/screens/RateOrder.tsx` | W10 Calificación y W10b ¡Gracias! |
 | `src/screens/NotFound.tsx` | Página no encontrada |
 | `src/screens/Delivery.tsx` | W9 Domicilio |
+| `src/components/CustomerFields.tsx` | Campos de nombre y WhatsApp (W5 y T4) |
+| `src/components/PayOptions.tsx` | ¿Cómo pagás? (W6 y T4) |
+| `src/components/StatusCard.tsx` | Tarjeta de estado de una orden (seguimiento y T5) |
+| `src/lib/useConfirmTakeout.ts` | Confirmar el pedido para llevar (W6 y T4) |
+| `src/lib/whatsapp.ts` | Link de "Escribinos" |
 
-**Cambiados para la web:** `Menu.tsx`, `Order.tsx`, `Tracking.tsx`, `MesaLayout.tsx`,
+**Cambiados para la web:** `Menu.tsx` (detalle encima y grillas de tablet), `DishDetail.tsx`
+(ventana), `Order.tsx`, `Tracking.tsx`, `Confirmation.tsx`, `MesaLayout.tsx`, `DishCard.tsx`
+(`fluid` y `photoClassName` para grillas), `CartBar.tsx` (varias barras a la vez), `Header.tsx`
+(subtítulo con contenido), `index.css` (variante `tablet:`),
 `router.tsx`, `useMesa.ts` (`paths`), `storage.ts` (prefijo `llevar`), `orderFlow.ts`,
 `api.ts`, `notifications.ts`, `combos.ts` (`bestSellersFor`), `reviews.ts` (ahora con
 `reviewsToSend`, que antes estaba en `Bill.tsx`, e `isRated`/`markRated`), `tableStore.ts` (exporta
@@ -484,14 +525,14 @@ dos cosas juntas (texto de `promo` y plato).
 | W7 tardaba 8 s en pasar al seguimiento en vez de 5 | El temporizador se reiniciaba cada vez que el pedido cambiaba de paso | Depende de que la comanda exista, no del objeto |
 | El campo con error de W5 se ponía verde al enfocarlo | El estilo de foco pisaba el rojo | Con error queda rojo siempre |
 | Los puntos de W0 casi no se veían | La animación de pulso los apagaba | Quietos, como en el Figma |
+| Al cerrar el detalle encima del menú, "Escribinos" quedaba sobre la barra del pedido | La barra del detalle, al cerrarse, borraba la altura publicada (`--dock-h`) aunque la del menú seguía | Al cerrarse una barra, queda la altura de la otra |
+| En el servidor de desarrollo, la mesa se veía a todo el ancho en tablet | Vite servía CSS viejo (OneDrive) | No era el código: se verificó con el build real (`vite preview`) y se reinició Vite con `--force` |
 | La promo decía "2 enchiladas por C$ 160" y el carrito cobraba otro monto | La tarjeta abría la enchilada suelta (C$ 90 cada una) | La promo es un plato propio de C$ 160 |
 | Una dirección web inexistente decía "Este QR no es válido" | La ruta comodín era la de mesa | `NotFound` para la web |
 
 ## 15. Pendiente
 
 **De la web:**
-- Etapa e: tablet (T1 Inicio, T2 Menú, T3 Detalle en ventana, T4 Pedido-datos-pago,
-  T5 Confirmación y seguimiento).
 - Etapa f: computadora (D1 Inicio, D2 Menú con carrito al costado, D3 Detalle en ventana,
   D4 Datos y pago, D5 Confirmación y seguimiento).
 - Etapa g: revisión y correcciones (ver la sección 12).
@@ -503,8 +544,7 @@ dos cosas juntas (texto de `promo` y plato).
 - Fotos reales (ver [vista-qr.md 19](vista-qr.md#19-pendiente)) y una foto de portada.
 
 **Del proyecto:**
-- Publicar una versión de prueba (Vercel) para mostrarla fuera de la red local.
-- Crear el PR de `plantilla-mesa` a `main`.
+- Pasar a `main` lo nuevo de `plantilla-mesa` para que se publique en Vercel.
 
 ## 16. Historial de commits
 
@@ -516,3 +556,5 @@ dos cosas juntas (texto de `promo` y plato).
 | `85412a0` | Seguimiento: línea de tiempo con hora por paso, textos más claros y pedido web sin cuenta de mesa |
 | `845f819` | Web etapa c: confirmación, seguimiento para llevar y avisos |
 | `efd7716` | Documentación de la vista web y actualización de la vista QR |
+| `13f497c` | Web etapa d: calificación con reseña en Google, promo con su precio y página no encontrada |
+| `e828b11` | QR con la marca y placas de mesa (`npm run qr`) |

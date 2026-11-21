@@ -1,3 +1,4 @@
+import type { RefObject } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { restaurant } from '../lib/catalog'
@@ -33,3 +34,21 @@ export const formatPhone = (digits: string) => digits.replace(/(\d{4})(?=\d)/g, 
 
 export const isValidName = (name: string) => name.trim().length >= 2
 export const isValidPhone = (digits: string) => digits.length === restaurant.web.phoneDigits
+
+/** Valida los datos; si falta algo, lleva el cursor al primer campo con error. */
+export function checkCustomer(
+  nameRef: RefObject<HTMLInputElement | null>,
+  phoneRef: RefObject<HTMLInputElement | null>,
+): boolean {
+  const { name, phone, setName } = useCustomer.getState()
+  if (!isValidName(name)) {
+    nameRef.current?.focus()
+    return false
+  }
+  if (!isValidPhone(phone)) {
+    phoneRef.current?.focus()
+    return false
+  }
+  setName(name.trim())
+  return true
+}

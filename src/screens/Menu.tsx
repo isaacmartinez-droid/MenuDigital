@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useOutlet } from 'react-router'
 import type { Dish } from '../types/menu'
 import { Header } from '../components/Header'
 import { Button } from '../components/Button'
@@ -82,7 +82,17 @@ export function Menu() {
   })
   useEffect(() => {
     useUi.getState().takeFlash()
+    // En la web el detalle se abre encima del menú (el menú no se desmonta): el aviso
+    // llega al cerrar el detalle, así que se escucha mientras el menú está montado.
+    return useUi.subscribe((state) => {
+      const flash = state.flash
+      if (!flash) return
+      useUi.getState().takeFlash()
+      setToast({ kind: 'added', key: `${flash.lineId}-${newId()}`, ...flash })
+    })
   }, [])
+  // Web: el detalle del plato (ruta hija) se muestra encima; el menú queda inerte debajo.
+  const detail = useOutlet()
   useEffect(() => {
     if (!toast) return
     const id = window.setTimeout(() => setToast(null), restaurant.timings.undoToastMs)
@@ -110,7 +120,8 @@ export function Menu() {
     cartStore(mesa).getState().decrementLine(lineId)
     setToast(null)
   }
-  const openDish = (dish: Dish) => navigate(paths.dish(mesa, dish.id))
+  // En la web el menú queda debajo del detalle: no se vuelve arriba al abrirlo.
+  const openDish = (dish: Dish) => navigate(paths.dish(mesa, dish.id), { preventScrollReset: takeout })
 
   // Búsqueda (sin distinguir tildes ni mayúsculas).
   const [query, setQuery] = useState('')
@@ -170,10 +181,11 @@ export function Menu() {
   // Sin combos cargados, la categoría "combos" no tiene pestaña ni sección.
   const categories = menu.categories.filter((c) => c.id !== COMBOS_CATEGORY || combos.length > 0)
 
-  const card = (dish: Dish, variant: 'row' | 'carousel') => (
+  const card = (dish: Dish, variant: 'row' | 'carousel', eager = false) => (
     <DishCard
       key={dish.id}
       variant={variant}
+      eager={eager}
       dish={dish}
       today={today}
       quantity={dishQuantity(items, dish.id)}
@@ -233,7 +245,7 @@ export function Menu() {
     <>
       {showWelcome && <Welcome mesa={mesa} onDone={finishWelcome} />}
 
-      <div className="app-shell" inert={showWelcome || undefined}>
+      <div className="app-shell" inert={showWelcome || Boolean(detail) || undefined}>
         <Header
           name={restaurant.name}
           logo={restaurant.logo}
@@ -338,9 +350,36 @@ export function Menu() {
                   title={t.menu.bestSellers}
                   titleId="mas-vendidos"
                   intervalMs={restaurant.timings.carouselMs}
+                  className="tablet:hidden"
                 >
-                  {bestSellers.map((dish) => card(dish, 'carousel'))}
+                  {/* Las dos primeras se ven al abrir: se piden ya, sin esperar (mejora el tiempo de carga). */}
+                  {bestSellers.map((dish, i) => card(dish, 'carousel', i < 2))}
                 </Carousel>
+              )}
+              {/* T2 (tablet): los más vendidos en grilla de 4 en lugar del carrusel. */}
+              {takeout && bestSellers.length > 0 && (
+                <section aria-labelledby="mas-vendidos-grilla" className="hidden px-4 tablet:block">
+                  <h2 id="mas-vendidos-grilla" className="text-section text-texto">
+                    {t.menu.bestSellers}
+                  </h2>
+                  <div className="mt-3 grid grid-cols-4 gap-3">
+                    {bestSellers.map((dish) => (
+                      <DishCard
+                        key={dish.id}
+                        variant="carousel"
+                        fluid
+                        photoClassName="h-[120px]"
+                        dish={dish}
+                        today={today}
+                        quantity={dishQuantity(items, dish.id)}
+                        canOrder={canOrder}
+                        onAdd={() => quickAdd(dish)}
+                        onDecrement={() => decrement(dish)}
+                        onOpen={() => openDish(dish)}
+                      />
+                    ))}
+                  </div>
+                </section>
               )}
 
               {/* Secciones en el orden de categorías de menu.json. "Combos" lleva título propio,
@@ -357,7 +396,8 @@ export function Menu() {
                       {isCombos ? t.combos.title : category.name}
                     </h2>
                     {isCombos && <p className="mt-0.5 text-small text-texto-2">{t.combos.subtitle}</p>}
-                    <div className="divide-y divide-borde [&>article:first-child]:pt-[11px]">
+                    {/* T2 (tablet): dos columnas, cada plato en su tarjeta. */}
+                    <div className="divide-y divide-borde [&>article:first-child]:pt-[11px] tablet:mt-3 tablet:grid tablet:grid-cols-2 tablet:gap-3 tablet:divide-y-0 tablet:[&>article]:rounded-grande tablet:[&>article]:border tablet:[&>article]:border-borde tablet:[&>article]:bg-tarjeta tablet:[&>article]:px-3 tablet:[&>article:first-child]:pt-3">
                       {(isCombos ? combos : dishesByCategory(category.id)).map(row)}
                     </div>
                   </section>
@@ -371,29 +411,35 @@ export function Menu() {
       </div>
 
 
-      {canOrder ? (
-        count > 0 && (
-          <CartBar
-            label={fmt(t.menu.viewOrder, { n: count, platos: platos(count) })}
-            total={formatMoney(total)}
-            count={count}
-            onClick={() => navigate(paths.order(mesa))}
-          />
-        )
-      ) : (
-        <BottomDock>
-          <button
-            type="button"
-            disabled
-            className="h-[52px] w-full rounded-grande bg-foto-vacia text-button text-texto-2"
-          >
-            {fmt(t.closed.button, { open: openState.opensAt ?? '' })}
-          </button>
-        </BottomDock>
-      )}
+      {/* Con el detalle abierto encima, la barra y WhatsApp quedan inertes (no se llega con el teclado). */}
+      <div inert={Boolean(detail) || undefined}>
+        {canOrder ? (
+          count > 0 && (
+            <CartBar
+              label={fmt(t.menu.viewOrder, { n: count, platos: platos(count) })}
+              total={formatMoney(total)}
+              count={count}
+              onClick={() => navigate(paths.order(mesa))}
+            />
+          )
+        ) : (
+          <BottomDock>
+            <button
+              type="button"
+              disabled
+              className="h-[52px] w-full rounded-grande bg-foto-vacia text-button text-texto-2"
+            >
+              {fmt(t.closed.button, { open: openState.opensAt ?? '' })}
+            </button>
+          </BottomDock>
+        )}
 
-      {/* Web: "Escribinos" por WhatsApp, siempre (en el QR no: el cliente está en el local). */}
-      {takeout && <WhatsAppButton />}
+        {/* Web: "Escribinos" por WhatsApp, siempre (en el QR no: el cliente está en el local). */}
+        {takeout && <WhatsAppButton />}
+      </div>
+
+      {/* Web: el detalle del plato, encima del menú (pantalla completa en celular, ventana en tablet). */}
+      {detail}
     </>
   )
 }

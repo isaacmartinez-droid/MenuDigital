@@ -20,7 +20,7 @@ export function Delivery() {
     <>
       <div className="app-shell">
         <PageHeader title={t.web.deliveryPageTitle} subtitle={t.web.deliverySubtitle} onBack={goBack} />
-        <main className="flex flex-col gap-4 px-4 pt-2">
+        <main className="flex flex-col gap-4 px-4 pt-2 tablet:px-8">
           <NoticeBanner tone="pronto" title={t.web.deliveryNoticeTitle} body={t.web.deliveryNoticeBody} />
 
           <div className="flex flex-col gap-2">

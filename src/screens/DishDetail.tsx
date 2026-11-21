@@ -1,6 +1,6 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { ChevronLeft, Star } from 'lucide-react'
+import { ChevronLeft, Star, X } from 'lucide-react'
 import type { Dish } from '../types/menu'
 import { Photo } from '../components/Photo'
 import { Tag } from '../components/Tag'
@@ -28,6 +28,8 @@ import { combosFor, dayBadge, daysLabel, isOnDay, useToday } from '../lib/combos
 import { reviewsFor } from '../lib/reviews'
 import { useGoBack } from '../lib/useGoBack'
 import { paths, useMesa } from '../lib/useMesa'
+import { isTakeout } from '../lib/channel'
+import { cx } from '../lib/cx'
 import { cartStore } from '../store/cart'
 import { useUi } from '../store/ui'
 
@@ -47,11 +49,53 @@ function alternativesFor(dish: Dish, today: number): Dish[] {
 }
 
 /**
+ * Web: el detalle se abre encima del menú. En celular ocupa toda la pantalla
+ * (se ve igual que en la mesa); en tablet (T3) es una ventana centrada sobre el
+ * menú oscurecido, que se cierra con la ✕, tocando afuera o con Esc.
+ */
+function WebDetailFrame({ onClose, labelledBy, children }: { onClose: () => void; labelledBy: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const close = useRef(onClose)
+  useEffect(() => {
+    close.current = onClose
+  })
+  useEffect(() => {
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    ref.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close.current()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = overflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [])
+  return (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={labelledBy}
+      tabIndex={-1}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) close.current()
+      }}
+      className="fixed inset-0 z-50 animate-fade-in overflow-y-auto bg-fondo outline-none tablet:bg-texto/50 tablet:px-6 tablet:py-[120px]"
+    >
+      {children}
+    </div>
+  )
+}
+
+/**
  * M2 Detalle del plato (pantalla con scroll y barra fija abajo).
  * Con ?linea=<id> edita una línea del pedido (desde "Con gallo pinto · cambiar").
  */
 export function DishDetail() {
   const mesa = useMesa()
+  const takeout = isTakeout(mesa)
   const navigate = useNavigate()
   const { dishId = '' } = useParams()
   const [search] = useSearchParams()
@@ -64,6 +108,7 @@ export function DishDetail() {
   const sideGroup = useId()
   const extrasGroup = useId()
   const noteId = useId()
+  const titleId = useId()
 
   const [sideId, setSideId] = useState<string | undefined>(() => editing?.sideId ?? dish?.defaultSide)
   const [extraIds, setExtraIds] = useState<string[]>(() => editing?.extraIds ?? [])
@@ -141,8 +186,13 @@ export function DishDetail() {
     goBack()
   }
 
-  return (
-    <div className="app-shell">
+  const page = (
+    <div
+      className={cx(
+        'app-shell',
+        takeout && 'tablet:max-w-[640px] tablet:overflow-hidden tablet:rounded-grande tablet:bg-tarjeta',
+      )}
+    >
       <div className="relative">
         <Photo
           src={dish.image}
@@ -150,19 +200,26 @@ export function DishDetail() {
           size="full"
           eager
           dimmed={unavailable}
-          className="h-[280px] w-full"
+          className="h-[280px] w-full tablet:h-[260px]"
         />
         <button
           type="button"
           onClick={goBack}
-          aria-label={t.common.back}
+          aria-label={takeout ? t.common.close : t.common.back}
           className="absolute top-3 left-4 grid size-10 place-items-center rounded-completo bg-tarjeta text-texto shadow-sm"
         >
-          <ChevronLeft size={24} strokeWidth={2} aria-hidden />
+          {takeout ? (
+            <>
+              <ChevronLeft size={24} strokeWidth={2} aria-hidden className="tablet:hidden" />
+              <X size={20} strokeWidth={2} aria-hidden className="hidden tablet:block" />
+            </>
+          ) : (
+            <ChevronLeft size={24} strokeWidth={2} aria-hidden />
+          )}
         </button>
       </div>
 
-      <main className="rounded-t-grande bg-tarjeta px-4 pt-4 pb-32">
+      <main className="rounded-t-grande bg-tarjeta px-4 pt-4 pb-32 tablet:rounded-none tablet:px-6 tablet:pt-6 tablet:pb-6">
         <div className="flex min-h-6 items-center justify-between gap-3">
           <div>
             {!dish.available ? (
@@ -173,7 +230,9 @@ export function DishDetail() {
           </div>
           <p className="text-section text-texto">{formatMoney(dish.price)}</p>
         </div>
-        <h1 className="mt-1 text-title text-texto">{dish.name}</h1>
+        <h1 id={titleId} className="mt-1 text-title text-texto">
+          {dish.name}
+        </h1>
         {rating && (
           <p
             className="mt-1 inline-flex items-center gap-1 text-small text-texto-2"
@@ -350,7 +409,8 @@ export function DishDetail() {
         </div>
       )}
 
-      <BottomDock>
+      {/* En la ventana de tablet la barra va al pie de la ventana, no fija abajo de la pantalla. */}
+      <BottomDock className={takeout ? 'tablet:static tablet:max-w-none' : undefined}>
         <div className="flex items-center gap-3 py-1">
           {canAdd ? (
             <>
@@ -387,5 +447,13 @@ export function DishDetail() {
         </div>
       </BottomDock>
     </div>
+  )
+
+  return takeout ? (
+    <WebDetailFrame onClose={goBack} labelledBy={titleId}>
+      {page}
+    </WebDetailFrame>
+  ) : (
+    page
   )
 }

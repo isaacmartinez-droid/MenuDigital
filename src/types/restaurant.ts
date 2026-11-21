@@ -49,7 +49,8 @@ export type Texts = (typeof restaurantJson)['texts']
 export interface RestaurantConfig {
   id: string
   name: string
-  logo: { webp: string; png: string; alt: string }
+  /** small: versión liviana para el encabezado (la genera `npm run images`). */
+  logo: { webp: string; small?: string; png: string; alt: string }
   colors: Record<ColorToken, string>
   currency: { symbol: string; locale: string }
   /**

@@ -130,6 +130,25 @@
 /* Pantallas bajas (ej. 360 × 640): la portada se compacta para que el botón entre sin scroll. */
 @custom-variant short (@media (max-height: 700px));
 
+/*
+ * Tablet (web para llevar, T1–T5): desde 768 px y solo dentro de la web (.web, en
+ * WebLayout). La mesa (QR) es solo celular: aunque se abra en una tablet, no cambia.
+ */
+@custom-variant tablet {
+  @media (min-width: 768px) {
+    &:where(.web, .web *) {
+      @slot;
+    }
+  }
+}
+
+/* En tablet la web usa el ancho del diseño (834 px); la columna, las barras y los botones flotantes lo siguen. */
+@media (min-width: 768px) {
+  .web {
+    --container-app: 834px;
+  }
+}
+
 /* Contenedor de la app: 390 px de diseño, centrado hasta 480 px. */
 @utility app-shell {
   width: 100%;

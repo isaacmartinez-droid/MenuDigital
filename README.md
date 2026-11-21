@@ -28,7 +28,7 @@ Hay dos canales en la misma app; la URL decide cuál:
 - **Mesa (QR):** cada mesa tiene su URL, `/m/5` es la Mesa 5 (es lo que va en el QR). Una mesa
   que no está en la config muestra "Este QR no es válido".
 - **Web para llevar:** `/` es el inicio (la primera vez, con la bienvenida de 2 s), `/menu` el
-  menú, `/plato/<id>` el detalle, `/pedido` el pedido, `/datos` nombre y WhatsApp (se recuerdan
+  menú, `/menu/plato/<id>` el detalle (se abre encima del menú), `/pedido` el pedido, `/datos` nombre y WhatsApp (se recuerdan
   en el teléfono), `/resumen` el resumen y pago al recoger, `/confirmacion/<id>` la comanda
   recibida (pasa sola al seguimiento a los 5 s), `/orden/<id>` el seguimiento con el número para
   mostrar al recoger, `/calificar/<id>` la calificación con la invitación a dejar reseña en
@@ -119,7 +119,8 @@ Todo lo del restaurante sale de dos JSON y de las fotos; no hace falta tocar com
    ```bash
    npm run images   # genera <foto>-400.webp, la versión liviana para listas
    ```
-   Si una foto no tiene versión de 400 px, se usa la original. Un plato sin `image` muestra
+   Si una foto no tiene versión de 400 px, se usa la original. El mismo comando, desde
+   `logo.png`, genera `logo-192.webp` (encabezado) e `icon-32.png` / `icon-180.png` (íconos). Un plato sin `image` muestra
    el fondo gris de espera.
 
 Los tipos están en `src/types/` (`restaurant.ts`, `menu.ts`, `order.ts`) y tienen la forma

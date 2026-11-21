@@ -4,13 +4,13 @@ import { BellRing, ChevronRight, MapPin, Plus } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { formatMoney } from '../lib/money'
 import { useNow } from '../lib/useNow'
-import { etaFor, sentAtClock, statusLabel } from '../lib/comandaStatus'
+import { statusLabel } from '../lib/comandaStatus'
 import { enableNotifications, notificationPermission } from '../lib/notifications'
 import { readItem, tableKey, writeItem } from '../lib/storage'
 import type { Substitute } from '../types/menu'
 import type { Comanda as ComandaModel } from '../types/order'
 import { Header } from '../components/Header'
-import { TrackingTimeline } from '../components/TrackingTimeline'
+import { StatusCard } from '../components/StatusCard'
 import { Comanda } from '../components/Comanda'
 import { SoldOutSheet } from '../components/SoldOutSheet'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -115,24 +115,6 @@ export function Tracking() {
   }
 
   const status = comanda.status
-  const sentAt = fmt(t.tracking.sentAt, { time: sentAtClock(comanda) })
-  // Mientras se prepara: hora estimada en rango, como las apps de delivery.
-  const inProgress = status === 'recibida' || status === 'en-el-comal'
-  const eta = etaFor(comanda, now)
-  const headline = {
-    recibida: {
-      title: t.tracking.processingTitle,
-      body: `${takeout ? t.web.processingBody : t.tracking.processingBody} · ${sentAt}`,
-    },
-    'en-el-comal': {
-      title: t.tracking.cookingTitle,
-      body: `${fmt(t.tracking.etaIn, { from: eta.minFrom, to: eta.minTo })} · ${sentAt}`,
-    },
-    lista: { title: t.tracking.readyTitle, body: takeout ? t.web.readyBody : fmt(t.tracking.readyBody, { mesa }) },
-    entregada: takeout
-      ? { title: t.web.doneTitle, body: t.web.doneBody }
-      : { title: t.tracking.deliveredTitle, body: t.tracking.deliveredBody },
-  }[status]
   // Las demás órdenes de este teléfono (la más reciente primero) y el total de toda la mesa.
   const others = comandas.filter((c) => c.mine && c.id !== comanda.id).sort((a, b) => b.number - a.number)
   const accountTotal = comandas.reduce((sum, c) => sum + c.total, 0)
@@ -181,7 +163,7 @@ export function Tracking() {
         tableText={takeout ? t.web.place : tableLabel(mesa)}
       />
 
-      <main className="px-4 pt-2">
+      <main className="px-4 pt-2 tablet:px-8">
         {!online && (
           <NoticeBanner role="status" tone="aviso" title={t.offline.title} body={t.offline.trackingBody} className="mb-3" />
         )}
@@ -189,23 +171,7 @@ export function Tracking() {
           <NoticeBanner role="status" tone="positivo" title={t.soldOut.doneTitle} body={replacedText} className="mb-3" />
         )}
 
-        <section className="rounded-grande border border-borde bg-tarjeta px-4 pt-4 pb-4" aria-labelledby="estado">
-          {inProgress && (
-            <div className="mb-2.5">
-              <p className="text-small text-texto-2">{t.tracking.etaLabel}</p>
-              <p className="text-title-lg text-texto tabular-nums">{eta.range}</p>
-            </div>
-          )}
-          <div aria-live="polite">
-            <h1 id="estado" className={cx('text-texto', inProgress ? 'text-section' : 'text-title')}>
-              {headline.title}
-            </h1>
-            <p className="mt-1 text-body text-texto-2">{headline.body}</p>
-          </div>
-          <div className="mt-4">
-            <TrackingTimeline comanda={comanda} status={status} takeout={takeout} />
-          </div>
-        </section>
+        <StatusCard comanda={comanda} mesa={mesa} now={now} />
 
         {/* Ofrece los avisos del sistema mientras la orden no se entregó (una vez por sesión). */}
         {status !== 'entregada' && notifyPerm === 'default' && !notifyDismissed && (

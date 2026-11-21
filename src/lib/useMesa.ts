@@ -16,8 +16,9 @@ const base = (id: string) => (isTakeout(id) ? '' : `/m/${id}`)
 /** Rutas de las pantallas. Las compartidas sirven para la mesa y para la web. */
 export const paths = {
   menu: (id: string) => (isTakeout(id) ? '/menu' : `/m/${id}`),
-  dish: (id: string, dishId: string) => `${base(id)}/plato/${dishId}`,
-  editLine: (id: string, dishId: string, lineId: string) => `${base(id)}/plato/${dishId}?linea=${lineId}`,
+  // En la web el detalle cuelga del menú (/menu/plato/…) para abrirse encima de él.
+  dish: (id: string, dishId: string) => `${isTakeout(id) ? '/menu' : base(id)}/plato/${dishId}`,
+  editLine: (id: string, dishId: string, lineId: string) => `${paths.dish(id, dishId)}?linea=${lineId}`,
   order: (id: string) => `${base(id)}/pedido`,
   tracking: (id: string, comandaId: string) => `${base(id)}/orden/${comandaId}`,
   bill: (id: string) => `/m/${id}/cuenta`,

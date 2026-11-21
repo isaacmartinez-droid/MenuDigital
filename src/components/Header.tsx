@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { t } from '../lib/text'
 
 interface HeaderProps {
   name: string
-  logo: { webp: string; png: string; alt: string }
+  logo: { webp: string; small?: string; png: string; alt: string }
   open: boolean
   /** "Abierto · cierra 10:00 pm" o "Cerrado ahora · abrimos a las 4:00 pm" */
   statusText: string
@@ -17,7 +18,8 @@ export function Header({ name, logo, open, statusText, tableText }: HeaderProps)
   return (
     <header className="flex items-center gap-3 px-4 pt-3 pb-3">
       <picture className="block h-[47px] w-16 shrink-0 overflow-hidden rounded-chico bg-tarjeta">
-        <source srcSet={logo.webp} type="image/webp" />
+        {/* Se ve de 64 px: alcanza la versión chica (6 KB en vez de 22 KB). */}
+        <source srcSet={logo.small ?? logo.webp} type="image/webp" />
         <img src={logo.png} alt={logo.alt} width={64} height={47} className="h-full w-full object-contain" />
       </picture>
       <div className="min-w-0 flex-1">
@@ -39,14 +41,14 @@ export function Header({ name, logo, open, statusText, tableText }: HeaderProps)
 
 interface PageHeaderProps {
   title: string
-  subtitle?: string
+  subtitle?: ReactNode
   onBack: () => void
 }
 
 /** Encabezado de página interna: botón atrás, título grande y subtítulo ("Tu pedido · Mesa 5"). */
 export function PageHeader({ title, subtitle, onBack }: PageHeaderProps) {
   return (
-    <header className="flex items-center gap-3 px-4 pt-3 pb-3">
+    <header className="flex items-center gap-3 px-4 pt-3 pb-3 tablet:px-8">
       <button
         type="button"
         onClick={onBack}

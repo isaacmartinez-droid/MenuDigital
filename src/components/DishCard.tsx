@@ -24,6 +24,12 @@ interface DishCardProps {
    * del día) muestra "Combo de hoy" o "Solo los martes" y, fuera de su día, sin +.
    */
   today?: number
+  /** Tarjeta (variant carousel) a todo el ancho de su celda, para grillas (tablet). */
+  fluid?: boolean
+  /** Alto de la foto de la tarjeta; por defecto 152 px. */
+  photoClassName?: string
+  /** Foto visible al abrir (primeras del carrusel): se pide ya y con prioridad, no en diferido. */
+  eager?: boolean
 }
 
 /** Para botones dentro de una tarjeta que ya abre el detalle: evita abrirlo dos veces. */
@@ -103,7 +109,7 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }
   )
 }
 
-function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today }: DishCardProps) {
+function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today, fluid, photoClassName, eager }: DishCardProps) {
   const soldOut = !dish.available
   const { badge, onDay } = dayInfo(dish, today)
   const photoTag = badge ?? dishTags(dish)[0]
@@ -112,7 +118,10 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today }: DishCardPr
     // Toda la tarjeta abre el detalle; la foto es el botón para teclado y lector de pantalla.
     <article
       onClick={onOpen}
-      className="flex w-[224px] shrink-0 cursor-pointer snap-start flex-col rounded-grande border border-borde bg-tarjeta p-2 transition-opacity duration-150 active:opacity-80"
+      className={cx(
+        'flex cursor-pointer flex-col rounded-grande border border-borde bg-tarjeta p-2 transition-opacity duration-150 active:opacity-80',
+        fluid ? 'w-full' : 'w-[224px] shrink-0 snap-start',
+      )}
       aria-label={dish.name}
     >
       <button
@@ -121,7 +130,12 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today }: DishCardPr
         aria-label={fmt(t.menu.openDetail, { dish: dish.name })}
         className="relative rounded-tarjeta"
       >
-        <Photo src={dish.image} className="h-[152px] w-full rounded-tarjeta" dimmed={soldOut} />
+        <Photo
+          src={dish.image}
+          className={cx('w-full rounded-tarjeta', photoClassName ?? 'h-[152px]')}
+          dimmed={soldOut}
+          eager={eager}
+        />
         {photoTag && (
           <Tag tone={photoTag.tone} className="absolute top-2 left-2">
             {photoTag.label}

@@ -3,6 +3,7 @@
   "name": "Fritanga Nica",
   "logo": {
     "webp": "/img/logo.webp",
+    "small": "/img/logo-192.webp",
     "png": "/img/logo.png",
     "alt": "Logo de Fritanga Nica"
   },
@@ -449,6 +450,10 @@
       "deliveryCta": "Próximamente",
       "newTab": "(se abre en otra pestaña)",
       "continue": "Continuar",
+      "orderSubtitleTablet": "Para llevar · pagás al recoger",
+      "dataNoteTablet": "No necesitás cuenta. Te escribimos para confirmar antes de cocinar.",
+      "openToday": "Abierto hoy · {open} a {close}",
+      "closedToday": "Cerrado ahora · abrimos a las {open}",
       "dataTitle": "Tus datos",
       "dataSubtitle": "Para confirmar tu pedido",
       "nameLabel": "Tu nombre",

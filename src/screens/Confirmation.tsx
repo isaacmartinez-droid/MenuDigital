@@ -3,6 +3,10 @@ import { Navigate, useNavigate, useParams } from 'react-router'
 import { Header } from '../components/Header'
 import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Button } from '../components/Button'
+import { StatusCard } from '../components/StatusCard'
+import { MapPin, MessageCircle } from 'lucide-react'
+import { useNow } from '../lib/useNow'
+import { whatsappHref } from '../lib/whatsapp'
 import { TAKEOUT } from '../lib/channel'
 import { restaurant } from '../lib/catalog'
 import { itemDetails } from '../lib/comandaStatus'
@@ -22,12 +26,14 @@ export function Confirmation() {
   const { comandaId = '' } = useParams()
   const comanda = useComandas(TAKEOUT, (s) => s.comandas.find((c) => c.id === comandaId))
   const openState = useOpenState()
+  const now = useNow(30_000)
   const follow = () => navigate(paths.tracking(TAKEOUT, comandaId), { replace: true })
 
   // Depende de que exista, no del objeto: si cambia de estado mientras tanto, el reloj no se reinicia.
   const exists = Boolean(comanda)
   useEffect(() => {
-    if (!exists) return
+    // En tablet (T5) la confirmación ya muestra el seguimiento al lado: no hace falta pasar.
+    if (!exists || window.matchMedia('(min-width: 768px)').matches) return
     const id = window.setTimeout(
       () => navigate(paths.tracking(TAKEOUT, comandaId), { replace: true }),
       restaurant.timings.webConfirmMs,
@@ -51,51 +57,85 @@ export function Confirmation() {
           }
           tableText={t.web.place}
         />
-        <main className="flex flex-col items-center gap-4 px-4 pt-4 text-center">
-          <h1 className="text-title text-texto">
-            {t.web.confirmTitle}
-          </h1>
+        <main className="flex flex-col items-center gap-4 px-4 pt-4 text-center tablet:items-stretch tablet:gap-6 tablet:px-8 tablet:pt-6 tablet:text-left">
+          <h1 className="text-title text-texto tablet:text-title-lg">{t.web.confirmTitle}</h1>
 
-          {/* Comanda "de papel" */}
-          <section
-            aria-label={comanda.id}
-            className="flex w-full flex-col items-center gap-3 rounded-chico border border-borde bg-tarjeta p-6 text-left"
-          >
-            <p className="text-small tracking-[0.12em] text-texto-2 uppercase">{t.web.ticketLabel}</p>
-            <p className="font-mano text-comanda-lg font-bold text-verde">{comanda.id}</p>
-            <hr className="w-full border-borde" />
-            <ul className="flex w-full flex-col gap-2">
-              {comanda.items.map((item, i) => {
-                const details = itemDetails(item)
-                return (
-                  <li key={i} className="flex gap-2">
-                    <span className="w-6 shrink-0 text-dish text-texto">{item.quantity}×</span>
-                    <span className="min-w-0 flex-1 text-body text-texto">
-                      {item.name}
-                      {details && <span className="text-texto-2"> · {details}</span>}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
-            <hr className="w-full border-borde" />
-            <p className="flex w-full items-center justify-between gap-3">
-              <span className="text-small text-texto-2">{fmt(t.web.payLine, { name: comanda.customerName })}</span>
-              <span className="text-price text-texto">{formatMoney(comanda.total)}</span>
-            </p>
-          </section>
-
-          <p role="status" className="text-body text-texto-2">
+          {/* Celular: el texto va debajo de la comanda; tablet (T5): debajo del título. */}
+          <p role="status" className="order-2 text-body text-texto-2 tablet:order-none tablet:-mt-4">
             {t.web.confirmBody}
           </p>
-          <DockSpacer />
+
+          {/* T5: la comanda y el seguimiento lado a lado. */}
+          <div className="order-1 grid w-full items-start gap-6 tablet:order-none tablet:grid-cols-2">
+            {/* Comanda "de papel" */}
+            <section
+              aria-label={comanda.id}
+              className="flex w-full flex-col items-center gap-3 rounded-chico border border-borde bg-tarjeta p-6 text-left"
+            >
+              <p className="text-small tracking-[0.12em] text-texto-2 uppercase">{t.web.ticketLabel}</p>
+              <p className="font-mano text-comanda-lg font-bold text-verde">{comanda.id}</p>
+              <hr className="w-full border-borde" />
+              <ul className="flex w-full flex-col gap-2">
+                {comanda.items.map((item, i) => {
+                  const details = itemDetails(item)
+                  return (
+                    <li key={i} className="flex gap-2">
+                      <span className="w-6 shrink-0 text-dish text-texto">{item.quantity}×</span>
+                      <span className="min-w-0 flex-1 text-body text-texto">
+                        {item.name}
+                        {details && <span className="text-texto-2"> · {details}</span>}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+              <hr className="w-full border-borde" />
+              <p className="flex w-full items-center justify-between gap-3">
+                <span className="text-small text-texto-2">{fmt(t.web.payLine, { name: comanda.customerName })}</span>
+                <span className="text-price text-texto">{formatMoney(comanda.total)}</span>
+              </p>
+            </section>
+            <div className="hidden tablet:block">
+              <StatusCard comanda={comanda} mesa={TAKEOUT} now={now} headingLevel="h2" />
+            </div>
+          </div>
+          <div className="order-3 tablet:order-none">
+            <DockSpacer />
+          </div>
         </main>
       </div>
 
       <BottomDock>
-        <Button block onClick={follow}>
-          {t.web.follow}
-        </Button>
+        <div className="tablet:hidden">
+          <Button block onClick={follow}>
+            {t.web.follow}
+          </Button>
+        </div>
+        {/* T5: cómo llegar y escribir por WhatsApp. */}
+        <div className="hidden gap-3 tablet:flex">
+          <a
+            href={restaurant.web.mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-[52px] flex-1 items-center justify-center gap-2 rounded-grande border border-borde bg-tarjeta text-button text-texto"
+          >
+            <MapPin size={20} strokeWidth={1.8} aria-hidden />
+            {t.web.directions}
+            <span className="sr-only"> {t.web.newTab}</span>
+          </a>
+          {whatsappHref() && (
+            <a
+              href={whatsappHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-[52px] flex-1 items-center justify-center gap-2 rounded-grande border border-borde bg-tarjeta text-button text-texto"
+            >
+              <MessageCircle size={20} strokeWidth={1.8} aria-hidden />
+              {t.closed.whatsapp}
+              <span className="sr-only"> {t.web.newTab}</span>
+            </a>
+          )}
+        </div>
       </BottomDock>
     </>
   )

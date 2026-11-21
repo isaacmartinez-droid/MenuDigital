@@ -33,8 +33,12 @@ const routes: RouteObject[] = [
     errorElement: <RouteError />,
     children: [
       { index: true, element: <Home /> },
-      { path: 'menu', element: <Menu /> },
-      { path: 'plato/:dishId', lazy: async () => ({ Component: (await screens.detail()).DishDetail }) },
+      // El detalle se abre encima del menú (ruta hija): el menú no se desmonta ni pierde su lugar.
+      {
+        path: 'menu',
+        element: <Menu />,
+        children: [{ path: 'plato/:dishId', lazy: async () => ({ Component: (await screens.detail()).DishDetail }) }],
+      },
       { path: 'pedido', lazy: async () => ({ Component: (await screens.order()).Order }) },
       { path: 'datos', lazy: async () => ({ Component: (await screens.customerData()).CustomerData }) },
       { path: 'resumen', lazy: async () => ({ Component: (await screens.summary()).Summary }) },
@@ -69,9 +73,15 @@ const routes: RouteObject[] = [
  */
 export function prefetchScreens() {
   const run = () => Object.values(screens).forEach((load) => void load().catch(() => undefined))
-  // Safari no tiene requestIdleCallback: ahí se espera un poco y listo.
-  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 4000 })
-  else setTimeout(run, 2000)
+  // Recién cuando la página terminó de cargar (fotos incluidas) y el navegador está libre:
+  // así no le quita ancho de banda a lo que se ve al abrir. Safari no tiene
+  // requestIdleCallback: ahí se espera un poco y listo.
+  const whenIdle = () => {
+    if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 3000 })
+    else setTimeout(run, 1500)
+  }
+  if (document.readyState === 'complete') whenIdle()
+  else window.addEventListener('load', whenIdle, { once: true })
 }
 
 // Muestrario de componentes, solo en desarrollo.

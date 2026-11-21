@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { CartItem } from '../types/order'
 import type { Dish } from '../types/menu'
@@ -22,6 +22,10 @@ import { useGoBack } from '../lib/useGoBack'
 import { useOpenState } from '../lib/useOpenState'
 import { paths, useMesa } from '../lib/useMesa'
 import { isTakeout } from '../lib/channel'
+import { useConfirmTakeout } from '../lib/useConfirmTakeout'
+import { CustomerFields } from '../components/CustomerFields'
+import { PayOptions } from '../components/PayOptions'
+import { checkCustomer } from '../store/customer'
 import { cartStore, cartTotal, countItems, lineTotal, useCart } from '../store/cart'
 
 type Notice = { kind: 'limit' | 'error'; key: string }
@@ -57,6 +61,15 @@ export function Order() {
   /** true mientras el campo de la nota tiene el foco; al salir, una nota escrita se ve guardada. */
   const [editingNote, setEditingNote] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
+  // T4 (tablet, para llevar): datos y pago en esta misma pantalla, con "Confirmar pedido".
+  const nameRef = useRef<HTMLInputElement>(null)
+  const phoneRef = useRef<HTMLInputElement>(null)
+  const [triedData, setTriedData] = useState(false)
+  const takeoutConfirm = useConfirmTakeout()
+  const confirmHere = () => {
+    setTriedData(true)
+    if (checkCustomer(nameRef, phoneRef)) void takeoutConfirm.confirm()
+  }
 
   useEffect(() => {
     if (!notice) return
@@ -97,11 +110,37 @@ export function Order() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={t.order.title} subtitle={takeout ? t.web.place : tableLabel(mesa)} onBack={goBack} />
+      <PageHeader
+        title={t.order.title}
+        subtitle={
+          takeout ? (
+            <>
+              <span className="tablet:hidden">{t.web.place}</span>
+              <span className="hidden tablet:inline">{t.web.orderSubtitleTablet}</span>
+            </>
+          ) : (
+            tableLabel(mesa)
+          )
+        }
+        onBack={goBack}
+      />
 
-      <main className="px-4">
+      <main className="px-4 tablet:px-8">
         {(pendingSend || !online) && (
           <NoticeBanner tone="aviso" role="status" title={t.offline.title} body={t.offline.body} className="mb-3" />
+        )}
+        {takeoutConfirm.notice && (
+          <Toast
+            key={takeoutConfirm.notice.key}
+            tone="aviso"
+            className="mb-3"
+            title={takeoutConfirm.notice.kind === 'limit' ? t.order.limitTitle : t.order.errorTitle}
+            body={
+              takeoutConfirm.notice.kind === 'limit'
+                ? fmt(t.order.limitBody, { max: restaurant.ordering.maxItemsPerComanda })
+                : t.order.errorBody
+            }
+          />
         )}
         {notice && (
           <Toast
@@ -356,6 +395,24 @@ export function Order() {
                 </>
               )}
             </section>
+
+            {/* T4 (tablet): tus datos y cómo pagás en la misma pantalla. */}
+            {takeout && (
+              <div className="hidden tablet:block">
+                <section className="mt-6" aria-labelledby={`${nameId}-datos`}>
+                  <h2 id={`${nameId}-datos`} className="text-section text-texto">
+                    {t.web.dataTitle}
+                  </h2>
+                  <div className="mt-3">
+                    <CustomerFields tried={triedData} nameRef={nameRef} phoneRef={phoneRef} columns />
+                  </div>
+                  <p className="mt-3 text-small text-texto-2">{t.web.dataNoteTablet}</p>
+                </section>
+                <div className="mt-6">
+                  <PayOptions />
+                </div>
+              </div>
+            )}
           </>
         )}
         <DockSpacer size="lg" />
@@ -364,9 +421,18 @@ export function Order() {
       {items.length > 0 && (
         <BottomDock>
           {openState.open && takeout ? (
-            <Button block onClick={() => navigate(paths.data)} trailing={formatMoney(total)}>
-              {t.web.continue}
-            </Button>
+            <>
+              <div className="tablet:hidden">
+                <Button block onClick={() => navigate(paths.data)} trailing={formatMoney(total)}>
+                  {t.web.continue}
+                </Button>
+              </div>
+              <div className="hidden tablet:block">
+                <Button block onClick={confirmHere} disabled={takeoutConfirm.sending} trailing={formatMoney(total)}>
+                  {takeoutConfirm.sending ? t.web.confirming : t.web.confirm}
+                </Button>
+              </div>
+            </>
           ) : openState.open ? (
             <div className="pt-1">
               <Button block onClick={() => setConfirming(true)} disabled={sending} trailing={formatMoney(total)}>

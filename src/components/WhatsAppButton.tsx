@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react'
-import { restaurant } from '../lib/catalog'
+import { whatsappHref } from '../lib/whatsapp'
 import { t } from '../lib/text'
 
 /**
@@ -8,9 +8,8 @@ import { t } from '../lib/text'
  * el QR de mesa no se usa (el cliente ya está en el local).
  */
 export function WhatsAppButton() {
-  const { number, message } = restaurant.whatsapp
-  if (!number) return null
-  const href = `https://wa.me/${number.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
+  const href = whatsappHref()
+  if (!href) return null
   return (
     <div
       className="pointer-events-none fixed inset-x-0 z-40 mx-auto flex w-full max-w-[var(--container-app)] justify-end px-6"
