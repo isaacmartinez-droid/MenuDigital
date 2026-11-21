@@ -115,11 +115,17 @@
 }
 
 /* Barra fija inferior alineada con la columna de la app. */
+/*
+ * Barra fija abajo, centrada en la columna de la app. Se centra con márgenes
+ * (no con transform) para que animaciones como sheet-in puedan usar transform
+ * sin descentrarla mientras entran.
+ */
 @utility bottom-dock {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
   width: 100%;
   max-width: var(--container-app);
   padding-bottom: env(safe-area-inset-bottom);
