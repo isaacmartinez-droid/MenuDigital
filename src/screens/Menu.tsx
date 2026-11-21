@@ -130,8 +130,15 @@ export function Menu() {
 
   const count = countItems(items)
   const total = cartTotal(items)
-  const bestSellers = menu.bestSellers.map(getDish).filter((d): d is Dish => Boolean(d))
   const combos = combosFor(today)
+  // "Los más vendidos": el combo de hoy va primero, después los de menu.json (sin repetir).
+  const todaysCombos = combos.filter((d) => d.available && d.days?.includes(today))
+  const bestSellers = [
+    ...todaysCombos,
+    ...menu.bestSellers
+      .map(getDish)
+      .filter((d): d is Dish => Boolean(d) && !todaysCombos.some((c) => c.id === d?.id)),
+  ]
   // Sin combos cargados, la categoría "combos" no tiene pestaña ni sección.
   const categories = menu.categories.filter((c) => c.id !== COMBOS_CATEGORY || combos.length > 0)
 
@@ -250,35 +257,26 @@ export function Menu() {
                 </Carousel>
               )}
 
-              {/* Las secciones siguen el orden de categorías de menu.json; "combos" va como carrusel. */}
-              {categories.map((category) =>
-                category.id === COMBOS_CATEGORY ? (
-                  <Carousel
-                    key={category.id}
-                    title={t.combos.title}
-                    subtitle={t.combos.subtitle}
-                    titleId={`cat-${COMBOS_CATEGORY}`}
-                    scrollMarginTop={TABS_HEIGHT + 8}
-                    intervalMs={restaurant.timings.carouselMs}
-                    className="mt-6 mb-2"
-                  >
-                    {combos.map((dish) => card(dish, 'carousel'))}
-                  </Carousel>
-                ) : (
-                <section key={category.id} aria-labelledby={`cat-${category.id}`} className="mt-3.5 px-4">
-                  <h2
-                    id={`cat-${category.id}`}
-                    className="text-section text-texto"
-                    style={{ scrollMarginTop: TABS_HEIGHT + 8 }}
-                  >
-                    {category.name}
-                  </h2>
-                  <div className="divide-y divide-borde [&>article:first-child]:pt-[11px]">
-                    {dishesByCategory(category.id).map(row)}
-                  </div>
-                </section>
-                ),
-              )}
+              {/* Secciones en el orden de categorías de menu.json. "Combos" lleva título propio,
+                  una línea de ayuda y va ordenada: el de hoy, los de siempre, los de otros días. */}
+              {categories.map((category) => {
+                const isCombos = category.id === COMBOS_CATEGORY
+                return (
+                  <section key={category.id} aria-labelledby={`cat-${category.id}`} className="mt-3.5 px-4">
+                    <h2
+                      id={`cat-${category.id}`}
+                      className="text-section text-texto"
+                      style={{ scrollMarginTop: TABS_HEIGHT + 8 }}
+                    >
+                      {isCombos ? t.combos.title : category.name}
+                    </h2>
+                    {isCombos && <p className="mt-0.5 text-small text-texto-2">{t.combos.subtitle}</p>}
+                    <div className="divide-y divide-borde [&>article:first-child]:pt-[11px]">
+                      {(isCombos ? combos : dishesByCategory(category.id)).map(row)}
+                    </div>
+                  </section>
+                )
+              })}
             </>
           )}
 

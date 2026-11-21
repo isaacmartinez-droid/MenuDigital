@@ -67,10 +67,12 @@ Todo lo del restaurante sale de dos JSON y de las fotos; no hace falta tocar com
 2. **`src/data/menu.json`**: categorías, etiquetas, acompañantes, extras y platos
    (`price`, `tags`, `defaultSide`, `sides`, `extras`, `maxExtras`, `available`, `rating`,
    `reviews`, `replaceable` para lo que puede agotarse), más `bestSellers` y `suggestedDrinks`.
-   - **Combos especiales:** los platos de la categoría `combos` salen en su propio carrusel.
-     Con `days` (0 = domingo … 6 = sábado) un combo solo se puede pedir esos días: ese día
-     dice "Combo de hoy" y va primero; los demás días se ve con "Solo los martes" y sin +.
-     Sin `days`, está todos los días. Los combos de ejemplo están por confirmar con el local.
+   - **Combos especiales:** los platos de la categoría `combos` salen en su sección (en el
+     lugar que tenga la categoría en `categories`). Con `days` (0 = domingo … 6 = sábado) un
+     combo solo se puede pedir esos días: ese día dice "Combo de hoy", va primero en su sección
+     y además encabeza el carrusel "Los más vendidos"; los demás días se ve con "Solo los
+     martes" y sin +. Sin `days`, está todos los días. Los combos de ejemplo están por
+     confirmar con el local.
 3. **Fotos en `public/img/`** (cuadradas, idealmente 800 × 800) y luego:
    ```bash
    npm run images   # genera <foto>-400.webp, la versión liviana para listas

@@ -42,7 +42,10 @@ export function DishCard(props: DishCardProps) {
 function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }: DishCardProps) {
   const soldOut = !dish.available
   const { badge, onDay } = dayInfo(dish, today)
-  const listTags = dishTags(dish).filter((tag) => tag.showInList)
+  // Con día ("Combo de hoy" / "Solo los martes") esa etiqueta reemplaza a las de la lista.
+  const listTags = badge
+    ? [{ id: 'dia', ...badge }]
+    : dishTags(dish).filter((tag) => tag.showInList)
   const openLabel = fmt(t.menu.openDetail, { dish: dish.name })
 
   return (
@@ -84,11 +87,7 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }
             <Tag tone="agotado" className="mb-2">
               {t.menu.soldOut}
             </Tag>
-          ) : !onDay && badge ? (
-            <Tag tone={badge.tone} className="mb-2">
-              {badge.label}
-            </Tag>
-          ) : canOrder ? (
+          ) : canOrder && onDay ? (
             quantity > 0 ? (
               <QuantityStepper
                 value={quantity}
