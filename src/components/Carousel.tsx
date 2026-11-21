@@ -26,7 +26,10 @@ const prefersReducedMotion = () => {
   }
 }
 
-const slidesOf = (track: HTMLElement) => [...track.children] as HTMLElement[]
+/** Cuánto espera después de un toque antes de seguir solo. */
+const HOLD_MS = 4000
+
+const slidesOf =(track: HTMLElement) => [...track.children] as HTMLElement[]
 const padOf = (track: HTMLElement) => parseFloat(getComputedStyle(track).paddingLeft) || 0
 
 function scrollToSlide(track: HTMLElement, index: number) {
@@ -37,8 +40,9 @@ function scrollToSlide(track: HTMLElement, index: number) {
 /**
  * Carrusel horizontal ("Los más vendidos"): se desliza con el dedo y encaja
  * en cada tarjeta; avanza solo cada `intervalMs` mientras está a la vista.
- * Se detiene en cuanto la persona lo toca, y tiene botón de pausa (WCAG 2.2.2).
- * Con "reducir movimiento" en el sistema no arranca solo.
+ * No se detiene: si la persona lo toca, espera unos segundos y sigue (y no se
+ * mueve mientras el foco del teclado está adentro). El botón de pausa lo para
+ * del todo (WCAG 2.2.2). Con "reducir movimiento" en el sistema no arranca solo.
  */
 export function Carousel({ title, titleId, subtitle, scrollMarginTop, className, intervalMs, children }: CarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -47,6 +51,16 @@ export function Carousel({ title, titleId, subtitle, scrollMarginTop, className,
   const [active, setActive] = useState(0)
   const [playing, setPlaying] = useState(() => count > 1 && !prefersReducedMotion())
   const [visible, setVisible] = useState(false)
+  // Toque reciente o foco adentro: espera y después retoma.
+  const [held, setHeld] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const holdTimer = useRef(0)
+  const hold = () => {
+    setHeld(true)
+    window.clearTimeout(holdTimer.current)
+    holdTimer.current = window.setTimeout(() => setHeld(false), HOLD_MS)
+  }
+  useEffect(() => () => window.clearTimeout(holdTimer.current), [])
 
   // Solo avanza mientras se ve (no mueve nada fuera de pantalla).
   useEffect(() => {
@@ -58,14 +72,14 @@ export function Carousel({ title, titleId, subtitle, scrollMarginTop, className,
   }, [])
 
   useEffect(() => {
-    if (!playing || !visible) return
+    if (!playing || !visible || held || focused) return
     const id = window.setInterval(() => {
       const track = trackRef.current
       if (!track || document.hidden) return
       scrollToSlide(track, activeRef.current >= count - 1 ? 0 : activeRef.current + 1)
     }, intervalMs)
     return () => window.clearInterval(id)
-  }, [playing, visible, count, intervalMs])
+  }, [playing, visible, held, focused, count, intervalMs])
 
   const onScroll = () => {
     const track = trackRef.current
@@ -81,8 +95,6 @@ export function Carousel({ title, titleId, subtitle, scrollMarginTop, className,
     activeRef.current = index
     setActive(index)
   }
-
-  const stop = () => setPlaying(false)
 
   return (
     <section aria-labelledby={titleId} aria-roledescription="carrusel" className={className}>
@@ -108,9 +120,16 @@ export function Carousel({ title, titleId, subtitle, scrollMarginTop, className,
       <div
         ref={trackRef}
         onScroll={onScroll}
-        onPointerDown={stop}
-        onWheel={stop}
-        onFocus={stop}
+        onPointerDown={hold}
+        onTouchMove={hold}
+        onWheel={hold}
+        // Solo el foco de teclado lo frena (tocar un botón también da foco, y eso no debe pararlo).
+        onFocus={(e) => {
+          if ((e.target as HTMLElement).matches(':focus-visible')) setFocused(true)
+        }}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false)
+        }}
         className="no-scrollbar relative mt-3 flex snap-x snap-mandatory scroll-px-4 gap-[13px] overflow-x-auto px-4"
       >
         {children}

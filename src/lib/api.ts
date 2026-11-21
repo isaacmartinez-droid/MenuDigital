@@ -10,7 +10,8 @@ import type { BillRequest, Comanda, ComandaItem, ComandaStatus, PayMethod, PaySc
 import { getDish, getExtra, getSide, restaurant, unitPrice } from './catalog'
 import { tipAmount } from './money'
 import { readDemoFlags } from './demoFlags'
-import { readItem, tableKey, writeItem } from './storage'
+import { newId, readItem, tableKey, writeItem } from './storage'
+import { addReviews } from './reviews'
 import { msToNextStatus, simulatedStatus } from './simulator'
 import { fmt, t } from './text'
 
@@ -261,14 +262,28 @@ export async function waitForPayment(tableId: string, sinceMs: number): Promise<
   }
 }
 
+export interface NewReview {
+  dishId: string
+  /** 1 a 5 */
+  rating: number
+  /** Comentario opcional (aparece en "Lo que dicen" del plato). */
+  text?: string
+  author: string
+}
+
 /**
- * Calificación rápida por plato (1 a 5).
- * API real: POST /api/mesas/:mesa/calificaciones { [platoId]: estrellas }
+ * Calificación al pagar: estrellas y comentario opcional por plato, más un
+ * comentario general para el dueño (no se publica).
+ * Simulado: se guardan en este navegador y aparecen en el detalle del plato.
+ * API real: POST /api/mesas/:mesa/calificaciones { resenas, comentario }
  */
-export async function rateDishes(tableId: string, ratings: Record<string, number>): Promise<void> {
+export async function rateDishes(tableId: string, reviews: NewReview[], comment?: string): Promise<void> {
   void tableId
-  void ratings
-  return roundTrip(() => undefined, 300)
+  void comment
+  return roundTrip(() => {
+    const date = new Date().toISOString().slice(0, 10)
+    addReviews(reviews.map((r) => ({ id: newId(), dishId: r.dishId, author: r.author, rating: r.rating, text: r.text?.trim() ?? '', date })))
+  }, 300)
 }
 
 /**

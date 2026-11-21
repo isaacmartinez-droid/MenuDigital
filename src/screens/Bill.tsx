@@ -12,7 +12,8 @@ import { Toast } from '../components/Toast'
 import { cx } from '../lib/cx'
 import { formatMoney, tipAmount } from '../lib/money'
 import { fmt, t, tableLabel } from '../lib/text'
-import { fetchAccount, rateDishes, requestBill } from '../lib/api'
+import { fetchAccount, rateDishes, requestBill, type NewReview } from '../lib/api'
+import { PaymentNotice } from '../components/PaymentNotice'
 import { itemDetails } from '../lib/comandaStatus'
 import { customerLabel } from '../lib/orderFlow'
 import { newId } from '../lib/storage'
@@ -29,14 +30,40 @@ type DishEntry = [dishId: string, name: string]
 type Overall = 'rico' | 'mal' | null
 
 /**
- * Lo que se manda como calificación: con pocos platos, las estrellas de cada
- * uno; con muchos, "todo rico" = 5 a todos, o 2 a los marcados como "no estuvo bien".
+ * Reseñas que se mandan: con pocos platos, estrellas y comentario de cada uno;
+ * con muchos, "todo rico" = 5 a todos, o 2 a los marcados como "no estuvo bien".
  */
-function ratingsToSend(dishes: DishEntry[], ratings: Record<string, number>, overall: Overall) {
-  if (dishes.length <= restaurant.ratings.perDishMax) return ratings
-  if (overall === 'rico') return Object.fromEntries(dishes.map(([id]) => [id, 5]))
-  if (overall === 'mal') return ratings
-  return {}
+function reviewsToSend(
+  dishes: DishEntry[],
+  ratings: Record<string, number>,
+  comments: Record<string, string>,
+  overall: Overall,
+  author: string,
+): NewReview[] {
+  if (dishes.length <= restaurant.ratings.perDishMax) {
+    return dishes
+      .filter(([id]) => ratings[id])
+      .map(([id]) => ({ dishId: id, rating: ratings[id], text: comments[id], author }))
+  }
+  if (overall === 'rico') return dishes.map(([id]) => ({ dishId: id, rating: 5, author }))
+  if (overall === 'mal') return Object.entries(ratings).map(([id, rating]) => ({ dishId: id, rating, author }))
+  return []
+}
+
+/** Campo corto de comentario (opcional), de una línea para que no ocupe mucho. */
+function CommentInput({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      aria-label={label}
+      maxLength={140}
+      enterKeyHint="done"
+      className="mt-1.5 mb-1 h-10 w-full animate-fade-in rounded-tarjeta border border-borde bg-fondo px-3 text-small text-texto outline-none placeholder:text-texto-2 focus-visible:outline-3 focus-visible:outline-verde"
+    />
+  )
 }
 
 /**
@@ -47,12 +74,16 @@ function RatingSection({
   mesa,
   dishes,
   ratings,
+  comments,
   overall,
+  overallComment,
 }: {
   mesa: string
   dishes: DishEntry[]
   ratings: Record<string, number>
+  comments: Record<string, string>
   overall: Overall
+  overallComment: string
 }) {
   const account = () => accountStore(mesa).getState()
   const perDish = dishes.length <= restaurant.ratings.perDishMax
@@ -72,13 +103,24 @@ function RatingSection({
         <>
           <ul className="mt-1.5">
             {dishes.map(([dishId, dishName]) => (
-              <li key={dishId} className="flex h-8 items-center justify-between gap-3">
-                <span className="min-w-0 truncate text-body text-texto">{dishName}</span>
-                <StarRating
-                  value={ratings[dishId] ?? 0}
-                  onChange={(stars) => account().rate(dishId, stars)}
-                  label={fmt(t.bill.rateDish, { dish: dishName })}
-                />
+              <li key={dishId}>
+                <div className="flex h-8 items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-body text-texto">{dishName}</span>
+                  <StarRating
+                    value={ratings[dishId] ?? 0}
+                    onChange={(stars) => account().rate(dishId, stars)}
+                    label={fmt(t.bill.rateDish, { dish: dishName })}
+                  />
+                </div>
+                {/* Con estrellas puestas, una línea opcional para contar qué tal (va a la reseña). */}
+                {Boolean(ratings[dishId]) && (
+                  <CommentInput
+                    value={comments[dishId] ?? ''}
+                    onChange={(v) => account().setComment(dishId, v)}
+                    placeholder={t.bill.commentPlaceholder}
+                    label={fmt(t.bill.commentLabel, { dish: dishName })}
+                  />
+                )}
               </li>
             ))}
           </ul>
@@ -109,9 +151,17 @@ function RatingSection({
             />
           </div>
           {overall === 'rico' && (
-            <p role="status" className="mt-3 text-small text-verde">
-              {t.bill.rateThanks}
-            </p>
+            <>
+              <p role="status" className="mt-3 text-small text-verde">
+                {t.bill.rateThanks}
+              </p>
+              <CommentInput
+                value={overallComment}
+                onChange={(v) => account().setOverallComment(v)}
+                placeholder={t.bill.overallCommentYes}
+                label={t.bill.overallCommentYes}
+              />
+            </>
           )}
           {overall === 'mal' && (
             <div className="mt-3">
@@ -137,7 +187,13 @@ function RatingSection({
                   )
                 })}
               </div>
-              <p className="mt-2 text-small text-texto-2">{t.bill.overallWhichHelp}</p>
+              <CommentInput
+                value={overallComment}
+                onChange={(v) => account().setOverallComment(v)}
+                placeholder={t.bill.overallCommentNo}
+                label={t.bill.overallCommentNo}
+              />
+              <p className="mt-1 text-small text-texto-2">{t.bill.overallWhichHelp}</p>
             </div>
           )}
         </>
@@ -160,6 +216,8 @@ export function Bill() {
   const ratings = useAccount(mesa, (s) => s.ratings)
   const ratingsSkipped = useAccount(mesa, (s) => s.ratingsSkipped)
   const overall = useAccount(mesa, (s) => s.overall)
+  const comments = useAccount(mesa, (s) => s.comments)
+  const overallComment = useAccount(mesa, (s) => s.overallComment)
   const payScope = useAccount(mesa, (s) => s.payScope)
   const tip = useAccount(mesa, (s) => s.tip)
   const payMethod = useAccount(mesa, (s) => s.payMethod)
@@ -212,8 +270,10 @@ export function Bill() {
     setNotifying(true)
     try {
       const { cashier: who } = await requestBill(mesa, { scope, tip, method: payMethod, cashGiven })
-      const toSend = ratingsToSend(dishes, ratings, overall)
-      if (!ratingsSkipped && Object.keys(toSend).length) void rateDishes(mesa, toSend).catch(() => undefined)
+      const reviews = reviewsToSend(dishes, ratings, comments, overall, customerName.trim() || t.detail.anonymousAuthor)
+      if (!ratingsSkipped && (reviews.length || overallComment.trim())) {
+        void rateDishes(mesa, reviews, overallComment.trim() || undefined).catch(() => undefined)
+      }
       accountStore(mesa).getState().markBillRequested(who)
     } catch {
       setOfflineKey(newId())
@@ -263,6 +323,13 @@ export function Bill() {
                 body={fmt(t.bill.goBody, { cashier: cashier ?? '' })}
                 className="mb-3"
               />
+            )}
+
+            {/* Siempre se paga en caja: bien visible antes de avisar (después lo dice "Pasá a caja"). */}
+            {!requested && (
+              <div className="mb-3">
+                <PaymentNotice />
+              </div>
             )}
 
             {inKitchen.length > 0 && !requested && (
@@ -348,7 +415,14 @@ export function Bill() {
             </section>
 
             {!requested && !ratingsSkipped && dishes.length > 0 && (
-              <RatingSection mesa={mesa} dishes={dishes} ratings={ratings} overall={overall} />
+              <RatingSection
+                mesa={mesa}
+                dishes={dishes}
+                ratings={ratings}
+                comments={comments}
+                overall={overall}
+                overallComment={overallComment}
+              />
             )}
           </>
         )}
@@ -368,7 +442,7 @@ export function Bill() {
               <Button block onClick={notifyCashier} disabled={notifying} trailing={formatMoney(total)}>
                 {notifying ? t.bill.notifying : t.bill.notify}
               </Button>
-              <p className="mt-2.5 text-center text-small text-texto-2">{t.bill.payAtCashier}</p>
+              <p className="mt-2.5 text-center text-small text-texto-2">{t.bill.notifyHelp}</p>
             </div>
           )}
         </BottomDock>

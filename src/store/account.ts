@@ -23,6 +23,10 @@ interface AccountState {
   ratings: Record<string, number>
   /** Con varios platos, una sola pregunta: "¿Todo estuvo rico?". */
   overall: 'rico' | 'mal' | null
+  /** Comentario opcional por plato (va a sus reseñas). */
+  comments: Record<string, string>
+  /** Comentario general para el dueño (con "todo rico" o "algo no"). */
+  overallComment: string
   ratingsSkipped: boolean
   /** Qué paga este teléfono: solo lo suyo (por defecto) o toda la mesa. */
   payScope: PayScope
@@ -38,6 +42,8 @@ interface AccountState {
   cancelWaiterCall: () => void
   rate: (dishId: string, stars: number) => void
   setOverall: (overall: 'rico' | 'mal') => void
+  setComment: (dishId: string, text: string) => void
+  setOverallComment: (text: string) => void
   /** Marca o desmarca un plato como "no estuvo bien". */
   toggleBadDish: (dishId: string) => void
   skipRatings: () => void
@@ -52,6 +58,8 @@ const store = tableStoreFactory<AccountState>('cuenta', () => (set, get) => ({
   waiterCall: null,
   ratings: {},
   overall: null,
+  comments: {},
+  overallComment: '',
   ratingsSkipped: false,
   payScope: 'mine',
   tip: { kind: 'percent', percent: restaurant.tip.suggested },
@@ -67,6 +75,8 @@ const store = tableStoreFactory<AccountState>('cuenta', () => (set, get) => ({
   cancelWaiterCall: () => set({ waiterCall: null }),
   rate: (dishId, stars) => set({ ratings: { ...get().ratings, [dishId]: stars } }),
   setOverall: (overall) => set(overall === 'rico' ? { overall, ratings: {} } : { overall }),
+  setComment: (dishId, text) => set({ comments: { ...get().comments, [dishId]: text } }),
+  setOverallComment: (overallComment) => set({ overallComment }),
   toggleBadDish: (dishId) => {
     const ratings = { ...get().ratings }
     if (ratings[dishId]) delete ratings[dishId]

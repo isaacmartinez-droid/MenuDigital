@@ -25,6 +25,7 @@ import { formatMoney, formatMoneyDelta } from '../lib/money'
 import { fmt, t } from '../lib/text'
 import { useOpenState } from '../lib/useOpenState'
 import { combosFor, dayBadge, daysLabel, isOnDay, useToday } from '../lib/combos'
+import { reviewsFor } from '../lib/reviews'
 import { useGoBack } from '../lib/useGoBack'
 import { paths, useMesa } from '../lib/useMesa'
 import { cartStore } from '../store/cart'
@@ -95,7 +96,8 @@ export function DishDetail() {
   const total = unitPrice(dish, extraIds) * quantity
   const onDay = isOnDay(dish, today)
   const canAdd = dish.available && openState.open && onDay
-  const reviews = dish.reviews ?? []
+  // Reseñas de menu.json más las que dejan los clientes al pagar (promedio recalculado).
+  const { written: reviews, rating } = reviewsFor(dish)
   // Agotado o combo de otro día: en vez del formulario, el motivo y dos alternativas.
   const unavailable = !dish.available || !onDay
   const alternatives = unavailable ? alternativesFor(dish, today) : []
@@ -172,13 +174,17 @@ export function DishDetail() {
           <p className="text-section text-texto">{formatMoney(dish.price)}</p>
         </div>
         <h1 className="mt-1 text-title text-texto">{dish.name}</h1>
-        {dish.rating && reviews.length > 0 && (
+        {rating && (
           <p
             className="mt-1 inline-flex items-center gap-1 text-small text-texto-2"
-            aria-label={fmt(t.detail.ratingLabel, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}
+            aria-label={fmt(t.detail.ratingLabel, {
+              avg: rating.average.toFixed(1),
+              n: rating.count,
+              word: rating.count === 1 ? t.detail.reviewOne : t.detail.reviewMany,
+            })}
           >
             <Star size={14} strokeWidth={0} aria-hidden className="fill-ambar" />
-            <span aria-hidden>{fmt(t.detail.ratingShort, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}</span>
+            <span aria-hidden>{fmt(t.detail.ratingShort, { avg: rating.average.toFixed(1), n: rating.count })}</span>
           </p>
         )}
         {dish.description && <p className="mt-2 text-body text-texto-2">{dish.description}</p>}
@@ -299,19 +305,23 @@ export function DishDetail() {
           </div>
         )}
 
-        {/* Reseñas: solo si el plato tiene. */}
+        {/* Reseñas con comentario: solo si hay (las de solo estrellas suman al promedio de arriba). */}
         {reviews.length > 0 && (
           <section className="mt-4 border-t border-borde pt-4" aria-labelledby={`${noteId}-r`}>
             <div className="flex items-center justify-between gap-3">
               <h2 id={`${noteId}-r`} className="text-dish text-texto">
                 {t.detail.reviews}
               </h2>
-              {dish.rating && (
+              {rating && (
                 <span className="flex items-center gap-2">
                   <span className="text-small text-texto-2">
-                    {fmt(t.detail.reviewsCount, { avg: dish.rating.average.toFixed(1), n: dish.rating.count })}
+                    {fmt(t.detail.reviewsCount, {
+                      avg: rating.average.toFixed(1),
+                      n: rating.count,
+                      word: rating.count === 1 ? t.detail.reviewOne : t.detail.reviewMany,
+                    })}
                   </span>
-                  <StarRating value={dish.rating.average} label={t.detail.reviews} size={18} />
+                  <StarRating value={rating.average} label={t.detail.reviews} size={18} />
                 </span>
               )}
             </div>
