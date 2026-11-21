@@ -1,0 +1,210 @@
+{
+  "categories": [
+    { "id": "fritangas", "name": "Fritangas" },
+    { "id": "asados", "name": "Asados" },
+    { "id": "antojitos", "name": "Antojitos" },
+    { "id": "bebidas", "name": "Bebidas" }
+  ],
+  "tags": [
+    { "id": "mas-vendido", "label": "Más vendido", "tone": "ambar", "showInList": false },
+    { "id": "de-la-casa", "label": "La de la casa", "tone": "ambar", "showInList": false },
+    { "id": "promo", "label": "Promo", "tone": "promo", "showInList": true },
+    { "id": "combo", "label": "Combo", "tone": "combo", "showInList": true }
+  ],
+  "sides": [
+    { "id": "gallo-pinto", "name": "Gallo pinto" },
+    { "id": "maduro", "name": "Maduro" },
+    { "id": "tajadas", "name": "Tajadas" },
+    { "id": "yuca", "name": "Yuca" }
+  ],
+  "extras": [
+    { "id": "queso-frito-extra", "name": "Queso frito extra", "shortName": "Queso extra", "price": 30 },
+    { "id": "tortilla", "name": "Tortilla", "price": 10 },
+    { "id": "chilero", "name": "Chilero", "price": 5 },
+    { "id": "crema", "name": "Crema", "price": 10 },
+    { "id": "chicharron-extra", "name": "Chicharrón extra", "shortName": "Chicharrón", "price": 35 }
+  ],
+  "dishes": [
+    {
+      "id": "fritanga-tradicional",
+      "name": "Fritanga tradicional",
+      "category": "fritangas",
+      "price": 220,
+      "shortDescription": "Carne asada, ensalada y queso frito · con gallo pinto",
+      "description": "La de siempre: carne asada al carbón, servida en hoja de plátano.",
+      "includes": "Carne asada, gallo pinto, maduro, ensalada de repollo y queso frito.",
+      "image": "/img/fritanga-tradicional.webp",
+      "tags": ["mas-vendido"],
+      "sides": ["gallo-pinto", "maduro", "tajadas"],
+      "defaultSide": "gallo-pinto",
+      "extras": ["queso-frito-extra", "tortilla", "chilero"],
+      "maxExtras": 3,
+      "available": true,
+      "reviews": [],
+      "replaceable": [
+        {
+          "id": "maduro",
+          "name": "maduro",
+          "substitutes": [
+            { "id": "tajadas", "name": "Tajadas", "note": "Mismo precio" },
+            { "id": "tostones", "name": "Tostones", "note": "Mismo precio" },
+            { "id": "sin-acompanante", "name": "Sin acompañante" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "combo-para-dos",
+      "name": "Combo para dos",
+      "category": "fritangas",
+      "price": 380,
+      "shortDescription": "2 carnes asadas, gallo pinto, tajadas y 2 frescos",
+      "description": "Para compartir: dos porciones de carne asada con todo y dos frescos naturales.",
+      "includes": "2 carnes asadas, gallo pinto, tajadas, ensalada de repollo y 2 frescos del día.",
+      "image": "/img/combo-para-dos.webp",
+      "tags": ["combo"],
+      "extras": ["queso-frito-extra", "tortilla"],
+      "maxExtras": 2,
+      "available": true,
+      "rating": { "average": 4.8, "count": 2 },
+      "reviews": [
+        { "id": "r1", "author": "Mariela", "rating": 5, "text": "Alcanza bien para dos y la carne vino en su punto.", "date": "2026-11-08" },
+        { "id": "r2", "author": "José", "rating": 4.5, "text": "Muy rico. Pedí el fresco de cacao y estaba buenísimo.", "date": "2026-10-30" }
+      ]
+    },
+    {
+      "id": "fritanga-cerdo",
+      "name": "Fritanga con cerdo",
+      "category": "fritangas",
+      "price": 230,
+      "shortDescription": "Cerdo asado, ensalada y queso frito · con gallo pinto",
+      "description": "Cerdo adobado y asado al carbón, servido en hoja de plátano.",
+      "includes": "Cerdo asado, gallo pinto, maduro, ensalada de repollo y queso frito.",
+      "image": "/img/fritanga-tradicional.webp",
+      "tags": [],
+      "sides": ["gallo-pinto", "maduro", "tajadas"],
+      "defaultSide": "gallo-pinto",
+      "extras": ["queso-frito-extra", "tortilla", "chilero"],
+      "maxExtras": 3,
+      "available": false
+    },
+    {
+      "id": "carne-asada",
+      "name": "Carne asada",
+      "category": "asados",
+      "price": 250,
+      "shortDescription": "Posta de res al carbón con chimichurri · con yuca",
+      "description": "Posta de res marinada y asada al carbón, con chimichurri de la casa.",
+      "includes": "Carne de res asada, chimichurri, ensalada de repollo y tortilla.",
+      "image": "/img/fritanga-tradicional.webp",
+      "tags": [],
+      "sides": ["yuca", "gallo-pinto", "tajadas"],
+      "defaultSide": "yuca",
+      "extras": ["queso-frito-extra", "tortilla", "chilero"],
+      "maxExtras": 3,
+      "available": true
+    },
+    {
+      "id": "pollo-asado",
+      "name": "Pollo asado",
+      "category": "asados",
+      "price": 190,
+      "shortDescription": "Medio pollo al carbón · con tajadas",
+      "description": "Medio pollo adobado y asado al carbón.",
+      "includes": "Medio pollo asado, ensalada de repollo y tortilla.",
+      "tags": ["promo"],
+      "sides": ["tajadas", "gallo-pinto", "yuca"],
+      "defaultSide": "tajadas",
+      "extras": ["tortilla", "chilero", "crema"],
+      "maxExtras": 3,
+      "available": true
+    },
+    {
+      "id": "enchilada",
+      "name": "Enchilada",
+      "category": "antojitos",
+      "price": 90,
+      "shortDescription": "Tortilla frita rellena de carne y arroz, con ensalada",
+      "description": "La de la casa: tortilla rellena de carne molida y arroz, frita al momento.",
+      "includes": "Enchilada frita, ensalada de repollo y tomate.",
+      "image": "/img/enchilada.webp",
+      "tags": ["de-la-casa"],
+      "extras": ["crema", "chilero"],
+      "maxExtras": 2,
+      "available": true,
+      "rating": { "average": 4.7, "count": 3 },
+      "reviews": [
+        { "id": "r3", "author": "Karla", "rating": 5, "text": "Crujiente y bien rellena, como las de antes.", "date": "2026-11-12" },
+        { "id": "r4", "author": "Don Ernesto", "rating": 4.5, "text": "Buena porción. Con chilero queda perfecta.", "date": "2026-11-02" },
+        { "id": "r5", "author": "Fernanda", "rating": 4.5, "text": "Llegó rápido y calientita.", "date": "2026-10-21" }
+      ]
+    },
+    {
+      "id": "vigoron",
+      "name": "Vigorón",
+      "category": "antojitos",
+      "price": 120,
+      "shortDescription": "Yuca, chicharrón y ensalada en hoja de plátano",
+      "description": "El clásico granadino, servido en hoja de plátano.",
+      "includes": "Yuca cocida, chicharrón y ensalada de repollo con chile.",
+      "tags": [],
+      "extras": ["chicharron-extra", "chilero"],
+      "maxExtras": 2,
+      "available": true
+    },
+    {
+      "id": "tajadas-con-queso",
+      "name": "Tajadas con queso",
+      "category": "antojitos",
+      "price": 80,
+      "shortDescription": "Tajadas de plátano verde con queso frito",
+      "description": "Tajadas fritas al momento con queso frito.",
+      "includes": "Tajadas de plátano verde, queso frito y ensalada.",
+      "tags": [],
+      "extras": ["crema", "chilero"],
+      "maxExtras": 2,
+      "available": false
+    },
+    {
+      "id": "fresco-de-cacao",
+      "name": "Fresco de cacao",
+      "category": "bebidas",
+      "price": 40,
+      "shortDescription": "Cacao molido con leche y canela",
+      "includes": "Vaso grande con hielo.",
+      "tags": [],
+      "available": true
+    },
+    {
+      "id": "chicha",
+      "name": "Chicha",
+      "category": "bebidas",
+      "price": 35,
+      "shortDescription": "Chicha de maíz, bien fría",
+      "includes": "Vaso grande con hielo.",
+      "tags": [],
+      "available": true
+    },
+    {
+      "id": "pinolillo",
+      "name": "Pinolillo",
+      "category": "bebidas",
+      "price": 35,
+      "shortDescription": "Maíz tostado y cacao con leche",
+      "includes": "Vaso grande con hielo.",
+      "tags": [],
+      "available": true
+    },
+    {
+      "id": "gaseosa",
+      "name": "Gaseosa",
+      "category": "bebidas",
+      "price": 30,
+      "shortDescription": "Lata de 355 ml",
+      "tags": [],
+      "available": true
+    }
+  ],
+  "bestSellers": ["fritanga-tradicional", "enchilada", "combo-para-dos"],
+  "suggestedDrinks": ["fresco-de-cacao", "chicha"]
+}

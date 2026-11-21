@@ -1,0 +1,10 @@
+node_modules
+dist
+*.local
+.vercel
+.DS_Store
+
+# Material de referencia del cliente (no forma parte de la app)
+*.pdf
+fritanga-img.zip
+prompt-claude-code-fritanga-mesa.md

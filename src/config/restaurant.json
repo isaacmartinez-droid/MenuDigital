@@ -1,0 +1,249 @@
+{
+  "id": "fritanga-nica",
+  "name": "Fritanga Nica",
+  "logo": {
+    "webp": "/img/logo.webp",
+    "png": "/img/logo.png",
+    "alt": "Logo de Fritanga Nica"
+  },
+  "colors": {
+    "verde": "#1F6B3A",
+    "verde-suave": "#E6F0E9",
+    "ambar": "#F2B33D",
+    "ambar-suave": "#FBEBC8",
+    "texto-sobre-ambar": "#3A2600",
+    "promo": "#B8402A",
+    "combo-fondo": "#E7ECF8",
+    "fondo": "#FAF7F2",
+    "tarjeta": "#FFFFFF",
+    "texto": "#2A211B",
+    "texto-2": "#6E6259",
+    "borde": "#ECE4D8",
+    "foto-vacia": "#EFE8DC",
+    "azul-logo": "#14237A"
+  },
+  "currency": { "symbol": "C$", "locale": "es-NI" },
+  "tables": ["1", "2", "3", "4", "5", "6", "7", "8"],
+  "whatsapp": {
+    "number": "50500000000",
+    "message": "Hola, Fritanga Nica. Tengo una consulta."
+  },
+  "schedule": {
+    "timezone": "America/Managua",
+    "ranges": [{ "days": [0, 1, 2, 3, 4, 5, 6], "open": "16:00", "close": "22:00" }]
+  },
+  "ordering": {
+    "maxItemsPerComanda": 10,
+    "comandaPrefix": "FN",
+    "firstComandaNumber": 142,
+    "myDeviceNumber": 1
+  },
+  "timings": {
+    "welcomeMs": 1500,
+    "undoToastMs": 4000,
+    "processingMs": 3000,
+    "cookingMs": 8000,
+    "readyMs": 4000,
+    "readyEstimateMin": 15,
+    "waiterAckMs": 3000,
+    "waiterBannerMs": 4000,
+    "waiterCooldownMs": 120000,
+    "billPaidMs": 5000,
+    "apiLatencyMs": 600
+  },
+  "staff": { "waiter": "Carlos", "cashier": "María" },
+  "waiterReasons": [
+    { "id": "mesero", "title": "Que venga el mesero", "hint": "Para pedir algo o preguntar" },
+    { "id": "servilletas", "title": "Servilletas o salsa" },
+    { "id": "otra", "title": "Otra cosa", "hint": "Se lo decís cuando llegue" }
+  ],
+  "demo": {
+    "tableMates": [
+      {
+        "name": "Carlos",
+        "deviceNumber": 2,
+        "comandaNumber": 143,
+        "items": [{ "dishId": "enchilada", "quantity": 2 }]
+      },
+      {
+        "name": null,
+        "deviceNumber": 3,
+        "comandaNumber": 147,
+        "items": [{ "dishId": "fresco-de-cacao", "quantity": 2 }]
+      }
+    ],
+    "paymentMethod": "Tarjeta"
+  },
+  "texts": {
+    "common": {
+      "back": "Volver",
+      "close": "Cerrar",
+      "table": "Mesa {mesa}",
+      "plate": "plato",
+      "plates": "platos",
+      "skip": "Omitir",
+      "undo": "Deshacer",
+      "decrease": "Uno menos de {dish}",
+      "increase": "Uno más de {dish}",
+      "quantity": "{n} de {dish}",
+      "device": "Teléfono {n}",
+      "noPhoto": "Sin foto"
+    },
+    "status": {
+      "open": "Abierto · cierra {close}",
+      "closed": "Cerrado ahora · abrimos a las {open}"
+    },
+    "welcome": {
+      "greeting": "Bienvenidos a",
+      "table": "Estás en la Mesa {mesa}",
+      "lead": "Pedí desde aquí y te lo llevamos a la mesa.",
+      "hint": "Solo la primera vez · tocá para entrar",
+      "enter": "Entrar al menú"
+    },
+    "invalidTable": {
+      "title": "Este QR no es válido",
+      "body": "No encontramos esta mesa. Pedile ayuda al mesero o escaneá el código de tu mesa."
+    },
+    "menu": {
+      "callWaiter": "Llamar al mesero",
+      "payNow": "Ya vamos a pagar",
+      "searchLabel": "Buscar en el menú",
+      "searchPlaceholder": "¿Qué se te antoja?",
+      "clearSearch": "Borrar búsqueda",
+      "categoriesLabel": "Categorías",
+      "bestSellers": "Los más vendidos",
+      "searchResults": "Resultados",
+      "noResults": "No encontramos \"{q}\". Probá con otra palabra.",
+      "soldOut": "Agotado",
+      "add": "Agregar {dish}",
+      "openDetail": "Ver {dish}",
+      "inOrder": "{n} en tu pedido",
+      "viewOrder": "Ver pedido · {n} {platos}",
+      "added": "Agregaste {dish}",
+      "addedWithSide": "Con {side} · lo cambiás en tu pedido",
+      "addedPlain": "Lo cambiás en tu pedido",
+      "removed": "Quitamos {dish}"
+    },
+    "closed": {
+      "title": "Ahorita estamos cerrados",
+      "body": "Podés ver el menú. Los pedidos se abren a las {open}.",
+      "button": "Abrimos a las {open}",
+      "whatsapp": "Escribinos"
+    },
+    "offline": {
+      "title": "Se nos fue la señal",
+      "body": "Tu pedido está guardado y se envía solito cuando vuelva.",
+      "back": "Ya volvió la señal. Enviamos tu pedido."
+    },
+    "detail": {
+      "photoAlt": "Foto de {dish}",
+      "whatComes": "¿Qué trae?",
+      "side": "Acompañante",
+      "sideRule": "Elegí 1 · máx. 1",
+      "required": "Obligatorio",
+      "defaultSide": "Viene así",
+      "extras": "Extras",
+      "extrasRule": "Elegí hasta {max} · máx. {max}",
+      "optional": "Opcional",
+      "extrasFull": "Ya elegiste {max}. Quitá uno para cambiarlo.",
+      "note": "Nota para la cocina",
+      "notePlaceholder": "Ej.: sin repollo",
+      "noteHelp": "Opcional. La cocina la ve en tu comanda.",
+      "reviews": "Lo que dicen",
+      "reviewsCount": "{avg} · {n} reseñas",
+      "noReviews": "Todavía no hay reseñas de este plato. Pedilo y sé de los primeros en calificarlo.",
+      "add": "Agregar · {total}",
+      "save": "Guardar · {total}",
+      "notFound": "Este plato ya no está en el menú."
+    },
+    "order": {
+      "title": "Tu pedido",
+      "withSide": "Con {side} · cambiar",
+      "changeSide": "Cambiar el acompañante de {dish}",
+      "noChanges": "Sin cambios",
+      "nameLabel": "Tu nombre (opcional)",
+      "nameHelp": "Si son varios en la mesa, así se sabe de quién es cada plato.",
+      "drinks": "¿Algo para tomar?",
+      "total": "Total",
+      "send": "Enviar a la cocina",
+      "sending": "Enviando…",
+      "queued": "Sin señal: lo enviamos solito cuando vuelva",
+      "empty": "Todavía no agregaste nada.",
+      "emptyCta": "Ver el menú",
+      "limitTitle": "Son muchos platos para un solo envío",
+      "limitBody": "Podés mandar hasta {max} por vez. Enviá estos y después pedí lo demás; todo se suma a la misma cuenta.",
+      "removeLine": "Quitar {dish}"
+    },
+    "tracking": {
+      "steps": ["Recibida", "En el comal", "¡Ya está!", "Entregada"],
+      "stepsLabel": "Avance de tu orden",
+      "processingTitle": "Estamos procesando tu orden",
+      "processingBody": "La cocina la recibe en un momento",
+      "cookingTitle": "Tu orden está en el comal",
+      "cookingBody": "Lista en unos {min} min",
+      "readyTitle": "¡Ya está! Va para tu mesa",
+      "readyBody": "El mesero ya la lleva a la Mesa {mesa}",
+      "deliveredTitle": "¡Buen provecho!",
+      "deliveredBody": "Que la disfrutés",
+      "yourOrder": "Tu orden · {name}",
+      "tablePill": "Mesa {mesa} · te la llevamos",
+      "tablePillDelivered": "Mesa {mesa}",
+      "addsToTable": "Se suma a la cuenta de la Mesa {mesa}",
+      "orderMore": "Pedir algo más",
+      "orderMoreHelp": "Se suma a la cuenta de tu mesa",
+      "pendingTitle": "Tu pedido está guardado",
+      "pendingBody": "Se envía solito cuando vuelva la señal",
+      "notFound": "No encontramos esta orden."
+    },
+    "waiter": {
+      "sheetTitle": "¿Qué necesitás?",
+      "submit": "Avisar al mesero",
+      "notifiedTitle": "Avisamos a los meseros",
+      "notifiedBody": "En un momento te confirmamos quién viene.",
+      "comingTitle": "{waiter} va en camino",
+      "comingBody": "Podés volver a llamar en {min} minutos.",
+      "cooldown": "Ya avisamos. Podés volver a llamar en {time}."
+    },
+    "soldOut": {
+      "title": "Se acabó el {component}",
+      "body": "Tu {dish} venía con {component} y se nos acabó. ¿Lo cambiamos?",
+      "submit": "Cambiar",
+      "done": "Listo: cambiamos el {component} por {substitute}."
+    },
+    "bill": {
+      "title": "Tu cuenta",
+      "summary": "Mesa {mesa} · {n} teléfonos",
+      "summaryOne": "Mesa {mesa} · 1 teléfono",
+      "perPerson": "Por persona",
+      "you": "{name} (vos)",
+      "tableTotal": "Total de la mesa",
+      "rateTitle": "¿Qué tal estuvo?",
+      "rateHelp": "Un toque por plato. Si algo no estuvo bien, el dueño se entera hoy mismo.",
+      "rateThanks": "¡Gracias! Ya le contamos al dueño.",
+      "rateDish": "Calificación de {dish}",
+      "splitTitle": "¿Pagan juntos o cada quien lo suyo?",
+      "together": "Todo junto",
+      "separate": "Cada quien lo suyo",
+      "notify": "Avisar a caja",
+      "notifyHelp": "Caja te prepara la cuenta para que no esperés",
+      "notifying": "Avisando…",
+      "goTitle": "Pasá a caja y decí \"Mesa {mesa}\"",
+      "goBody": "{cashier} ya tiene tu cuenta lista.",
+      "orderMore": "Pedir algo más",
+      "empty": "Todavía no hay pedidos en esta mesa."
+    },
+    "payment": {
+      "title": "Pagás en caja al terminar",
+      "body": "Efectivo o tarjeta, en caja. Solo decí tu número de mesa."
+    },
+    "paid": {
+      "title": "¡Cuenta pagada!",
+      "subtitle": "Gracias por venir. Te esperamos pronto.",
+      "table": "Mesa {mesa}",
+      "method": "Pagado con",
+      "cashier": "Cobró",
+      "cashierValue": "{cashier} · caja",
+      "closedNote": "La mesa se cerró. Los próximos clientes empiezan una cuenta nueva y no ven estos pedidos."
+    }
+  }
+}
