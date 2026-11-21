@@ -12,15 +12,30 @@ import { readItem, writeItem } from './storage'
  *                     se usa una vez y no cambia el forzado abierto/cerrado
  *   ?forzar=ninguno   quita todos los forzados
  *   ?compas=0         sin compañeros de mesa simulados (Carlos, Teléfono 3)
+ *   ?dia=martes       el menú se comporta como si hoy fuera ese día (combos del día);
+ *                     acepta el nombre o el número (0 = domingo); ?dia=hoy lo quita
  */
 export interface DemoFlags {
   horario: 'cerrado' | 'abierto' | null
   agotado: boolean
   compas: boolean
+  /** Día de la semana forzado (0 = domingo), o null para usar el real. */
+  dia: number | null
 }
 
 const KEY = `${restaurant.id}:demo`
-const DEFAULTS: DemoFlags = { horario: null, agotado: false, compas: true }
+const DEFAULTS: DemoFlags = { horario: null, agotado: false, compas: true, dia: null }
+
+const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']
+
+/** "martes", "Sábado", "2" → número de día; "hoy" o algo inválido → null. */
+function parseDay(value: string | null): number | null {
+  if (!value) return null
+  const v = value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+  if (/^[0-6]$/.test(v)) return Number(v)
+  const index = DAY_NAMES.indexOf(v)
+  return index >= 0 ? index : null
+}
 
 function stored(): DemoFlags {
   try {
@@ -44,7 +59,12 @@ export function readDemoFlags(search: string = window.location.search): DemoFlag
     else {
       flags.horario = null
       flags.agotado = false
+      flags.dia = null
     }
+  }
+  if (params.has('dia')) {
+    flags.dia = parseDay(params.get('dia'))
+    changed = true
   }
   if (params.has('compas')) {
     flags.compas = params.get('compas') !== '0'

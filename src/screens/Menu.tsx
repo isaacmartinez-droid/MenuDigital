@@ -9,6 +9,7 @@ import { SearchBar } from '../components/SearchBar'
 import { CategoryTabs } from '../components/CategoryTabs'
 import { DishCard } from '../components/DishCard'
 import { Carousel } from '../components/Carousel'
+import { COMBOS_CATEGORY, combosFor, isOnDay, useToday } from '../lib/combos'
 import { CartBar, BottomDock, DockSpacer } from '../components/CartBar'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -47,6 +48,7 @@ export function Menu() {
   const canOrder = openState.open
   // Mesa con cuenta abierta: aunque pase la hora de cierre, puede llamar al mesero y pagar.
   const hasAccount = useComandas(mesa, (s) => s.comandas.length > 0)
+  const today = useToday()
 
   // M0: solo la primera vez de esta sesión en esta mesa.
   const welcomeKey = tableKey(mesa, 'bienvenida')
@@ -72,6 +74,7 @@ export function Menu() {
   }, [toast])
 
   const quickAdd = (dish: Dish) => {
+    if (!isOnDay(dish, today)) return
     const result = cartStore(mesa).getState().quickAdd(dish.id)
     if (!result.ok) {
       if (result.reason === 'limit') setToast({ kind: 'limit', key: newId() })
@@ -128,12 +131,15 @@ export function Menu() {
   const count = countItems(items)
   const total = cartTotal(items)
   const bestSellers = menu.bestSellers.map(getDish).filter((d): d is Dish => Boolean(d))
+  const combos = combosFor(today)
+  const listCategories = menu.categories.filter((c) => c.id !== COMBOS_CATEGORY)
 
-  const row = (dish: Dish) => (
+  const card = (dish: Dish, variant: 'row' | 'carousel') => (
     <DishCard
       key={dish.id}
-      variant="row"
+      variant={variant}
       dish={dish}
+      today={today}
       quantity={dishQuantity(items, dish.id)}
       canOrder={canOrder}
       onAdd={() => quickAdd(dish)}
@@ -141,6 +147,7 @@ export function Menu() {
       onOpen={() => openDish(dish)}
     />
   )
+  const row = (dish: Dish) => card(dish, 'row')
 
   // Franja bajo el encabezado: un aviso reemplaza a los botones de mesa (como en M1b y M8).
   let slot: ReactNode
@@ -238,22 +245,24 @@ export function Menu() {
                   titleId="mas-vendidos"
                   intervalMs={restaurant.timings.carouselMs}
                 >
-                  {bestSellers.map((dish) => (
-                    <DishCard
-                      key={dish.id}
-                      variant="carousel"
-                      dish={dish}
-                      quantity={dishQuantity(items, dish.id)}
-                      canOrder={canOrder}
-                      onAdd={() => quickAdd(dish)}
-                      onDecrement={() => decrement(dish)}
-                      onOpen={() => openDish(dish)}
-                    />
-                  ))}
+                  {bestSellers.map((dish) => card(dish, 'carousel'))}
                 </Carousel>
               )}
 
-              {menu.categories.map((category) => (
+              {combos.length > 0 && (
+                <Carousel
+                  title={t.combos.title}
+                  subtitle={t.combos.subtitle}
+                  titleId={`cat-${COMBOS_CATEGORY}`}
+                  scrollMarginTop={TABS_HEIGHT + 8}
+                  intervalMs={restaurant.timings.carouselMs}
+                  className="mt-5"
+                >
+                  {combos.map((dish) => card(dish, 'carousel'))}
+                </Carousel>
+              )}
+
+              {listCategories.map((category) => (
                 <section key={category.id} aria-labelledby={`cat-${category.id}`} className="mt-3.5 px-4">
                   <h2
                     id={`cat-${category.id}`}

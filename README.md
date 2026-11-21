@@ -32,6 +32,7 @@ Se agregan a cualquier URL y quedan activos mientras la pestaña esté abierta.
 | `?forzar=agotado` | Sobre la comanda en curso, sale la hoja "Se acabó el maduro" (M4g). Se usa una vez. |
 | `?forzar=ninguno` | Quita todos los forzados y vuelve al horario real. |
 | `?compas=0` | Sin compañeros de mesa simulados (Carlos y Teléfono 3). Por defecto están. |
+| `?dia=martes` | El menú hace de cuenta que hoy es ese día, para ver los combos del día (`?dia=jueves`, `?dia=sabado` o `?dia=0`…`6`, con 0 = domingo). `?dia=hoy` vuelve al día real. |
 
 Sin señal (M9) no necesita flag: en Chrome, DevTools → Network → **Offline**.
 
@@ -66,6 +67,10 @@ Todo lo del restaurante sale de dos JSON y de las fotos; no hace falta tocar com
 2. **`src/data/menu.json`**: categorías, etiquetas, acompañantes, extras y platos
    (`price`, `tags`, `defaultSide`, `sides`, `extras`, `maxExtras`, `available`, `rating`,
    `reviews`, `replaceable` para lo que puede agotarse), más `bestSellers` y `suggestedDrinks`.
+   - **Combos especiales:** los platos de la categoría `combos` salen en su propio carrusel.
+     Con `days` (0 = domingo … 6 = sábado) un combo solo se puede pedir esos días: ese día
+     dice "Combo de hoy" y va primero; los demás días se ve con "Solo los martes" y sin +.
+     Sin `days`, está todos los días. Los combos de ejemplo están por confirmar con el local.
 3. **Fotos en `public/img/`** (cuadradas, idealmente 800 × 800) y luego:
    ```bash
    npm run images   # genera <foto>-400.webp, la versión liviana para listas

@@ -12,6 +12,7 @@ import { dishExtras, dishSides, dishTags, getDish, getSide, restaurant, unitPric
 import { formatMoney, formatMoneyDelta } from '../lib/money'
 import { fmt, t } from '../lib/text'
 import { useOpenState } from '../lib/useOpenState'
+import { dayBadge, isOnDay, onlyDaysText, useToday } from '../lib/combos'
 import { useGoBack } from '../lib/useGoBack'
 import { paths, useMesa } from '../lib/useMesa'
 import { cartStore } from '../store/cart'
@@ -30,6 +31,7 @@ export function DishDetail() {
   const editing = editingId ? cartStore(mesa).getState().items.find((i) => i.lineId === editingId) : undefined
   const goBack = useGoBack(editing ? paths.order(mesa) : paths.menu(mesa))
   const openState = useOpenState()
+  const today = useToday()
   const sideGroup = useId()
   const extrasGroup = useId()
   const noteId = useId()
@@ -61,9 +63,10 @@ export function DishDetail() {
   const extras = dishExtras(dish)
   const maxExtras = dish.maxExtras ?? extras.length
   const extrasFull = extraIds.length >= maxExtras
-  const tag = dishTags(dish)[0]
+  const tag = dayBadge(dish, today) ?? dishTags(dish)[0]
   const total = unitPrice(dish, extraIds) * quantity
-  const canAdd = dish.available && openState.open
+  const onDay = isOnDay(dish, today)
+  const canAdd = dish.available && openState.open && onDay
   const reviews = dish.reviews ?? []
 
   const toggleExtra = (id: string) =>
@@ -276,7 +279,11 @@ export function DishDetail() {
               disabled
               className="h-[52px] flex-1 rounded-grande bg-foto-vacia text-button text-texto-2"
             >
-              {!dish.available ? t.menu.soldOut : fmt(t.closed.button, { open: openState.opensAt ?? '' })}
+              {!dish.available
+                ? t.menu.soldOut
+                : !onDay
+                  ? onlyDaysText(dish)
+                  : fmt(t.closed.button, { open: openState.opensAt ?? '' })}
             </button>
           )}
         </div>

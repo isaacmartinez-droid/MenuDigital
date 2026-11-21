@@ -1,6 +1,7 @@
 import type { Dish } from '../types/menu'
 import { cx } from '../lib/cx'
 import { dishTags } from '../lib/catalog'
+import { dayBadge, isOnDay } from '../lib/combos'
 import { formatMoney } from '../lib/money'
 import { fmt, t } from '../lib/text'
 import { Photo } from './Photo'
@@ -17,6 +18,17 @@ interface DishCardProps {
   onAdd: () => void
   onDecrement: () => void
   onOpen: () => void
+  /**
+   * Día de la semana de hoy (0 = domingo). Con platos atados a días (combos
+   * del día) muestra "Combo de hoy" o "Solo los martes" y, fuera de su día, sin +.
+   */
+  today?: number
+}
+
+/** Etiqueta del día y si se puede pedir hoy. */
+function dayInfo(dish: Dish, today: number | undefined) {
+  if (today === undefined) return { badge: undefined, onDay: true }
+  return { badge: dayBadge(dish, today), onDay: isOnDay(dish, today) }
 }
 
 /**
@@ -27,8 +39,9 @@ export function DishCard(props: DishCardProps) {
   return props.variant === 'row' ? <DishRow {...props} /> : <DishTile {...props} />
 }
 
-function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen }: DishCardProps) {
+function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }: DishCardProps) {
   const soldOut = !dish.available
+  const { badge, onDay } = dayInfo(dish, today)
   const listTags = dishTags(dish).filter((tag) => tag.showInList)
   const openLabel = fmt(t.menu.openDetail, { dish: dish.name })
 
@@ -71,6 +84,10 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen }: DishC
             <Tag tone="agotado" className="mb-2">
               {t.menu.soldOut}
             </Tag>
+          ) : !onDay && badge ? (
+            <Tag tone={badge.tone} className="mb-2">
+              {badge.label}
+            </Tag>
           ) : canOrder ? (
             quantity > 0 ? (
               <QuantityStepper
@@ -89,13 +106,14 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen }: DishC
   )
 }
 
-function DishTile({ dish, quantity, canOrder, onAdd, onOpen }: DishCardProps) {
+function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today }: DishCardProps) {
   const soldOut = !dish.available
-  const photoTag = dishTags(dish)[0]
+  const { badge, onDay } = dayInfo(dish, today)
+  const photoTag = badge ?? dishTags(dish)[0]
 
   return (
     <article
-      className="flex w-[196px] shrink-0 snap-start flex-col rounded-grande border border-borde bg-tarjeta p-2"
+      className="flex w-[224px] shrink-0 snap-start flex-col rounded-grande border border-borde bg-tarjeta p-2"
       aria-label={dish.name}
     >
       <button
@@ -105,7 +123,7 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen }: DishCardProps) {
         aria-label={fmt(t.menu.openDetail, { dish: dish.name })}
         className="relative rounded-tarjeta"
       >
-        <Photo src={dish.image} className="h-[136px] w-full rounded-tarjeta" dimmed={soldOut} />
+        <Photo src={dish.image} className="h-[152px] w-full rounded-tarjeta" dimmed={soldOut} />
         {photoTag && (
           <Tag tone={photoTag.tone} className="absolute top-2 left-2">
             {photoTag.label}
@@ -120,17 +138,20 @@ function DishTile({ dish, quantity, canOrder, onAdd, onOpen }: DishCardProps) {
           </span>
         )}
       </button>
-      <h3 className={cx('mt-3 truncate px-1 text-dish', soldOut ? 'text-texto-2' : 'text-texto')}>
-        {dish.name}
-      </h3>
-      <div className="mt-1 flex min-h-10 items-center justify-between px-1 pb-1">
+      {/* Nombre y descripción cortada a 2 líneas: tocarlos abre el detalle para leer todo
+          (para teclado y lector de pantalla, el botón es la foto). */}
+      <div onClick={soldOut ? undefined : onOpen} className={cx('mt-3 px-1', !soldOut && 'cursor-pointer')}>
+        <h3 className={cx('truncate text-dish', soldOut ? 'text-texto-2' : 'text-texto')}>{dish.name}</h3>
+        <p className="mt-1 line-clamp-2 min-h-[2lh] text-small text-texto-2">{dish.includes ?? dish.shortDescription}</p>
+      </div>
+      <div className="mt-auto flex min-h-10 items-center justify-between px-1 pt-2 pb-1">
         <span className={cx('text-price', soldOut ? 'text-texto-2' : 'text-texto')}>
           {formatMoney(dish.price)}
         </span>
         {soldOut ? (
           <Tag tone="agotado">{t.menu.soldOut}</Tag>
         ) : (
-          canOrder && <AddButton onClick={onAdd} label={fmt(t.menu.add, { dish: dish.name })} />
+          canOrder && onDay && <AddButton onClick={onAdd} label={fmt(t.menu.add, { dish: dish.name })} />
         )}
       </div>
     </article>

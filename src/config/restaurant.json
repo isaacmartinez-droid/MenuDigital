@@ -129,6 +129,14 @@
       "addedPlain": "Ya está en tu pedido",
       "removed": "Quitamos {dish}"
     },
+    "combos": {
+      "title": "Combos especiales",
+      "subtitle": "Algunos salen solo un día de la semana",
+      "today": "Combo de hoy",
+      "onlyDays": "Solo los {days}",
+      "and": "y",
+      "daysPlural": ["domingos", "lunes", "martes", "miércoles", "jueves", "viernes", "sábados"]
+    },
     "closed": {
       "title": "Ahorita estamos cerrados",
       "body": "Podés ver el menú. Los pedidos se abren a las {open}.",

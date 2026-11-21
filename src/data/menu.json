@@ -1,5 +1,6 @@
 {
   "categories": [
+    { "id": "combos", "name": "Combos" },
     { "id": "fritangas", "name": "Fritangas" },
     { "id": "asados", "name": "Asados" },
     { "id": "antojitos", "name": "Antojitos" },
@@ -8,7 +9,6 @@
   "tags": [
     { "id": "mas-vendido", "label": "Más vendido", "tone": "ambar", "showInList": false },
     { "id": "de-la-casa", "label": "La de la casa", "tone": "ambar", "showInList": false },
-    { "id": "promo", "label": "Promo", "tone": "promo", "showInList": true },
     { "id": "combo", "label": "Combo", "tone": "combo", "showInList": true }
   ],
   "sides": [
@@ -56,7 +56,7 @@
     {
       "id": "combo-para-dos",
       "name": "Combo para dos",
-      "category": "fritangas",
+      "category": "combos",
       "price": 380,
       "shortDescription": "2 carnes asadas, gallo pinto, tajadas y 2 frescos",
       "description": "Para compartir: dos porciones de carne asada con todo y dos frescos naturales.",
@@ -71,6 +71,73 @@
         { "id": "r1", "author": "Mariela", "rating": 5, "text": "Alcanza bien para dos y la carne vino en su punto.", "date": "2026-11-08" },
         { "id": "r2", "author": "José", "rating": 4.5, "text": "Muy rico. Pedí el fresco de cacao y estaba buenísimo.", "date": "2026-10-30" }
       ]
+    },
+    {
+      "id": "combo-familiar",
+      "name": "Combo familiar",
+      "category": "combos",
+      "price": 720,
+      "shortDescription": "2 carnes y 2 cerdos asados, gallo pinto, tajadas y 4 frescos",
+      "description": "Para la mesa completa: cuatro porciones al carbón con todo y cuatro frescos naturales.",
+      "includes": "2 carnes asadas, 2 cerdos asados, gallo pinto, tajadas, ensalada de repollo, queso frito y 4 frescos del día.",
+      "image": "/img/combo-para-dos.webp",
+      "tags": ["combo"],
+      "extras": ["queso-frito-extra", "tortilla", "chilero"],
+      "maxExtras": 3,
+      "available": true,
+      "reviews": []
+    },
+    {
+      "id": "combo-martes-enchiladas",
+      "name": "Martes de enchiladas",
+      "category": "combos",
+      "days": [2],
+      "price": 190,
+      "shortDescription": "2 enchiladas + fresco de cacao",
+      "description": "Solo los martes: dos enchiladas de la casa con su fresco de cacao, a precio de combo.",
+      "includes": "2 enchiladas, ensalada de repollo y 1 fresco de cacao.",
+      "image": "/img/enchilada.webp",
+      "tags": ["combo"],
+      "extras": ["crema", "chilero"],
+      "maxExtras": 2,
+      "available": true,
+      "reviews": []
+    },
+    {
+      "id": "combo-jueves-cerdo",
+      "name": "Jueves de cerdo",
+      "category": "combos",
+      "days": [4],
+      "price": 235,
+      "shortDescription": "Fritanga con cerdo + chicha",
+      "description": "Solo los jueves: la fritanga con cerdo adobado al carbón y una chicha bien fría.",
+      "includes": "Cerdo asado, gallo pinto, maduro, ensalada de repollo, queso frito y 1 chicha.",
+      "image": "/img/fritanga-tradicional.webp",
+      "tags": ["combo"],
+      "sides": ["gallo-pinto", "maduro", "tajadas"],
+      "defaultSide": "gallo-pinto",
+      "extras": ["queso-frito-extra", "tortilla", "chilero"],
+      "maxExtras": 3,
+      "available": true,
+      "reviews": []
+    },
+    {
+      "id": "combo-sabado-fritanga",
+      "name": "Sábado de fritanga",
+      "category": "combos",
+      "days": [6],
+      "price": 230,
+      "shortDescription": "Fritanga tradicional + fresco de cacao",
+      "description": "Solo los sábados: la fritanga de siempre con su fresco de cacao, a precio de combo.",
+      "includes": "Carne asada, gallo pinto, maduro, ensalada de repollo, queso frito y 1 fresco de cacao.",
+      "image": "/img/fritanga-tradicional.webp",
+      "tags": ["combo"],
+      "sides": ["gallo-pinto", "maduro", "tajadas"],
+      "defaultSide": "gallo-pinto",
+      "extras": ["queso-frito-extra", "tortilla", "chilero"],
+      "maxExtras": 3,
+      "available": true,
+      "reviews": []
     },
     {
       "id": "fritanga-cerdo",
@@ -112,7 +179,7 @@
       "shortDescription": "Medio pollo al carbón · con tajadas",
       "description": "Medio pollo adobado y asado al carbón.",
       "includes": "Medio pollo asado, ensalada de repollo y tortilla.",
-      "tags": ["promo"],
+      "tags": [],
       "sides": ["tajadas", "gallo-pinto", "yuca"],
       "defaultSide": "tajadas",
       "extras": ["tortilla", "chilero", "crema"],

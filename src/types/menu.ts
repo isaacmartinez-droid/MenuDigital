@@ -93,6 +93,11 @@ export interface Dish {
   /** ids de extras posibles. */
   extras?: string[]
   maxExtras?: number
+  /**
+   * Días de la semana en que se puede pedir (0 = domingo … 6 = sábado), en la
+   * zona horaria del local. Sin `days`, todos los días. Ej.: combo del martes = [2].
+   */
+  days?: number[]
   available: boolean
   rating?: Rating
   reviews?: Review[]

@@ -7,6 +7,11 @@ import { t } from '../lib/text'
 interface CarouselProps {
   title: string
   titleId: string
+  /** Línea chica bajo el título. */
+  subtitle?: string
+  /** Espacio sobre el título al saltar a él desde las pestañas (las pestañas son fijas). */
+  scrollMarginTop?: number
+  className?: string
   /** Cada cuánto avanza solo (config: timings.carouselMs). */
   intervalMs: number
   /** Una tarjeta por hijo; cada una con snap-start. */
@@ -35,7 +40,7 @@ function scrollToSlide(track: HTMLElement, index: number) {
  * Se detiene en cuanto la persona lo toca, y tiene botón de pausa (WCAG 2.2.2).
  * Con "reducir movimiento" en el sistema no arranca solo.
  */
-export function Carousel({ title, titleId, intervalMs, children }: CarouselProps) {
+export function Carousel({ title, titleId, subtitle, scrollMarginTop, className, intervalMs, children }: CarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null)
   const activeRef = useRef(0)
   const count = Children.count(children)
@@ -80,11 +85,14 @@ export function Carousel({ title, titleId, intervalMs, children }: CarouselProps
   const stop = () => setPlaying(false)
 
   return (
-    <section aria-labelledby={titleId} aria-roledescription="carrusel">
-      <div className="flex items-center justify-between px-4">
-        <h2 id={titleId} className="text-section text-texto">
-          {title}
-        </h2>
+    <section aria-labelledby={titleId} aria-roledescription="carrusel" className={className}>
+      <div className="flex items-center justify-between gap-3 px-4">
+        <div className="min-w-0">
+          <h2 id={titleId} className="text-section text-texto" style={{ scrollMarginTop }}>
+            {title}
+          </h2>
+          {subtitle && <p className="mt-0.5 text-small text-texto-2">{subtitle}</p>}
+        </div>
         {count > 1 && (
           <button
             type="button"
