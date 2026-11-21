@@ -38,11 +38,24 @@ export type SubmitResult =
   | { ok: true; comanda: Comanda }
   | { ok: false; reason: 'empty' | 'limit' | 'offline' | 'server' }
 
+/** Envíos en curso por mesa: evita mandar el mismo carrito dos veces. */
+const inFlight = new Map<string, Promise<SubmitResult>>()
+
 /**
  * Envía el carrito de la mesa como una comanda nueva, directo a cocina.
  * Si no hay señal, el carrito queda marcado para enviarse solo al volver.
+ * Si ya hay un envío en curso (ej. el reintento automático al volver la
+ * señal y un toque en "Enviar" al mismo tiempo), devuelve ese mismo resultado.
  */
-export async function submitCart(tableId: string): Promise<SubmitResult> {
+export function submitCart(tableId: string): Promise<SubmitResult> {
+  const running = inFlight.get(tableId)
+  if (running) return running
+  const attempt = doSubmit(tableId).finally(() => inFlight.delete(tableId))
+  inFlight.set(tableId, attempt)
+  return attempt
+}
+
+async function doSubmit(tableId: string): Promise<SubmitResult> {
   const cart = cartStore(tableId).getState()
   if (!cart.items.length) return { ok: false, reason: 'empty' }
   if (countItems(cart.items) > restaurant.ordering.maxItemsPerComanda) return { ok: false, reason: 'limit' }

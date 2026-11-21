@@ -94,6 +94,7 @@ export function DishDetail() {
         <Photo
           src={dish.image}
           alt={fmt(t.detail.photoAlt, { dish: dish.name })}
+          size="full"
           eager
           dimmed={!dish.available}
           className="h-[280px] w-full"

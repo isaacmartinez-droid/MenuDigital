@@ -22,6 +22,8 @@ import { paths, useMesa } from '../lib/useMesa'
 import { cartStore, cartTotal, countItems, dishQuantity, useCart } from '../store/cart'
 import { useUi } from '../store/ui'
 import { useWaiter } from '../lib/useWaiter'
+import { useOnline } from '../lib/useOnline'
+import { WhatsAppButton } from '../components/WhatsAppButton'
 import { Welcome } from './Welcome'
 
 type ToastState =
@@ -116,6 +118,7 @@ export function Menu() {
   }
   useEffect(() => () => window.clearTimeout(pinTimer.current), [])
 
+  const online = useOnline()
   const waiter = useWaiter(mesa)
   const [waiterSheet, setWaiterSheet] = useState(false)
 
@@ -173,6 +176,8 @@ export function Menu() {
         body={fmt(t.closed.body, { open: openState.opensAt ?? '' })}
       />
     )
+  } else if (!online) {
+    slot = <NoticeBanner role="status" tone="aviso" title={t.offline.title} body={t.offline.body} />
   } else {
     slot = (
       <TableActions
@@ -286,6 +291,7 @@ export function Menu() {
         )
       ) : (
         <BottomDock>
+          <WhatsAppButton />
           <button
             type="button"
             disabled

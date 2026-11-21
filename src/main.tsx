@@ -12,7 +12,7 @@ import './theme/index.css'
 
 import { applyTheme } from './theme/applyTheme'
 import { restaurant } from './lib/catalog'
-import { router } from './router'
+import { prefetchScreens, router } from './router'
 
 applyTheme(restaurant)
 
@@ -21,3 +21,5 @@ createRoot(document.getElementById('root')!).render(
     <RouterProvider router={router} />
   </StrictMode>,
 )
+
+prefetchScreens()

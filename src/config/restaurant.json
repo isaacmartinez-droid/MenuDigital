@@ -133,7 +133,9 @@
     "offline": {
       "title": "Se nos fue la señal",
       "body": "Tu pedido está guardado y se envía solito cuando vuelva.",
-      "back": "Ya volvió la señal. Enviamos tu pedido."
+      "back": "Ya volvió la señal. Enviamos tu pedido.",
+      "retry": "Reintentar",
+      "trackingBody": "Tu orden ya está en la cocina. Cuando vuelva la señal, seguimos mostrándote cómo va."
     },
     "detail": {
       "photoAlt": "Foto de {dish}",

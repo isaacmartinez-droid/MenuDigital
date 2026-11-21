@@ -14,6 +14,7 @@ import { formatMoney } from '../lib/money'
 import { fmt, t, tableLabel } from '../lib/text'
 import { customerLabel, submitCart } from '../lib/orderFlow'
 import { newId } from '../lib/storage'
+import { useOnline } from '../lib/useOnline'
 import { useGoBack } from '../lib/useGoBack'
 import { useOpenState } from '../lib/useOpenState'
 import { paths, useMesa } from '../lib/useMesa'
@@ -30,6 +31,7 @@ export function Order() {
   const customerName = useCart(mesa, (s) => s.customerName)
   const pendingSend = useCart(mesa, (s) => s.pendingSend)
   const openState = useOpenState()
+  const online = useOnline()
   const nameId = useId()
   const [skipName, setSkipName] = useState(false)
   const [sending, setSending] = useState(false)
@@ -70,7 +72,7 @@ export function Order() {
       <PageHeader title={t.order.title} subtitle={tableLabel(mesa)} onBack={goBack} />
 
       <main className="px-4">
-        {pendingSend && (
+        {(pendingSend || !online) && (
           <NoticeBanner tone="aviso" role="status" title={t.offline.title} body={t.offline.body} className="mb-3" />
         )}
         {notice && (

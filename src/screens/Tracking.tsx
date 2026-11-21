@@ -20,6 +20,7 @@ import { clearAgotado, useDemoFlags } from '../lib/demoFlags'
 import { useOpenState } from '../lib/useOpenState'
 import { useLiveComanda } from '../lib/useLiveComanda'
 import { useWaiter } from '../lib/useWaiter'
+import { useOnline } from '../lib/useOnline'
 import { paths, useMesa } from '../lib/useMesa'
 import { comandasStore } from '../store/comandas'
 
@@ -45,6 +46,7 @@ export function Tracking() {
   const openState = useOpenState()
   const flags = useDemoFlags()
   const waiter = useWaiter(mesa)
+  const online = useOnline()
   const [waiterSheet, setWaiterSheet] = useState(false)
 
   const soldOut = findReplaceable(comanda)
@@ -140,6 +142,9 @@ export function Tracking() {
           cooldownLeft={waiter.cooldownLeft}
           className="mb-3"
         />
+        {!online && (
+          <NoticeBanner role="status" tone="aviso" title={t.offline.title} body={t.offline.trackingBody} className="mb-3" />
+        )}
         {replacedText && (
           <NoticeBanner role="status" tone="positivo" title={t.soldOut.doneTitle} body={replacedText} className="mb-3" />
         )}
