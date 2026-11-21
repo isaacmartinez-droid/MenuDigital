@@ -176,22 +176,25 @@ export function Tracking() {
           onCallWaiter={() => waiter.tryOpen() && setWaiterSheet(true)}
           onPay={() => navigate(paths.bill(mesa))}
         />
-        <DockSpacer size="lg" />
+        {openState.open && <DockSpacer size="lg" />}
       </main>
 
-      <BottomDock>
-        <div className="pt-1">
-          <Button
-            block
-            variant="secondary"
-            icon={<Plus size={24} strokeWidth={2} aria-hidden />}
-            onClick={() => navigate(paths.menu(mesa))}
-          >
-            {t.tracking.orderMore}
-          </Button>
-          {!delivered && <p className="mt-2.5 text-center text-small text-texto-2">{t.tracking.orderMoreHelp}</p>}
-        </div>
-      </BottomDock>
+      {/* Fuera de horario no se piden cosas nuevas; llamar al mesero y pagar siguen. */}
+      {openState.open && (
+        <BottomDock>
+          <div className="pt-1">
+            <Button
+              block
+              variant="secondary"
+              icon={<Plus size={24} strokeWidth={2} aria-hidden />}
+              onClick={() => navigate(paths.menu(mesa))}
+            >
+              {t.tracking.orderMore}
+            </Button>
+            {!delivered && <p className="mt-2.5 text-center text-small text-texto-2">{t.tracking.orderMoreHelp}</p>}
+          </div>
+        </BottomDock>
+      )}
 
       <WaiterSheet
         open={waiterSheet}

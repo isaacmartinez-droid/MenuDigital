@@ -27,7 +27,7 @@ Se agregan a cualquier URL y quedan activos mientras la pestaña esté abierta.
 
 | Flag | Qué hace |
 |---|---|
-| `?forzar=cerrado` | Menú fuera de horario (M8): se ve el menú, sin + ni barra de pedido, con "Escribinos". |
+| `?forzar=cerrado` | Fuera de horario (M8): se ve el menú, sin + ni barra de pedido. Si la mesa ya pidió, siguen "Llamar al mesero" y "Ya vamos a pagar"; lo que no se puede es pedir algo más. |
 | `?forzar=abierto` | Abierto aunque sea fuera de horario (útil para presentar de día). |
 | `?forzar=agotado` | Sobre la comanda en curso, sale la hoja "Se acabó el maduro" (M4g). Se usa una vez. |
 | `?forzar=ninguno` | Quita todos los forzados y vuelve al horario real. |
@@ -56,7 +56,9 @@ Todo lo del restaurante sale de dos JSON y de las fotos; no hace falta tocar com
    - `name`, `logo`, `colors` (se aplican como variables CSS al arrancar).
    - `tables`: ids de mesa válidos (lo que va después de `/m/`).
    - `schedule`: zona horaria y franjas (`days` 0 = domingo; horas `HH:mm`, pueden cruzar la medianoche).
-   - `whatsapp`, `staff` (mesero y cajera de la demo), `waiterReasons`.
+   - `staff` (mesero y cajera de la demo), `waiterReasons`.
+   - `whatsapp`: número y mensaje del botón "Escribinos" (`WhatsAppButton`). El QR de mesa no
+     lo muestra; queda listo para la web para llevar.
    - `ordering`: límite de platos por envío, prefijo y número inicial de comanda.
    - `timings`: todos los tiempos simulados, en milisegundos.
    - `demo`: compañeros de mesa simulados y método de pago del recibo.

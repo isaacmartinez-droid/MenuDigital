@@ -23,7 +23,7 @@ import { cartStore, cartTotal, countItems, dishQuantity, useCart } from '../stor
 import { useUi } from '../store/ui'
 import { useWaiter } from '../lib/useWaiter'
 import { useOnline } from '../lib/useOnline'
-import { WhatsAppButton } from '../components/WhatsAppButton'
+import { useComandas } from '../store/comandas'
 import { Welcome } from './Welcome'
 
 type ToastState =
@@ -44,6 +44,8 @@ export function Menu() {
   const items = useCart(mesa, (s) => s.items)
   const openState = useOpenState()
   const canOrder = openState.open
+  // Mesa con cuenta abierta: aunque pase la hora de cierre, puede llamar al mesero y pagar.
+  const hasAccount = useComandas(mesa, (s) => s.comandas.length > 0)
 
   // M0: solo la primera vez de esta sesión en esta mesa.
   const welcomeKey = tableKey(mesa, 'bienvenida')
@@ -168,7 +170,7 @@ export function Menu() {
         cooldownLeft={waiter.cooldownLeft}
       />
     )
-  } else if (!canOrder) {
+  } else if (!canOrder && !hasAccount) {
     slot = (
       <NoticeBanner
         tone="aviso"
@@ -291,7 +293,6 @@ export function Menu() {
         )
       ) : (
         <BottomDock>
-          <WhatsAppButton />
           <button
             type="button"
             disabled

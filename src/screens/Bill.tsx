@@ -14,6 +14,7 @@ import { fmt, t, tableLabel } from '../lib/text'
 import { fetchAccount, rateDishes, requestBill } from '../lib/api'
 import { newId } from '../lib/storage'
 import { useGoBack } from '../lib/useGoBack'
+import { useOpenState } from '../lib/useOpenState'
 import { paths, useMesa } from '../lib/useMesa'
 import { comandasStore, useComandas } from '../store/comandas'
 import { accountStore, useAccount } from '../store/account'
@@ -56,6 +57,9 @@ export function Bill() {
   const total = sorted.reduce((sum, c) => sum + c.total, 0)
   const phones = new Set(sorted.map((c) => c.customerName)).size
   const requested = Boolean(billRequestedAt)
+  // Ya avisaron a caja: "Pedir algo más" solo si el local sigue abierto.
+  const canOrder = useOpenState().open
+  const showDock = sorted.length > 0 && (!requested || canOrder)
 
   // Platos para calificar: los de toda la mesa, sin repetir.
   const dishes = [...new Map(sorted.flatMap((c) => c.items).map((i) => [i.dishId, i.name])).entries()]
@@ -166,10 +170,10 @@ export function Bill() {
             )}
           </>
         )}
-        <DockSpacer size="lg" />
+        {showDock && <DockSpacer size="lg" />}
       </main>
 
-      {sorted.length > 0 && (
+      {showDock && (
         <BottomDock>
           {requested ? (
             <div className="py-1">

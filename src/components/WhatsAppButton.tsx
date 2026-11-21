@@ -3,8 +3,9 @@ import { restaurant } from '../lib/catalog'
 import { t } from '../lib/text'
 
 /**
- * "Escribinos" por WhatsApp (solo en M8, con el local cerrado). Va dentro de
- * la barra inferior y flota por encima de ella, a la derecha.
+ * "Escribinos" por WhatsApp. Va dentro de la barra inferior y flota por
+ * encima de ella, a la derecha. En el QR de mesa no se usa (con el local
+ * cerrado nadie está en la mesa); queda para la web para llevar.
  */
 export function WhatsAppButton() {
   const { number, message } = restaurant.whatsapp
