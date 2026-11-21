@@ -5,7 +5,8 @@ para llevar desde su casa. Explica cada pantalla, por qué se decidió así, có
 con la vista QR, la configuración y lo que falta. La vista de mesa está en
 [vista-qr.md](vista-qr.md); cómo correr el proyecto, en el [README](../README.md).
 
-- **Rama:** `plantilla-mesa` (la misma de la vista QR), todavía sin PR a `main`.
+- **Rama:** `plantilla-mesa` (la misma de la vista QR), ya pasada a `main` y publicada en Vercel
+  (ver [16](#16-demo-publicada-y-qr)).
 - **Estado:** terminada como demo (etapas a a g): celular, tablet y computadora, con la ronda
   de correcciones hecha. Todo simulado en el navegador.
 
@@ -23,10 +24,16 @@ con la vista QR, la configuración y lo que falta. La vista de mesa está en
 10. [Modelo de datos: canal, WhatsApp y origen](#10-modelo-de-datos-canal-whatsapp-y-origen)
 11. [Referencia de archivos](#11-referencia-de-archivos)
 12. [Diferencias con el Figma y notas para corregir](#12-diferencias-con-el-figma-y-notas-para-corregir)
-13. [Limitaciones conocidas](#13-limitaciones-conocidas)
-14. [Bugs corregidos](#14-bugs-corregidos)
-15. [Pendiente](#15-pendiente)
-16. [Historial de commits](#16-historial-de-commits)
+13. [Accesibilidad](#13-accesibilidad)
+14. [Rendimiento](#14-rendimiento)
+15. [Fotos](#15-fotos)
+16. [Demo publicada y QR](#16-demo-publicada-y-qr)
+17. [Flags de la demo en la web](#17-flags-de-la-demo-en-la-web)
+18. [Notas para desarrollar y cómo se probó](#18-notas-para-desarrollar-y-cómo-se-probó)
+19. [Limitaciones conocidas](#19-limitaciones-conocidas)
+20. [Bugs corregidos](#20-bugs-corregidos)
+21. [Pendiente](#21-pendiente)
+22. [Historial de commits](#22-historial-de-commits)
 
 ---
 
@@ -83,10 +90,13 @@ la mesa (`cMenu({ web: true })`, `cPedido(llevar)`, `tracker(…, llevar)`) más
 | a | Canal para llevar, W0 Bienvenida, W1 Inicio, W3 Menú, W9 Domicilio | Hecha (`19a9e3a`) |
 | b | W4 Tu pedido, W5 Tus datos, W6 Resumen y pago | Hecha (`e9de11f`) |
 | c | W7 Confirmación, W8 y W8b Seguimiento | Hecha (`845f819`) |
-| d | W10 Calificación y W10b reseña en Google, botón "Calificá tu comida" en W8b; promo con su precio y página no encontrada | Hecha |
-| e | Tablet (T1–T5) | Hecha |
-| f | Computadora (D1–D5) | Hecha |
-| g | Revisión y correcciones (ver 12) | Hecha |
+| d | W10 Calificación y W10b reseña en Google, botón "Calificá tu comida" en W8b; promo con su precio y página no encontrada | Hecha (`13f497c`) |
+| e | Tablet (T1–T5), detalle encima del menú y carga más rápida | Hecha (`d714b38`) |
+| f | Computadora (D1–D5) | Hecha (`8e93b7f`) |
+| g | Revisión y correcciones (ver 12) | Hecha (`b70c85f`) |
+
+Además, fuera de las etapas: la línea de tiempo del seguimiento (`85412a0`), los QR con la
+marca (`e828b11`) y las fotos provisorias (`ed142ab`).
 
 ## 4. Rutas
 
@@ -189,7 +199,16 @@ Deshacer, barra "Ver pedido") es igual a la mesa. Ver [vista-qr.md 4.2](vista-qr
 
 ### 6.4 Detalle del plato (`DishDetail.tsx`)
 
-Igual a la mesa; solo cambian los links (vuelve a `/menu` y edita líneas en `/pedido`).
+El contenido es el mismo de la mesa (foto, precio, qué trae, acompañante, extras, nota, "Lo
+que dicen" y "Agregar"). Lo que cambia en la web:
+- **Se abre encima del menú** (`/menu/plato/:dishId`, ruta hija del menú): el menú no se
+  desmonta ni vuelve arriba. En celular ocupa toda la pantalla y se ve igual que en la mesa; en
+  tablet es una ventana de 640 px (T3) y en computadora, una horizontal de 900 × 660 (D3). Se
+  cierra con Volver o ✕, tocando afuera o con Esc.
+- **La promo:** fuera de su horario, o si se abre desde la mesa, muestra "Esta promo es solo para
+  pedidos en línea, de 4 a 7 pm." y dos alternativas, en lugar del formulario.
+- Al agregar vuelve al menú con el aviso "Agregaste… · Deshacer"; al editar una línea
+  (`?linea=<id>`), vuelve a Tu pedido.
 
 ### 6.5 W4 Tu pedido (`Order.tsx`, variante `takeout`)
 
@@ -364,6 +383,9 @@ carrito lateral → D4 (`/resumen`) → Confirmación. "Tu pedido" (`/pedido`) y
 **Pantallas sin diseño de computadora** (Tu pedido, Tus datos, Seguimiento, Calificación y
 Domicilio): se ven como en tablet, centradas en 834 px, con su barra de abajo del mismo ancho.
 
+**La mesa** no usa nada de esto: aunque se abra en una computadora, sigue en su columna de
+480 px.
+
 **Cómo está hecho:** variante `desktop:` en `index.css` (desde 1200 px, solo dentro de `.web`;
 `--container-app` pasa a 1440 px) y el hook `useIsDesktop()` (`lib/useMediaQuery.ts`) para las
 pantallas que cambian de estructura (D1, D2, D4 y D5).
@@ -502,6 +524,11 @@ dos cosas juntas (texto de `promo` y plato).
 | `src/components/GoogleStars.tsx` | Cinco estrellas de Google |
 | `src/screens/HomeDesktop.tsx` | D1 Inicio en computadora |
 | `src/screens/SummaryDesktop.tsx` | D4 Datos y pago en computadora |
+| `src/lib/promo.ts` | `isPromoDish`, `usePromoActive` (horario de la promo) y `promoAllows` (solo web y en horario) |
+| `src/lib/images.ts` | `thumbOf`: la miniatura de 400 px de una foto |
+| `scripts/qr.mjs` | `npm run qr`: QR con la marca, placas de mesa y hoja de la demo |
+| `docs/fotos-provisorias.md` | Autor y link de cada foto de Unsplash |
+| `public/img/logo-192.webp`, `icon-32.png`, `icon-180.png` | Logo del encabezado e íconos (los genera `npm run images`) |
 
 **Cambiados para la web:** `Menu.tsx` (detalle encima y grillas de tablet), `DishDetail.tsx`
 (ventana), `Order.tsx`, `Tracking.tsx`, `Confirmation.tsx`, `MesaLayout.tsx`, `DishCard.tsx`
@@ -511,6 +538,12 @@ dos cosas juntas (texto de `promo` y plato).
 `api.ts`, `notifications.ts`, `combos.ts` (`bestSellersFor`), `reviews.ts` (ahora con
 `reviewsToSend`, que antes estaba en `Bill.tsx`, e `isRated`/`markRated`), `tableStore.ts` (exporta
 `safeLocalStorage`), `Carousel`, `NoticeBanner`, `PaymentNotice`, `WhatsAppButton` y los tipos.
+
+**También:** `store/cart.ts` (`lineDetails`: acompañante, extras y nota de una línea),
+`CategoryTabs` (prop `className`), `Photo` (usa `thumbOf`), `vite.config.ts` (precarga de
+fuentes y portada, paquete `vendor`), `scripts/optimize-images.mjs` (logo e íconos),
+`index.html` (íconos nuevos) y `restaurant.json` (`publicUrl`, `logo.small`, `texts.qr`,
+`texts.notFound`).
 
 **Borrado:** `src/screens/RootRedirect.tsx`.
 
@@ -527,6 +560,9 @@ dos cosas juntas (texto de `promo` y plato).
 | Sin página de error web | "Página no encontrada" con Ir al inicio | Pedido de la reunión: no mostrar "Este QR no es válido" en la web |
 | Tu pedido con la fila "Total" | Total en el botón Continuar | Viene de la corrección de mesa |
 | Confirmación por WhatsApp sin indicar qué pasa sin señal | Aviso de error y volver a confirmar | Para llevar no puede quedar en espera sin que el cliente sepa |
+| Detalle como pantalla aparte | Encima del menú (ruta hija), sin perder el lugar en la lista | Más cómodo en celular y necesario para las ventanas de T3 y D3 |
+| D4 como pantalla propia | D4 vive en `/resumen` (en computadora) y el carrito lateral reemplaza a Tu pedido | Una sola dirección para el resumen en todos los tamaños |
+| Platos sin foto | 9 fotos provisorias de Unsplash | Para que la demo se vea completa mientras llegan las profesionales |
 
 **Ronda de correcciones (etapa g), aprobada por el cliente:**
 
@@ -545,7 +581,127 @@ dos cosas juntas (texto de `promo` y plato).
 - El estado de la portada usa la hora corta ("hasta 10 pm") y el encabezado del menú la larga
   ("cierra 10:00 pm").
 
-## 13. Limitaciones conocidas
+## 13. Accesibilidad
+
+Lo mismo que en la mesa ([vista-qr.md 12](vista-qr.md#12-accesibilidad-y-rendimiento)), más lo
+propio de la web:
+
+- **Movimiento:** con "reducir movimiento" no hay animaciones ni carrusel automático; la línea
+  de tiempo queda quieta. W0 no anima nada (los puntos son quietos).
+- **Ventanas (detalle en la web, W0):** son diálogos (`role="dialog"`, `aria-modal`). Al abrirse,
+  el foco entra en la ventana y la página de atrás no se desplaza; lo de atrás (el menú, su
+  barra y "Escribinos") queda inerte, así el teclado no se escapa. Se cierran con **Esc**, con
+  la ✕ o tocando afuera.
+- **Formularios (W5, T4, D4):** cada campo tiene su etiqueta; los errores se muestran al
+  intentar seguir, quedan ligados al campo (`aria-invalid`, `aria-describedby`) y el foco va al
+  primero con error. El WhatsApp abre el teclado numérico; nombre y teléfono se autocompletan.
+- **Estados que cambian solos:** la tarjeta de estado del seguimiento y de T5/D5 se anuncia
+  (`aria-live`); la confirmación de W7 y el "Recibimos tu calificación" son `role="status"`.
+- **Navegación:** el paso actual de la línea de tiempo y la categoría activa del menú de
+  computadora llevan `aria-current`; la barra de computadora es un `nav` con nombre.
+- **Links externos** (Google, Maps, WhatsApp): avisan "(se abre en otra pestaña)" al lector de
+  pantalla.
+- **Estrellas de Google:** decorativas; el lector lee "4.8 de 5 estrellas en Google".
+
+## 14. Rendimiento
+
+La carga se midió en frío como un celular promedio (4G lento, procesador 4 veces más lento, sin
+caché), con el build real (`vite preview`) y puppeteer. Lo que mide es el **pintado
+principal** (LCP: cuándo se ve lo más grande de la pantalla).
+
+| Pantalla | Antes | Después de optimizar | Con las 9 fotos nuevas |
+|---|---|---|---|
+| Inicio web | — (la portada no terminaba de bajar en la medición) | 3,7 s | 3,9 s |
+| Menú web | 4,5 s | 3,6 s | 3,9 s |
+| Mesa 5 | 4,5 s | 3,7 s | 3,9 s |
+
+En Vercel es algo mejor: comprime con Brotli, más que el servidor de prueba.
+
+**Qué se hizo** (commit `d714b38`):
+- **Portada del inicio:** el HTML la pide desde el principio, solo si se abre `/`, sin esperar al
+  JavaScript (plugin `precarga-portada` en `vite.config.ts`).
+- **Fotos:**
+  - las dos primeras del carrusel del menú se piden con prioridad (`eager` en `DishCard`);
+  - las del carrusel del inicio, no, porque están más abajo de la primera pantalla y le quitaban
+    ancho de banda a la portada;
+  - la promo usa la miniatura de 400 px (antes, la de 800 px, de 100 KB, para mostrarse de 120 px);
+  - el logo de la portada lo elige el navegador según el tamaño (`srcset`).
+- **Logo e íconos:**
+  - el encabezado usa `logo-192.webp` (6 KB en vez de 22 KB);
+  - la pestaña y el celular usan `icon-32.png` (2 KB) e `icon-180.png` (10 KB), en vez del
+    `logo.png` de 160 KB.
+- **Fuentes:** el HTML precarga Figtree 400, 600 y 700 (plugin `precarga-fuentes`).
+- **JavaScript:**
+  - las librerías van en un paquete `vendor` que queda en caché entre versiones;
+  - al abrir se piden 9 archivos en vez de 14;
+  - las demás pantallas se precargan recién cuando la página terminó de cargar
+    (`prefetchScreens`).
+
+**Para que siga liviana:** las fotos nuevas van por `npm run images` (800 px y miniatura de
+400 px); `npm run build` muestra el peso de cada paquete.
+
+## 15. Fotos
+
+- **Del restaurante (3):** fritanga tradicional, enchilada y combo para dos. La de combo para
+  dos es la portada del inicio (`web.cover`).
+- **Provisorias de Unsplash (9):** pollo asado, carne asada, gaseosa, fresco de cacao, tajadas,
+  combo familiar y los 3 combos del día. Son gratis para uso comercial; autor y link de cada una
+  en [fotos-provisorias.md](fotos-provisorias.md).
+  - Se eligieron solo las que muestran el plato de verdad (pedido del cliente).
+  - No se usaron fotos de reseñas de Google: son de los clientes que las subieron, no del
+    restaurante.
+- **Sin foto (3):** vigorón, chicha y pinolillo (no hay fotos reales en Unsplash): muestran el
+  fondo de espera.
+- **Con foto prestada (1):** fritanga de cerdo usa la de la fritanga tradicional.
+- **Para reemplazarlas:** poner la foto en `public/img/` con el mismo nombre (cuadrada, ideal
+  800 × 800) y correr `npm run images`.
+
+## 16. Demo publicada y QR
+
+- **En línea (Vercel, desde `main`; cada push a `main` se publica solo):**
+  - web para llevar: https://menu-digital-one-sigma.vercel.app/
+  - mesa 5: https://menu-digital-one-sigma.vercel.app/m/5 (mesas 1 a 8)
+  - antes de las 4 pm sale cerrado: para mostrarla a cualquier hora, agregar `?forzar=abierto`.
+  - El nombre del dominio se cambia en Vercel → Settings → Domains.
+- **QR con la marca** (`npm run qr`, ver el README): además de las placas de mesa genera
+  `llevar.svg` (la web) y la **hoja de la demo** (`qr/hoja-demo.pdf`) con dos placas: "Mesa 5" y
+  "Pedí para llevar", con `?forzar=abierto` para que funcionen a cualquier hora. Los QR se
+  verificaron decodificándolos.
+- **Antes de imprimir las placas reales**, definir el dominio: el QR queda atado al link.
+
+## 17. Flags de la demo en la web
+
+Se agregan a cualquier link y quedan activos mientras la pestaña esté abierta.
+
+| Flag | Qué hace en la web |
+|---|---|
+| `?forzar=abierto` | Abierto aunque sea fuera de horario; la promo también se ve |
+| `?forzar=cerrado` | Fuera de horario: no se puede pedir y la promo no se ve |
+| `?forzar=agotado` | Sobre el pedido en curso, la hoja "Se acabó el maduro" |
+| `?forzar=ninguno` | Quita los forzados |
+| `?dia=martes` | Simula otro día (combos del día); `?dia=hoy` vuelve al real |
+| `?src=ig` | Origen de la visita (`ig`, `fb`, `google`, `wa`): viaja con el pedido |
+
+Los de mesa (`?compas=0`, `?forzar=pago-rapido`, `?forzar=mesa-nueva`) no aplican en la web.
+Para empezar de cero: borrar los datos del sitio en el navegador.
+
+## 18. Notas para desarrollar y cómo se probó
+
+- **Cómo se probó cada etapa:** con scripts de puppeteer (Chrome) fuera del repo, en celular
+  (390 × 844), tablet (834 × 1194) y computadora (1440 × 900). Recorren el flujo completo
+  (agregar, datos, confirmar, seguimiento hasta "Recogida", calificar), verifican textos y
+  medidas, sacan capturas y confirman que la mesa no cambió. Las correcciones de la promo se
+  probaron fijando la hora de Managua (5 pm y 8 pm).
+- **Probar con el build real:** `npm run build` y `npx vite preview`. El servidor de desarrollo,
+  dentro de OneDrive, a veces sirve CSS o código viejo (ver
+  [vista-qr.md 16](vista-qr.md#16-notas-para-desarrollar)); si algo "no cambió", probar con el
+  build o reiniciar con `npx vite --force`.
+- **Tamaños:** `tablet:` y `desktop:` solo aplican dentro de `.web`. Para ver la tablet o la
+  computadora en el navegador, achicar o agrandar la ventana (768 px y 1200 px son los cortes).
+- **Agregar una pantalla web nueva:** colgarla de `WebLayout` en `router.tsx`, usar `paths` para
+  los links y `TAKEOUT` como id; sus textos van en `texts.web`.
+
+## 19. Limitaciones conocidas
 
 - **Todo es simulado:** no se manda ningún WhatsApp, la caja no confirma nada y la cocina
   avanza con tiempos fijos (`processingMs`, `cookingMs`, `readyMs`).
@@ -558,9 +714,13 @@ dos cosas juntas (texto de `promo` y plato).
 - **Los datos del cliente viven en su navegador:** si borra los datos del sitio o cambia de
   teléfono, los vuelve a escribir.
 - **Los links de prueba por IP** (`http://192.168.1.15:5173/…`) solo abren en la misma red
-  Wi‑Fi; para mostrarla en otro lado hay que publicarla (Vercel).
+  Wi‑Fi; para mostrarla en otro lado está el link de Vercel (ver 16).
+- **La promo y la hora:** si alguien agrega la promo a las 6:55 y confirma a las 7:05, el pedido
+  sale igual con el precio de promo. En el sistema real lo controla el servidor.
+- **Pantallas sin diseño de tablet o computadora** (Tus datos, Resumen en tablet, Seguimiento,
+  Calificación, Domicilio): se ven como en celular, más anchas.
 
-## 14. Bugs corregidos
+## 20. Bugs corregidos
 
 | Problema | Causa | Arreglo |
 |---|---|---|
@@ -572,8 +732,10 @@ dos cosas juntas (texto de `promo` y plato).
 | En el servidor de desarrollo, la mesa se veía a todo el ancho en tablet | Vite servía CSS viejo (OneDrive) | No era el código: se verificó con el build real (`vite preview`) y se reinició Vite con `--force` |
 | La promo decía "2 enchiladas por C$ 160" y el carrito cobraba otro monto | La tarjeta abría la enchilada suelta (C$ 90 cada una) | La promo es un plato propio de C$ 160 |
 | Una dirección web inexistente decía "Este QR no es válido" | La ruta comodín era la de mesa | `NotFound` para la web |
+| En D4, al confirmar, el resumen podía mandar al menú antes de abrir la confirmación | Al enviar, el carrito se vacía y la pantalla veía "sin platos" | D4 controla ese caso con su propio estado de envío |
+| El inicio cargaba más lento al dar prioridad a las fotos del carrusel | Están más abajo de lo que se ve y le quitaban ancho de banda a la portada | Prioridad solo en el carrusel del menú; la portada se precarga desde el HTML |
 
-## 15. Pendiente
+## 21. Pendiente
 
 **De la web:**
 - Ninguna etapa del Figma pendiente. Lo que sigue es el sistema real (backend): pedidos que
@@ -586,9 +748,11 @@ dos cosas juntas (texto de `promo` y plato).
 - Fotos reales (ver [vista-qr.md 19](vista-qr.md#19-pendiente)) y una foto de portada.
 
 **Del proyecto:**
-- Pasar a `main` lo nuevo de `plantilla-mesa` para que se publique en Vercel.
+- El sistema real (backend): que los pedidos lleguen de verdad, con WhatsApp de confirmación,
+  pantallas de cocina y caja y panel del dueño (con los pedidos por canal y por origen).
+- Definir el dominio y, con él, regenerar e imprimir las placas QR (`npm run qr`).
 
-## 16. Historial de commits
+## 22. Historial de commits
 
 | Commit | Cambio |
 |---|---|
@@ -600,3 +764,7 @@ dos cosas juntas (texto de `promo` y plato).
 | `efd7716` | Documentación de la vista web y actualización de la vista QR |
 | `13f497c` | Web etapa d: calificación con reseña en Google, promo con su precio y página no encontrada |
 | `e828b11` | QR con la marca y placas de mesa (`npm run qr`) |
+| `d714b38` | Web etapa e: tablet (T1–T5), detalle encima del menú y carga más rápida |
+| `ed142ab` | Fotos provisorias de Unsplash para 9 platos |
+| `8e93b7f` | Web etapa f: computadora (D1–D5) |
+| `b70c85f` | Web etapa g: promo por horario y solo web, resumen con detalle y 3 más vendidos en computadora |

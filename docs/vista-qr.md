@@ -962,4 +962,4 @@ está en el cuerpo de su commit.
 | `7f37c4a` | Documentación completa y forma de trabajo |
 | `85412a0` | Seguimiento: línea de tiempo con hora por paso y textos "Cocinando" y "Lista" |
 
-Los commits de la web están en [vista-web.md 16](vista-web.md#16-historial-de-commits).
+Los commits de la web están en [vista-web.md 22](vista-web.md#22-historial-de-commits).
