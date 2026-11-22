@@ -1,4 +1,4 @@
-import { createBrowserRouter, type RouteObject } from 'react-router'
+import { createBrowserRouter, redirect, type RouteObject } from 'react-router'
 import { InvalidTable } from './screens/InvalidTable'
 import { NotFound } from './screens/NotFound'
 import { MesaLayout } from './screens/MesaLayout'
@@ -66,6 +66,7 @@ const routes: RouteObject[] = [
   },
   // Personal: cocina, caja y panel (tablet) y meseros (celular). Se bajan solo si se abren.
   {
+    id: 'personal',
     lazy: async () => ({ Component: (await import('./screens/staff/StaffLayout')).StaffLayout }),
     errorElement: <RouteError />,
     children: [
@@ -134,6 +135,23 @@ export function prefetchScreens() {
   }
   if (document.readyState === 'complete') whenIdle()
   else window.addEventListener('load', whenIdle, { once: true })
+}
+
+/*
+ * Dos direcciones desde el mismo código (variable VITE_SITIO al compilar):
+ * - "cliente": solo la web y la mesa; las pantallas del personal no existen.
+ * - "personal": todo, y la raíz abre el ingreso con PIN. Incluye la web y la
+ *   mesa para mostrar en la demo cómo llega lo que se cambia en el panel.
+ * Sin la variable (desarrollo) está todo, como antes.
+ */
+const site = import.meta.env.VITE_SITIO
+if (site === 'cliente') {
+  const i = routes.findIndex((r) => r.id === 'personal')
+  if (i >= 0) routes.splice(i, 1)
+} else if (site === 'personal') {
+  const web = routes.find((r) => r.path === '/')
+  const home = web?.children?.find((r) => r.index)
+  if (home) Object.assign(home, { element: undefined, loader: () => redirect('/personal') })
 }
 
 // Muestrario de componentes, solo en desarrollo.
