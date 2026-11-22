@@ -26,10 +26,11 @@ import {
   type ServerTable,
 } from './server'
 import { isStaffLive } from './staffLive'
+import { panelSettingsStore } from '../store/panelSettings'
 
 export class ApiError extends Error {
-  readonly code: 'offline' | 'server'
-  constructor(code: 'offline' | 'server', message = code) {
+  readonly code: 'offline' | 'server' | 'blocked'
+  constructor(code: 'offline' | 'server' | 'blocked', message = code) {
     super(message)
     this.code = code
   }
@@ -118,10 +119,16 @@ function seedTableMates(state: ServerTable, tableId: string, createdAt: string, 
 export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda; account: Comanda[] }> {
   return roundTrip(() => {
     const state = loadServer(input.tableId)
+    // Caja bloqueó la mesa ("¿Pedidos raros?"): no recibe pedidos nuevos.
+    if (state.blocked) throw new ApiError('blocked')
     const now = new Date().toISOString()
     const number = nextComandaNumber(state)
     // Con la cocina abierta en otra pestaña (demo del personal), el pedido espera a que la cocina lo mueva.
     const live = isStaffLive()
+    // Regla "El mesero acepta el primer pedido": el primero de la mesa (sin cuenta abierta) espera al mesero.
+    const firstOfTable = !state.comandas.some((c) => !c.paid && !c.rejectedAt)
+    const needsAccept =
+      live && !isTakeout(input.tableId) && firstOfTable && panelSettingsStore.getState().waiterAccepts
     const comanda: Comanda = {
       id: comandaId(number),
       number,
@@ -139,6 +146,7 @@ export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda
       statusAt: now,
       substitutions: [],
       ...(live ? { kitchenLive: true, statusTimes: { recibida: now } } : {}),
+      ...(needsAccept ? { pendingAccept: true } : {}),
     }
     state.comandas.push(comanda)
     // Los compañeros simulados son de la mesa; el pedido para llevar es solo de este cliente.
@@ -171,7 +179,8 @@ function watchServer(tableId: string, onChange: (state: ServerTable) => void): (
 
 /** Cuenta completa de la mesa. API real: GET /api/mesas/:mesa/cuenta */
 export async function fetchAccount(tableId: string): Promise<Comanda[]> {
-  return roundTrip(() => loadServer(tableId).comandas, 150)
+  // Lo que rechazó el mesero no se suma a la cuenta.
+  return roundTrip(() => loadServer(tableId).comandas.filter((c) => !c.rejectedAt), 150)
 }
 
 /**

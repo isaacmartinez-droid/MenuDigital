@@ -41,16 +41,16 @@ las tres que más le sirven al dueño para decidir, fieles al plugin (`pCocina`,
 | Hecho | Para después |
 |---|---|
 | P1 Cocina, P1a y P1b (las comandas pasan de columna), P1c Agotados | P0 Entrar con PIN |
-| P2 Caja · por cobrar, P2a por confirmar, P2b Cobrar, P2e mesa cerrada | P2c Pedido manual, P2d Corte del día |
-| P3 Meseros: avisos, Voy y Atendido (P3a, P3b), P3m Mesas, P3d detalle de mesa | Aceptar o rechazar el primer pedido de la mesa |
+| P2 Caja · por cobrar, P2a por confirmar, P2b Cobrar, P2e mesa cerrada, P2c Nuevo pedido, P2d Corte del día | |
+| Caja sin diseño en el Figma (boceto aprobado el 2026-11-22): Imprimir cuenta, Bloquear mesa, pestaña En curso | |
+| P3 Meseros: avisos, Voy y Atendido (P3a, P3b), P3m Mesas, P3d detalle de mesa, Agregar pedido a esta mesa, Aceptar o rechazar el primer pedido | |
 | P4 Panel · Resumen, P4a Menú y agotados, P4b Mesas y QR, P4c Personal y PINs | |
 | Panel: Agregar y editar plato, Agregar y quitar mesa, Agregar persona, Cambiar PIN, Nueva promo y Cambiar horario (sin diseño en el Figma: boceto aprobado el 2026-11-22) | |
 | Panel · Promos, Horarios y Reseñas (sin diseño en el Figma: boceto aprobado el 2026-11-21) | |
 
 Lo que es para después **se ve, pero no hace nada**. Está deshabilitado y el lector de pantalla
-dice "Próximamente". Eso incluye "Agregar pedido a esta mesa" (meseros), "Nuevo pedido", "Corte del día", "Imprimir
-cuenta", "Bloquear mesa", la pestaña "En curso" de caja y, en el panel, la regla "El mesero acepta
-el primer pedido".
+dice "Próximamente". Después de las etapas del 2026-11-22 ya no queda ningún botón así en la
+caja, los meseros ni el panel.
 
 ## 2. Rutas
 
@@ -58,8 +58,11 @@ el primer pedido".
 |---|---|---|
 | `/cocina` | P1 Cocina | `screens/staff/Kitchen.tsx` |
 | `/caja` | P2 Caja | `screens/staff/Cashier.tsx` |
+| `/caja/nuevo` | P2c Nuevo pedido | `screens/staff/ManualOrder.tsx` |
+| `/caja/corte` | P2d Corte del día | `screens/staff/DayClose.tsx` |
 | `/meseros` | P3 Meseros: Avisos y Mesas (celular) | `screens/staff/Waiters.tsx` |
 | `/meseros/mesa/:mesa` | P3d Una mesa con sus pedidos | `screens/staff/Waiters.tsx` |
+| `/meseros/mesa/:mesa/nuevo` | Agregar pedido a esta mesa (P2c en celular) | `screens/staff/ManualOrder.tsx` |
 | `/panel` | P4 Panel · Resumen | `screens/staff/OwnerPanel.tsx` |
 | `/panel/menu` | P4a Menú y agotados | `screens/staff/panel/PanelMenu.tsx` |
 | `/panel/mesas` | P4b Mesas y QR | `screens/staff/panel/PanelTables.tsx` |
@@ -157,21 +160,41 @@ pueden encender.
 
 ### 4.3 P2 Caja (`Cashier.tsx`)
 
-- Barra: **Nuevo pedido** y **Corte del día** (deshabilitados) y "María".
-- A la izquierda, las pestañas **Por confirmar · N**, **Por cobrar · N** y **En curso · N** (solo
-  muestra el número). Debajo, la lista:
+- Barra: **Nuevo pedido** (P2c), **Corte del día** (P2d) y "María".
+- A la izquierda, las pestañas **Por confirmar · N**, **Por cobrar · N** y **En curso · N**.
+  Debajo, la lista:
   - **Por cobrar:** primero las mesas que vienen a pagar ("Viene a pagar a caja · Todo junto · hace
     1 min" o "Cada quien lo suyo"), después las cuentas abiertas ("Comiendo · cuenta abierta · 3
     teléfonos · hace 25 min"), cada una con su total;
   - **Por confirmar:** los pedidos web ("FN-0144 · Ana · 8888 0000 · Para llevar · hace 2 min").
+  - **En curso:** los pedidos que están en la cocina (Recibida, Cocinando o Lista), de todos los
+    canales, con el detalle a la derecha. Lo mueve la cocina; al entregarse sale de la lista.
+  - En **Por cobrar** también aparece el **Mostrador** si un pedido manual no se cobró al momento.
 - A la derecha, el detalle de lo elegido (460 px).
   - **Mesa:** nombre y estado ("Viene a pagar" en ámbar o "Cuenta abierta" en verde), "Viene a caja
     · pagan todo junto", lo de cada persona con sus comandas y precios, el total (si el cliente
     dejó propina: consumo, propina y total) y **Cómo cobrar**: Todo junto o Por persona.
   - **Por persona:** "Tocá a quién le cobrás" y cada persona es una tarjeta para elegir. Viene
     elegida la que avisó a caja. Lo ya pagado dice "Pagado".
-  - Abajo: **Imprimir cuenta** (deshabilitado), **Cobrar · C$ total**, el texto del PIN del dueño
-    y **Bloquear mesa** (deshabilitado).
+  - Abajo: **Imprimir cuenta** (abre la impresión del navegador con un ticket de 72 mm: platos,
+    consumo, propina, total y "Atendió: María"), **Cobrar · C$ total**, el texto del PIN del dueño
+    y **Bloquear mesa**. Bloqueada, la mesa dice "Bloqueada" en rojo y el botón pasa a
+    **Desbloquear mesa**; en el teléfono, el menú y "Tu pedido" muestran "Esta mesa no está
+    recibiendo pedidos · Llamá al mesero" y no deja enviar.
+- **P2c Nuevo pedido** (`/caja/nuevo`): "Para quien no tiene celular o no quiere escanear", el canal
+  (Mostrador, Mesa con su número, o Para llevar con WhatsApp), el buscador y los platos de hoy con
+  su +. A la derecha el ticket ("Mostrador · Don Pedro"), con nombre, cantidades y total:
+  - **Enviar a cocina:** entra directo a la cocina (ya está confirmado) y vuelve a caja con "FN-0150
+    enviado a la cocina";
+  - **Cobrar ahora:** abre P2b; al cobrar, lo envía y vuelve con "FN-0150 cobrado: C$ 90 con
+    efectivo".
+- **P2d Corte del día** (`/caja/corte`): Vendido, Efectivo, Tarjeta y Cancelados; Por canal; Efectivo
+  en caja (fondo inicial `ordering.cashFloat`, ventas en efectivo, debería haber), **Contado** y la
+  diferencia ("faltan C$ 40", "sobran" o "Cuadra exacto"); **Imprimir corte** y **Cerrar el día**.
+  - Usa un registro de cobros (`fritanga-nica:caja:cobros`), porque la mesa se borra al cerrarse.
+    Cuenta los cobros de hoy desde el último corte.
+  - Sin cobros, muestra los números de ejemplo del Figma ("viernes (ejemplo)") y "Cerrar el día"
+    queda deshabilitado.
 - **P2a Por confirmar:** número a mano, "Para llevar", "Ana · 8888 0000", lo pedido, el aviso
   "Confirmalo antes de cocinar", **Confirmar por WhatsApp** (abre `wa.me` al número del cliente
   con "Hola Ana, recibimos tu orden FN-0144 en Fritanga Nica: 1× Combo para dos. Total C$ 380,
@@ -213,7 +236,13 @@ Sin la barra de tablet: "Meseros" y "Carlos" arriba, y las pestañas **Avisos ·
   Comiendo · 3 tel., Pagando en caja) y lo que deben. "Pidiendo" es una mesa con platos en el
   pedido sin enviar (en este navegador). Una mesa con cuenta abre P3d.
 - **P3d Mesa:** "3 teléfonos · abierta hace 25 min · C$ 430", cada pedido con su persona, número,
-  estado y platos, y **Agregar pedido a esta mesa** (deshabilitado).
+  estado y platos, y **Agregar pedido a esta mesa**, que abre el Nuevo pedido en celular con la
+  mesa fija (sin "Cobrar ahora": el mesero no cobra). Una mesa libre en P3m también lo abre.
+- **Aceptar el primer pedido** (si la regla está encendida en P4b y el personal está abierto): el
+  primer pedido de una mesa sin cuenta abierta llega a Avisos como "Pedido nuevo · FN-0148" con
+  **Rechazar** y **Aceptar**. Hasta aceptarlo no entra a la cocina, y el teléfono dice "Esperando
+  que el mesero confirme tu pedido". Rechazado, no va a la cocina ni a la cuenta, y el teléfono
+  dice "El mesero no pudo confirmar tu pedido".
 - Hay un llamado de ejemplo de la Mesa 2 (`callSecAgo` en `demo.staffSeeds`).
 
 ### 4.6 P4 Panel · Resumen (`OwnerPanel.tsx`)
@@ -248,7 +277,8 @@ Sin la barra de tablet: "Meseros" y "Carlos" arriba, y las pestañas **Avisos ·
 - **Agregar mesa** suma la siguiente (Mesa 9, 10…) con su QR, y `/m/9` empieza a funcionar. Las
   agregadas tienen "Nueva" y se pueden quitar.
 - Las tres reglas: "Solo en horario de atención" y "Límite por
-  pedido" funcionan (ver 3); "El mesero acepta el primer pedido" está apagada y deshabilitada.
+  pedido" funcionan (ver 3); "El mesero acepta el primer pedido" viene apagada y, encendida, manda
+  el primer pedido de cada mesa a Meseros (ver 4.5).
 - Las 8 mesas con su **QR de verdad** (el mismo diseño de `npm run qr`, hecho en el navegador con
   `lib/qr.ts`), la dirección y **Descargar QR** (baja `mesa-N.svg` con el logo adentro).
 - "Enlaces para redes" con `?src=ig`, `fb`, `google` y `wa` y **Copiar** (copia de verdad; dice
@@ -380,6 +410,7 @@ propina, método, recibido, vuelto, cajera y hora).
 | Agotados de la cocina | `fritanga-nica:agotados` |
 | Ajustes del panel (promo, reglas, cerrar hoy) | `fritanga-nica:panel` |
 | Platos, promos, mesas, personal y horario del panel | `fritanga-nica:catalogo` |
+| Registro de cobros y cortes del día | `fritanga-nica:caja:cobros`, `fritanga-nica:caja:cortes` |
 | Último número de comanda | `fritanga-nica:ultimo-numero` |
 
 **API real:** el tablero (`lib/staff.ts`) se reemplaza por `GET /api/cocina` y `GET /api/caja`
@@ -401,6 +432,9 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 | `src/store/panelSettings.ts` | Ajustes del panel compartidos entre pestañas: promo, reglas y "Cerrar hoy" |
 | `src/store/catalogEdits.ts` | Lo que agrega o cambia el dueño (platos, promos, mesas, personal, horario), aplicado sobre `menu` y `restaurant` |
 | `src/lib/qr.ts` | QR de mesa con la marca, en el navegador, y su descarga |
+| `src/lib/useTableServer.ts` | El teléfono lee lo que marcó el personal (mesa bloqueada, pedido aceptado o rechazado) |
+| `src/components/staff/PrintSheet.tsx` | Ticket de 72 mm para imprimir (cuenta y corte) |
+| `src/screens/staff/ManualOrder.tsx`, `DayClose.tsx` | P2c Nuevo pedido (caja y mesero) y P2d Corte del día |
 | `src/components/staff/` | `StaffBar`, `ChannelChip`, `KitchenTicket`, `Segmented`, `Switch`, `StaffDialog`, `SoldOutDialog`, `ChargeDialog` |
 | `src/screens/staff/` | `StaffLayout`, `Kitchen`, `Cashier`, `Waiters`, `OwnerPanel` |
 | `src/screens/staff/panel/` | `PanelLayout`, `PanelMenu`, `PanelTables`, `PanelPeople`, `PanelPromos`, `PanelHours`, `PanelReviews`, `parts`, las ventanas (`DishDialog`, `PromoDialog`, `PersonDialog`, `HoursDialog`) y el formulario (`form`, `formUtils`) |
@@ -456,8 +490,7 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 
 ## 12. Pendiente
 
-- Del Figma: P0 PIN, P2c Pedido manual, P2d Corte del día y aceptar el primer pedido de la mesa
-  (meseros).
+- Del Figma: P0 PIN.
 - Del panel: editar o borrar promos ya creadas, borrar personas y que el registro de acciones
   sea real.
 - Del sistema real: backend para que los pedidos lleguen entre dispositivos, WhatsApp de

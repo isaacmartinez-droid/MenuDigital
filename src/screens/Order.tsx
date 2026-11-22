@@ -9,6 +9,7 @@ import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Button } from '../components/Button'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
+import { useTableServer } from '../lib/useTableServer'
 import { BottomSheet } from '../components/BottomSheet'
 import { ChevronRight, Clock, CupSoda, Pencil, Plus, ReceiptText, X } from 'lucide-react'
 import { useComandas } from '../store/comandas'
@@ -48,6 +49,8 @@ export function Order() {
   const pendingSend = useCart(mesa, (s) => s.pendingSend)
   const openState = useOpenState()
   const online = useOnline()
+  // Caja bloqueó la mesa: no deja enviar (el aviso queda arriba).
+  const blocked = Boolean(useTableServer(mesa)?.blocked) && !takeout
   const nameId = useId()
   const [skipName, setSkipName] = useState(false)
   const [sending, setSending] = useState(false)
@@ -95,6 +98,7 @@ export function Order() {
 
   const send = async () => {
     if (sending) return
+    if (blocked) return setConfirming(false)
     setSending(true)
     const result = await submitCart(mesa)
     setSending(false)
@@ -105,6 +109,7 @@ export function Order() {
     setConfirming(false)
     if (result.reason === 'limit') setNotice({ kind: 'limit', key: newId() })
     else if (result.reason === 'server') setNotice({ kind: 'error', key: newId() })
+    // 'blocked': el aviso de mesa bloqueada ya está arriba.
     // 'offline': el carrito queda marcado y se muestra el aviso de señal.
   }
 
@@ -128,6 +133,9 @@ export function Order() {
       <main className="px-4 tablet:px-8">
         {(pendingSend || !online) && (
           <NoticeBanner tone="aviso" role="status" title={t.offline.title} body={t.offline.body} className="mb-3" />
+        )}
+        {blocked && (
+          <NoticeBanner tone="aviso" role="status" title={t.order.blockedTitle} body={t.order.blockedBody} className="mb-3" />
         )}
         {takeoutConfirm.notice && (
           <Toast

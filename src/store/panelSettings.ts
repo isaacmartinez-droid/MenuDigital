@@ -19,6 +19,9 @@ interface PanelSettingsState {
   onlyInHours: boolean
   itemLimit: boolean
   closedOn: string | null
+  /** "El mesero acepta el primer pedido" (P4b). */
+  waiterAccepts: boolean
+  setWaiterAccepts: (on: boolean) => void
   setPromoOn: (on: boolean) => void
   setOnlyInHours: (on: boolean) => void
   setItemLimit: (on: boolean) => void
@@ -39,6 +42,8 @@ export const panelSettingsStore = createStore<PanelSettingsState>()(
       onlyInHours: true,
       itemLimit: true,
       closedOn: null,
+      waiterAccepts: false,
+      setWaiterAccepts: (waiterAccepts) => set({ waiterAccepts }),
       setPromoOn: (promoOn) => set({ promoOn }),
       setOnlyInHours: (onlyInHours) => set({ onlyInHours }),
       setItemLimit: (itemLimit) => set({ itemLimit }),
@@ -47,7 +52,13 @@ export const panelSettingsStore = createStore<PanelSettingsState>()(
     {
       name: KEY,
       storage: safeLocalStorage,
-      partialize: ({ promoOn, onlyInHours, itemLimit, closedOn }) => ({ promoOn, onlyInHours, itemLimit, closedOn }),
+      partialize: ({ promoOn, onlyInHours, itemLimit, closedOn, waiterAccepts }) => ({
+        promoOn,
+        onlyInHours,
+        itemLimit,
+        closedOn,
+        waiterAccepts,
+      }),
     },
   ),
 )

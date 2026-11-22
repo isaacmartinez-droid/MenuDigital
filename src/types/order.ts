@@ -84,6 +84,13 @@ export interface Comanda {
   confirmedAt?: string
   /** true cuando caja ya cobró esta comanda. */
   paid?: boolean
+  /**
+   * Regla "El mesero acepta el primer pedido" (P4b): el primer pedido de la mesa espera
+   * a que el mesero lo acepte antes de entrar a la cocina.
+   */
+  pendingAccept?: boolean
+  /** El mesero lo rechazó (ISO): no entra a la cocina ni a la cuenta. */
+  rejectedAt?: string
 }
 
 /** Un cobro de caja: toda la mesa o lo de una persona. */

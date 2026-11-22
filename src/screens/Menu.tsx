@@ -18,6 +18,7 @@ import { promoAllows, useActivePromos } from '../lib/promo'
 import { CartBar, BottomDock, DockSpacer } from '../components/CartBar'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
+import { useTableServer } from '../lib/useTableServer'
 import { dishesByCategory, getDish, getSide, menu, restaurant } from '../lib/catalog'
 import { formatMoney } from '../lib/money'
 import { fmt, platos, t, tableLabel } from '../lib/text'
@@ -185,6 +186,8 @@ export function Menu() {
   useEffect(() => () => window.clearTimeout(pinTimer.current), [])
 
   const online = useOnline()
+  // Caja bloqueó la mesa ("¿Pedidos raros?"): se ve el menú, pero no deja pedir.
+  const blocked = Boolean(useTableServer(mesa)?.blocked) && !takeout
 
   const count = countItems(items)
   const total = cartTotal(items)
@@ -233,6 +236,8 @@ export function Menu() {
         body={fmt(t.order.limitBody, { max: restaurant.ordering.maxItemsPerComanda })}
       />
     )
+  } else if (blocked) {
+    slot = <NoticeBanner role="status" tone="aviso" title={t.order.blockedTitle} body={t.order.blockedBody} />
   } else if (!canOrder && !hasAccount) {
     slot = (
       <NoticeBanner

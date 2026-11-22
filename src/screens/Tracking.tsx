@@ -15,6 +15,7 @@ import { Comanda } from '../components/Comanda'
 import { SoldOutSheet } from '../components/SoldOutSheet'
 import { useAvailability } from '../store/availability'
 import { NoticeBanner } from '../components/NoticeBanner'
+import { useTableServer } from '../lib/useTableServer'
 import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Button } from '../components/Button'
 import { TakeoutTicket } from '../components/TakeoutTicket'
@@ -74,6 +75,8 @@ export function Tracking() {
   const navigate = useNavigate()
   const { comandaId = '' } = useParams()
   const comanda = useLiveComanda(mesa, comandaId)
+  // Regla "El mesero acepta el primer pedido": si espera al mesero o si lo rechazó.
+  const onServer = useTableServer(mesa)?.comandas.find((c) => c.id === comandaId)
   const comandas = useComandas(mesa, (s) => s.comandas)
   // Reloj para que "Lista en unos N min" baje solo mientras no se entregó.
   const now = useNow(30_000, comanda?.status !== 'entregada')
@@ -173,6 +176,18 @@ export function Tracking() {
       />
 
       <main className="px-4 pt-2 tablet:px-8">
+        {onServer?.pendingAccept && (
+          <NoticeBanner
+            role="status"
+            tone="pronto"
+            title={t.tracking.pendingAcceptTitle}
+            body={t.tracking.pendingAcceptBody}
+            className="mb-3"
+          />
+        )}
+        {onServer?.rejectedAt && (
+          <NoticeBanner role="alert" tone="aviso" title={t.tracking.rejectedTitle} body={t.tracking.rejectedBody} className="mb-3" />
+        )}
         {!online && (
           <NoticeBanner role="status" tone="aviso" title={t.offline.title} body={t.offline.trackingBody} className="mb-3" />
         )}

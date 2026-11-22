@@ -65,8 +65,10 @@ export function Kitchen() {
 
   const columns = useMemo(() => {
     const all = boardComandas(tables).filter(
-      // Para llevar entra a cocina recién cuando caja lo confirma (si se pidió con la caja abierta).
-      (c) => c.channel !== 'llevar' || !c.comanda.kitchenLive || Boolean(c.comanda.confirmedAt),
+      // Para llevar entra a cocina recién cuando caja lo confirma (si se pidió con la caja abierta),
+      // y el primer pedido de una mesa, cuando el mesero lo acepta (regla del panel).
+      (c) =>
+        !c.comanda.pendingAccept && (c.channel !== 'llevar' || !c.comanda.kitchenLive || Boolean(c.comanda.confirmedAt)),
     )
     return COLUMNS.map((col) => ({
       ...col,

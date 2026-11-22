@@ -145,6 +145,8 @@ export interface RestaurantConfig {
     firstComandaNumber: number
     /** Número de "Teléfono N" de este dispositivo si no pone nombre. */
     myDeviceNumber: number
+    /** Fondo inicial de la caja para el corte del día (P2d). */
+    cashFloat: number
   }
   /**
    * Avisos del sistema (con permiso del cliente) cuando su orden pasa a estos

@@ -134,7 +134,8 @@ export function PanelTables() {
   const m = t.staff.panel.tables
   const onlyInHours = usePanelSettings((s) => s.onlyInHours)
   const limit = usePanelSettings((s) => s.itemLimit)
-  const { setOnlyInHours, setItemLimit } = panelSettingsStore.getState()
+  const accepts = usePanelSettings((s) => s.waiterAccepts)
+  const { setOnlyInHours, setItemLimit, setWaiterAccepts } = panelSettingsStore.getState()
   const [announce, setAnnounce] = useState('')
   const [note, showNote] = useSavedNote()
   // Se vuelve a dibujar cuando el dueño agrega o quita una mesa.
@@ -158,7 +159,7 @@ export function PanelTables() {
           checked={limit}
           onChange={setItemLimit}
         />
-        <Rule title={m.rules.accept.title} body={m.rules.accept.body} checked={false} onChange={() => {}} disabled />
+        <Rule title={m.rules.accept.title} body={m.rules.accept.body} checked={accepts} onChange={setWaiterAccepts} />
       </section>
 
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

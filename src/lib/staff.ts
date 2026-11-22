@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
-import type { Channel, Comanda, ComandaStatus, PayMethod, PayScope, Payment } from '../types/order'
+import type { Channel, Comanda, ComandaItem, ComandaStatus, PayMethod, PayScope, Payment } from '../types/order'
 import { restaurant } from './catalog'
 import { TAKEOUT } from './channel'
 import { tipAmount } from './money'
-import { comandaId, isTableSettled, itemsFromIds, parseServer, saveServer, loadServer, markNumbersUsed, type ServerTable } from './server'
+import { comandaId, isTableSettled, itemsFromIds, nextComandaNumber, parseServer, saveServer, loadServer, markNumbersUsed, type ServerTable } from './server'
 import { simulatedStatus } from './simulator'
 import { listKeys, readItem, writeItem } from './storage'
 import { fmt, t } from './text'
@@ -137,7 +137,8 @@ function realTables(): BoardTable[] {
     const tableId = match ? match[1] : key === takeoutKey ? TAKEOUT : null
     if (!tableId) continue
     const state = parseServer(readItem('local', key))
-    if (state) tables.push({ source: 'real', tableId, state })
+    // Lo que rechazó el mesero no va a la cocina ni a la cuenta.
+    if (state) tables.push({ source: 'real', tableId, state: { ...state, comandas: state.comandas.filter((c) => !c.rejectedAt) } })
   }
   return tables
 }
@@ -291,6 +292,13 @@ export function chargeTable(table: BoardTable, input: ChargeInput): { payment: P
     }
     for (const c of state.comandas) if (input.comandaIds.includes(c.id)) c.paid = true
     state.payments = [...(state.payments ?? []), payment]
+    // Para el corte del día: la mesa se borra al cerrarse, el registro de cobros queda.
+    const byChannel: Partial<Record<Channel, number>> = {}
+    for (const c of state.comandas.filter((x) => input.comandaIds.includes(x.id))) {
+      const ch = channelOf(c)
+      byChannel[ch] = (byChannel[ch] ?? 0) + c.total
+    }
+    appendLedger({ at: payment.at, total, method: input.method, tableId: table.tableId, comandas: input.comandaIds.length, byChannel })
     result = { payment, closed: isTableSettled(state) }
   })
   return result
@@ -325,3 +333,126 @@ export function markCleaned(table: BoardTable) {
     state.cleanedAt = Date.now()
   })
 }
+
+/* ------------------------------------------------------------------ */
+/* Caja: bloquear, pedido manual y corte (P2c, P2d)                     */
+/* ------------------------------------------------------------------ */
+
+/** Caja: "Bloquear mesa" / "Desbloquear mesa". La mesa deja de recibir pedidos. */
+export function setBlocked(table: BoardTable, blocked: boolean) {
+  update(table, (state) => {
+    if (blocked) state.blocked = true
+    else delete state.blocked
+  })
+}
+
+/** Mesero: acepta el primer pedido de la mesa; pasa a la cocina. */
+export function acceptComanda(table: BoardTable, comandaId: string) {
+  update(table, (state) => {
+    const c = state.comandas.find((x) => x.id === comandaId)
+    if (c) delete c.pendingAccept
+  })
+}
+
+/** Mesero: rechaza el primer pedido de la mesa; no entra a la cocina ni a la cuenta. */
+export function rejectComanda(table: BoardTable, comandaId: string) {
+  update(table, (state) => {
+    const c = state.comandas.find((x) => x.id === comandaId)
+    if (!c) return
+    delete c.pendingAccept
+    c.rejectedAt = new Date().toISOString()
+  })
+}
+
+export interface ManualOrderInput {
+  /** "5", "mostrador" o "llevar". */
+  tableId: string
+  channel: Channel
+  customerName: string
+  phone?: string
+  items: ComandaItem[]
+}
+
+/**
+ * Caja o mesero: pedido para quien no tiene celular (P2c). Entra directo a la cocina
+ * (ya está confirmado) y se suma a la cuenta de la mesa, del mostrador o para llevar.
+ * Devuelve la cuenta y la comanda, o null si la mesa está bloqueada.
+ */
+export function createManualOrder(input: ManualOrderInput): { table: BoardTable; comanda: Comanda } | null {
+  const state = loadServer(input.tableId)
+  if (state.blocked) return null
+  const now = new Date().toISOString()
+  const number = nextComandaNumber(state)
+  const comanda: Comanda = {
+    id: comandaId(number),
+    number,
+    tableId: input.tableId,
+    customerName: input.customerName,
+    mine: false,
+    items: input.items,
+    ...(input.channel !== 'mesa' ? { channel: input.channel } : {}),
+    ...(input.phone ? { phone: input.phone } : {}),
+    total: input.items.reduce((s, i) => s + i.lineTotal, 0),
+    status: 'recibida',
+    createdAt: now,
+    statusAt: now,
+    substitutions: [],
+    kitchenLive: true,
+    statusTimes: { recibida: now },
+    ...(input.channel === 'llevar' ? { confirmedAt: now } : {}),
+  }
+  state.comandas.push(comanda)
+  saveServer(input.tableId, state)
+  markNumbersUsed(state.comandas.map((c) => c.number))
+  notify()
+  return { table: { source: 'real', tableId: input.tableId, state }, comanda }
+}
+
+/** Un cobro en el registro de caja (para el corte del día). */
+export interface LedgerEntry {
+  at: string
+  total: number
+  method: PayMethod
+  tableId: string
+  comandas: number
+  byChannel: Partial<Record<Channel, number>>
+}
+
+export interface DayClose {
+  at: string
+  total: number
+  counted: number | null
+}
+
+const LEDGER_KEY = `${id}:caja:cobros`
+const CLOSES_KEY = `${id}:caja:cortes`
+
+const readList = <T,>(key: string): T[] => {
+  try {
+    return JSON.parse(readItem('local', key) ?? '[]') as T[]
+  } catch {
+    return []
+  }
+}
+
+function appendLedger(entry: LedgerEntry) {
+  writeItem('local', LEDGER_KEY, JSON.stringify([...readList<LedgerEntry>(LEDGER_KEY), entry]))
+}
+
+/** Cobros desde el último corte (y de hoy, en la zona del local). */
+export function ledgerSinceLastClose(): LedgerEntry[] {
+  const closes = readList<DayClose>(CLOSES_KEY)
+  const last = closes.length ? Date.parse(closes[closes.length - 1].at) : 0
+  const today = localDay(new Date())
+  return readList<LedgerEntry>(LEDGER_KEY).filter((e) => Date.parse(e.at) > last && localDay(new Date(e.at)) === today)
+}
+
+/** "Cerrar el día": guarda el corte; los cobros siguientes van al próximo. */
+export function closeDay(total: number, counted: number | null): DayClose {
+  const entry: DayClose = { at: new Date().toISOString(), total, counted }
+  writeItem('local', CLOSES_KEY, JSON.stringify([...readList<DayClose>(CLOSES_KEY), entry]))
+  notify()
+  return entry
+}
+
+const localDay = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: restaurant.schedule.timezone }).format(date)

@@ -8,8 +8,10 @@ import { statusLabel } from '../../lib/comandaStatus'
 import { cx } from '../../lib/cx'
 import { formatMoney } from '../../lib/money'
 import {
+  acceptComanda,
   ackCall,
   boardComandas,
+  rejectComanda,
   finishCall,
   markCleaned,
   setComandaStatus,
@@ -164,9 +166,13 @@ export function Waiters() {
     document.title = `${t.staff.areas.meseros} · ${restaurant.name}`
   }, [])
 
-  const { calls, paying, ready, views } = useMemo(() => {
+  const { pending, calls, paying, ready, views } = useMemo(() => {
     const mesas = tables.filter((tb) => restaurant.tables.includes(tb.tableId))
     return {
+      // Regla "El mesero acepta el primer pedido": esperan Aceptar o Rechazar.
+      pending: boardComandas(mesas)
+        .filter((e) => e.comanda.pendingAccept)
+        .sort((a, b) => a.comanda.number - b.comanda.number),
       calls: mesas
         .flatMap((table) => (table.state.calls ?? []).filter((c) => !c.doneAt).map((call) => ({ table, call })))
         .sort((a, b) => a.call.at - b.call.at),
@@ -180,7 +186,7 @@ export function Waiters() {
     }
   }, [tables])
 
-  const count = calls.length + paying.length + ready.length
+  const count = pending.length + calls.length + paying.length + ready.length
 
   return (
     <div className="mx-auto w-full max-w-app">
@@ -200,6 +206,9 @@ export function Waiters() {
           <>
             {count === 0 && <p className="text-body text-texto-2">{w.empty}</p>}
             <ul className="flex flex-col gap-3" aria-live="polite">
+              {pending.map((entry) => (
+                <PendingCard key={`acepta:${entry.table.source}:${entry.comanda.id}`} entry={entry} />
+              ))}
               {calls.map(({ table, call }) => (
                 <CallCard key={`${table.source}:${table.tableId}:${call.at}`} table={table} call={call} now={now} />
               ))}
@@ -245,7 +254,10 @@ export function Waiters() {
                       {body}
                     </Link>
                   ) : (
-                    <div className={box}>{body}</div>
+                    // Mesa libre: el mesero le puede tomar el pedido a quien no tiene celular.
+                    <Link to={`/meseros/mesa/${v.mesa}/nuevo`} className={box}>
+                      {body}
+                    </Link>
                   )}
                 </li>
               )
@@ -280,6 +292,25 @@ function CallCard({ table, call, now }: { table: BoardTable; call: WaiterCallRec
     >
       <Button className="flex-1" onClick={() => ackCall(table, call.at)}>
         {w.go}
+      </Button>
+    </AlertCard>
+  )
+}
+
+/** Primer pedido de la mesa esperando al mesero (regla del panel). */
+function PendingCard({ entry }: { entry: BoardComanda }) {
+  const items = entry.comanda.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')
+  return (
+    <AlertCard
+      mesa={entry.comanda.tableId}
+      title={fmt(w.newOrder, { id: entry.comanda.id })}
+      sub={fmt(w.newOrderSub, { name: entry.comanda.customerName, items })}
+    >
+      <Button variant="secondary" className="flex-1" onClick={() => rejectComanda(entry.table, entry.comanda.id)}>
+        {w.reject}
+      </Button>
+      <Button className="flex-1" onClick={() => acceptComanda(entry.table, entry.comanda.id)}>
+        {w.accept}
       </Button>
     </AlertCard>
   )
@@ -363,10 +394,13 @@ export function WaiterTable() {
             )
           })}
         </ul>
-        {/* Pedido manual del mesero: en una etapa siguiente. */}
-        <Button variant="secondary" block disabled title={t.staff.soon} icon={<Plus size={20} aria-hidden />}>
+        <Link
+          to={`/meseros/mesa/${mesa}/nuevo`}
+          className="inline-flex h-[52px] w-full items-center justify-center gap-2.5 rounded-grande border border-borde bg-tarjeta px-4 text-button text-texto"
+        >
+          <Plus size={20} aria-hidden />
           {w.addOrder}
-        </Button>
+        </Link>
         <p className="text-small text-texto-2">{w.addOrderHint}</p>
       </main>
     </div>

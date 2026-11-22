@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { MessageCircle } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router'
+import { Lock, MessageCircle, Unlock } from 'lucide-react'
 import { Button } from '../../components/Button'
 import { NoticeBanner } from '../../components/NoticeBanner'
 import { ChannelChip } from '../../components/staff/ChannelChip'
 import { ChargeDialog } from '../../components/staff/ChargeDialog'
+import { PrintSheet } from '../../components/staff/PrintSheet'
 import { Segmented } from '../../components/staff/Segmented'
 import { StaffBar } from '../../components/staff/StaffBar'
 import { TAKEOUT } from '../../lib/channel'
@@ -17,11 +19,13 @@ import {
   chargeAmounts,
   chargeTable,
   confirmTakeout,
+  setBlocked,
   useBoard,
   type BoardComanda,
   type BoardTable,
 } from '../../lib/staff'
-import { agoText } from '../../lib/staffText'
+import { agoText, placeLabel } from '../../lib/staffText'
+import { statusLabel } from '../../lib/comandaStatus'
 import { fmt, t, tableLabel } from '../../lib/text'
 import { useNow } from '../../lib/useNow'
 import { formatPhone } from '../../store/customer'
@@ -32,6 +36,8 @@ type Mode = 'table' | 'person'
 
 const c = t.staff.cashier
 const tableKeyOf = (table: BoardTable) => `${table.source}:${table.tableId}`
+/** "Mesa 5" o "Mostrador". */
+const accountLabel = (tableId: string) => (tableId === COUNTER ? c.counterChip : tableLabel(tableId))
 const comandaKeyOf = (entry: BoardComanda) => `${tableKeyOf(entry.table)}:${entry.comanda.id}`
 
 /** Personas de la cuenta (por nombre), con sus comandas, en el orden en que pidieron. */
@@ -59,12 +65,18 @@ function confirmLink(comanda: Comanda): string {
 export function Cashier() {
   const tables = useBoard()
   const now = useNow(15_000)
+  const navigate = useNavigate()
+  const location = useLocation()
   const [tab, setTab] = useState<Tab>('cobrar')
   const [selected, setSelected] = useState<string | null>(null)
   const [mode, setMode] = useState<Record<string, Mode>>({})
   const [person, setPerson] = useState<Record<string, string>>({})
   const [charging, setCharging] = useState(false)
-  const [notice, setNotice] = useState<{ tone: 'positivo'; title: string; body?: string } | null>(null)
+  // Al volver de "Nuevo pedido", su aviso ("FN-0150 enviado a la cocina").
+  const [notice, setNotice] = useState<{ tone: 'positivo'; title: string; body?: string } | null>(() => {
+    const text = (location.state as { notice?: string } | null)?.notice
+    return text ? { tone: 'positivo', title: text } : null
+  })
 
   useEffect(() => {
     document.title = `${t.staff.areas.caja} · ${restaurant.name}`
@@ -72,8 +84,14 @@ export function Cashier() {
 
   const { toCharge, toConfirm, inProgress } = useMemo(() => {
     const entries = boardComandas(tables)
+    // Mesas con cuenta abierta, y el mostrador real (pedidos manuales que no se cobraron al momento).
     const mesas = tables
-      .filter((tb) => tb.tableId !== TAKEOUT && tb.tableId !== COUNTER && tb.state.comandas.some((cm) => !cm.paid))
+      .filter(
+        (tb) =>
+          tb.tableId !== TAKEOUT &&
+          (tb.tableId !== COUNTER || tb.source === 'real') &&
+          tb.state.comandas.some((cm) => !cm.paid && !cm.pendingAccept),
+      )
       .sort((a, b) => {
         // Primero los que vienen a pagar (el que avisó antes, arriba); después las cuentas abiertas.
         if (Boolean(a.state.bill) !== Boolean(b.state.bill)) return a.state.bill ? -1 : 1
@@ -83,9 +101,9 @@ export function Cashier() {
     return {
       toCharge: mesas,
       toConfirm: entries.filter(awaitingConfirmation).sort((a, b) => a.comanda.number - b.comanda.number),
-      inProgress: entries.filter(
-        (e) => e.status !== 'entregada' && !awaitingConfirmation(e),
-      ).length,
+      inProgress: entries
+        .filter((e) => e.status !== 'entregada' && !awaitingConfirmation(e) && !e.comanda.pendingAccept)
+        .sort((a, b) => a.comanda.number - b.comanda.number),
     }
   }, [tables])
 
@@ -96,6 +114,8 @@ export function Cashier() {
       : undefined
   const currentConfirm =
     tab === 'confirmar' ? (toConfirm.find((e) => comandaKeyOf(e) === selected) ?? toConfirm[0]) : undefined
+  const currentProgress =
+    tab === 'curso' ? (inProgress.find((e) => comandaKeyOf(e) === selected) ?? inProgress[0]) : undefined
 
   const changeTab = (next: Tab) => {
     setTab(next)
@@ -110,11 +130,8 @@ export function Cashier() {
         user={restaurant.staff.cashier}
         actions={
           <>
-            {/* Pedido manual (P2c) y corte del día (P2d): en una etapa siguiente. */}
-            <Button disabled title={t.staff.soon}>
-              {c.newOrder}
-            </Button>
-            <Button variant="secondary" disabled title={t.staff.soon}>
+            <Button onClick={() => navigate('/caja/nuevo')}>{c.newOrder}</Button>
+            <Button variant="secondary" onClick={() => navigate('/caja/corte')}>
               {c.dayClose}
             </Button>
           </>
@@ -130,8 +147,7 @@ export function Cashier() {
             options={[
               { value: 'confirmar', label: fmt(c.tabConfirm, { n: toConfirm.length }) },
               { value: 'cobrar', label: fmt(c.tabCharge, { n: toCharge.length }) },
-              // "En curso" no tiene diseño todavía: muestra cuántos hay, pero no se abre.
-              { value: 'curso', label: fmt(c.tabInProgress, { n: inProgress }), disabled: true },
+              { value: 'curso', label: fmt(c.tabInProgress, { n: inProgress.length }) },
             ]}
           />
 
@@ -158,7 +174,12 @@ export function Cashier() {
                       <AccountRow
                         selected={tb === current}
                         onSelect={() => setSelected(tableKeyOf(tb))}
-                        chip={<ChannelChip channel="mesa" label={tableLabel(tb.tableId)} />}
+                        chip={
+                          <ChannelChip
+                            channel={tb.tableId === COUNTER ? 'mostrador' : 'mesa'}
+                            label={accountLabel(tb.tableId)}
+                          />
+                        }
                         title={coming ? c.comingToPay : c.eating}
                         sub={sub}
                         total={formatMoney(total)}
@@ -166,6 +187,26 @@ export function Cashier() {
                     </li>
                   )
                 })}
+              </ul>
+            ))}
+
+          {tab === 'curso' &&
+            (inProgress.length === 0 ? (
+              <p className="text-body text-texto-2">{c.emptyProgress}</p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {inProgress.map((e) => (
+                  <li key={comandaKeyOf(e)}>
+                    <AccountRow
+                      selected={e === currentProgress}
+                      onSelect={() => setSelected(comandaKeyOf(e))}
+                      chip={<ChannelChip channel={e.channel} label={e.comanda.id} />}
+                      title={fmt(c.progressTitle, { id: placeLabel(e), status: statusLabel(e.status) })}
+                      sub={agoText(e.comanda.createdAt, now)}
+                      total={formatMoney(e.comanda.total)}
+                    />
+                  </li>
+                ))}
               </ul>
             ))}
 
@@ -206,6 +247,7 @@ export function Cashier() {
             onCharged={(n) => setNotice(n)}
           />
         )}
+        {currentProgress && <ProgressDetail entry={currentProgress} />}
         {currentConfirm && (
           <ConfirmDetail
             entry={currentConfirm}
@@ -298,7 +340,9 @@ function TableDetail({
   onCharged: (notice: { tone: 'positivo'; title: string; body?: string }) => void
 }) {
   const { state } = table
-  const mesa = tableLabel(table.tableId)
+  const mesa = accountLabel(table.tableId)
+  const [printing, setPrinting] = useState(false)
+  const blocked = Boolean(state.blocked)
   const coming = Boolean(state.bill)
   const people = peopleOf(state.comandas)
   const requester = state.comandas.find((cm) => cm.mine)?.customerName
@@ -338,10 +382,10 @@ function TableDetail({
         <span
           className={cx(
             'rounded-completo px-3 py-1 text-small font-medium',
-            coming ? 'bg-ambar text-texto-sobre-ambar' : 'bg-verde-suave text-verde',
+            blocked ? 'bg-promo text-blanco' : coming ? 'bg-ambar text-texto-sobre-ambar' : 'bg-verde-suave text-verde',
           )}
         >
-          {coming ? c.statusComing : c.statusOpen}
+          {blocked ? c.blockedBadge : coming ? c.statusComing : c.statusOpen}
         </span>
       </div>
       {coming && (
@@ -422,8 +466,7 @@ function TableDetail({
 
       <div className="flex-1" />
       <div className="flex gap-2">
-        {/* Imprimir y bloquear la mesa: todavía no hacen nada en la demo. */}
-        <Button variant="secondary" className="flex-1" disabled title={t.staff.soon}>
+        <Button variant="secondary" className="flex-1" disabled={!ids.length} onClick={() => setPrinting(true)}>
           {c.print}
         </Button>
         <Button
@@ -437,10 +480,52 @@ function TableDetail({
           {fmt(c.charge, { total: formatMoney(total) })}
         </Button>
       </div>
-      <p className="text-center text-small text-texto-2">{c.pinNote}</p>
-      <Button variant="secondary" block disabled title={t.staff.soon}>
-        {c.block}
-      </Button>
+      {table.tableId !== COUNTER && (
+        <>
+          <p className="text-center text-small text-texto-2">{c.pinNote}</p>
+          <Button
+            variant="secondary"
+            block
+            icon={blocked ? <Unlock size={18} aria-hidden /> : <Lock size={18} aria-hidden />}
+            onClick={() => {
+              setBlocked(table, !blocked)
+              onCharged({ tone: 'positivo', title: fmt(blocked ? c.unblockedNotice : c.blockedNotice, { mesa }) })
+            }}
+          >
+            {blocked ? c.unblock : c.block}
+          </Button>
+        </>
+      )}
+
+      {printing && (
+        <PrintSheet
+          title={t.staff.cashier.printSheet.title}
+          lines={[
+            mode === 'person' && chosen ? `${mesa} · ${chosen.name}` : mesa,
+            new Date().toLocaleString(restaurant.currency.locale),
+          ]}
+          rows={state.comandas
+            .filter((cm) => ids.includes(cm.id))
+            .flatMap((cm) => cm.items.map((i) => ({ label: `${i.quantity}× ${i.name}`, amount: i.lineTotal })))}
+          totals={[
+            ...(tip > 0
+              ? [
+                  { label: t.staff.cashier.printSheet.subtotal, amount: subtotal },
+                  { label: c.tip, amount: tip },
+                ]
+              : []),
+            { label: c.total, amount: total, strong: true },
+          ]}
+          footer={
+            <>
+              {fmt(t.staff.cashier.printSheet.printedBy, { name: restaurant.staff.cashier })}
+              <br />
+              {t.staff.cashier.printSheet.thanks}
+            </>
+          }
+          onDone={() => setPrinting(false)}
+        />
+      )}
 
       {charging && (
         <ChargeDialog
@@ -491,6 +576,30 @@ function ConfirmDetail({ entry, onConfirmed }: { entry: BoardComanda; onConfirme
       </Button>
       <div className="flex-1" />
       <p className="text-small text-texto-2">{c.confirmHint}</p>
+    </Panel>
+  )
+}
+
+/** "En curso": un pedido que está en la cocina (lo mueve la cocina). */
+function ProgressDetail({ entry }: { entry: BoardComanda }) {
+  const { comanda } = entry
+  return (
+    <Panel label={comanda.id}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-mano text-comanda font-bold text-texto">{comanda.id}</h2>
+        <ChannelChip channel={entry.channel} label={placeLabel(entry)} />
+      </div>
+      <p className="text-dish text-texto">
+        {comanda.customerName} · {statusLabel(entry.status)}
+      </p>
+      <ItemRows comanda={comanda} />
+      <hr className="border-borde" />
+      <div className="flex justify-between text-section text-texto">
+        <span>{c.total}</span>
+        <span>{formatMoney(comanda.total)}</span>
+      </div>
+      <div className="flex-1" />
+      <p className="text-small text-texto-2">{c.progressHint}</p>
     </Panel>
   )
 }

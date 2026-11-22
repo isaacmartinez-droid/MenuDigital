@@ -21,6 +21,8 @@ export interface ServerTable {
   calls?: WaiterCallRecord[]
   /** El mesero tocó "Mesa limpia" en el aviso de que la mesa está pagando (ms). */
   cleanedAt?: number
+  /** Caja bloqueó la mesa ("¿Pedidos raros?"): no recibe pedidos nuevos. */
+  blocked?: boolean
 }
 
 /** Un llamado al mesero. Tiempos en milisegundos. */

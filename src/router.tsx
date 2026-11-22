@@ -72,10 +72,19 @@ const routes: RouteObject[] = [
       { path: '/personal', element: <Navigate to="/cocina" replace /> },
       { path: '/cocina', lazy: async () => ({ Component: (await import('./screens/staff/Kitchen')).Kitchen }) },
       { path: '/caja', lazy: async () => ({ Component: (await import('./screens/staff/Cashier')).Cashier }) },
+      {
+        path: '/caja/nuevo',
+        lazy: async () => ({ Component: (await import('./screens/staff/ManualOrder')).CashierNewOrder }),
+      },
+      { path: '/caja/corte', lazy: async () => ({ Component: (await import('./screens/staff/DayClose')).DayClose }) },
       { path: '/meseros', lazy: async () => ({ Component: (await import('./screens/staff/Waiters')).Waiters }) },
       {
         path: '/meseros/mesa/:mesa',
         lazy: async () => ({ Component: (await import('./screens/staff/Waiters')).WaiterTable }),
+      },
+      {
+        path: '/meseros/mesa/:mesa/nuevo',
+        lazy: async () => ({ Component: (await import('./screens/staff/ManualOrder')).WaiterNewOrder }),
       },
       {
         path: '/panel',

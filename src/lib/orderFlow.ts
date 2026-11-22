@@ -38,7 +38,7 @@ export const customerLabel = (name: string) =>
 
 export type SubmitResult =
   | { ok: true; comanda: Comanda }
-  | { ok: false; reason: 'empty' | 'limit' | 'offline' | 'server' }
+  | { ok: false; reason: 'empty' | 'limit' | 'offline' | 'server' | 'blocked' }
 
 /** Envíos en curso por mesa: evita mandar el mismo carrito dos veces. */
 const inFlight = new Map<string, Promise<SubmitResult>>()
@@ -87,6 +87,7 @@ async function doSubmit(tableId: string, customer?: TakeoutCustomer): Promise<Su
       if (!isTakeout(tableId)) cartStore(tableId).getState().setPendingSend(true)
       return { ok: false, reason: 'offline' }
     }
+    if (error instanceof ApiError && error.code === 'blocked') return { ok: false, reason: 'blocked' }
     return { ok: false, reason: 'server' }
   }
 }
