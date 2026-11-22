@@ -55,7 +55,9 @@ export default defineConfig({
       output: {
         // Las librerías (React, React Router, Zustand, íconos) en un solo paquete, que cambia
         // poco y queda en caché entre versiones. El código de la app lo reparte Vite.
+        // La librería de QR solo la usa el panel (Mesas y QR): va con él, no en vendor.
         manualChunks(id) {
+          if (/node_modules\/(qrcode|dijkstrajs|encode-utf8)\//.test(id)) return undefined
           if (id.includes('node_modules')) return 'vendor'
         },
       },

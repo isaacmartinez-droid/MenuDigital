@@ -1,6 +1,4 @@
-import { useEffect } from 'react'
 import { NoticeBanner } from '../../components/NoticeBanner'
-import { StaffBar } from '../../components/staff/StaffBar'
 import { restaurant } from '../../lib/catalog'
 import { cx } from '../../lib/cx'
 import { t } from '../../lib/text'
@@ -60,56 +58,30 @@ function Bars({ title, unit = '', bars }: { title: string; unit?: string; bars: 
  * P4 Panel del dueño · Resumen: vendido, pedidos, tiempo en cocina y respuesta del
  * mesero; pedidos por canal (local contra en línea), de dónde llegan a la web,
  * formas de pago, horas pico y más vendidos, y la queja del día. Todos los números
- * son de ejemplo (demo.panel en restaurant.json). Las otras secciones del panel
- * (Menú y agotados, Mesas y QR, Personal…) vienen en una etapa siguiente.
+ * son de ejemplo (demo.panel en restaurant.json). La barra y las secciones van en
+ * PanelLayout.
  */
 export function OwnerPanel() {
   const { kpis, rows, complaint } = restaurant.demo.panel
   const p = t.staff.panel
 
-  useEffect(() => {
-    document.title = `${t.staff.areas.panel} · ${restaurant.name}`
-  }, [])
-
   return (
     <>
-      <StaffBar area="panel" user={restaurant.staff.owner} />
-      <nav aria-label={p.sectionsLabel} className="px-6 py-3">
-        <ul className="flex flex-wrap gap-x-6 gap-y-2">
-          {p.sections.map((name, i) => (
-            <li key={name}>
-              {i === 0 ? (
-                <span aria-current="page" className="text-dish text-verde">
-                  {name}
-                </span>
-              ) : (
-                <span aria-disabled="true" title={t.staff.soon} className="text-dish text-texto-2">
-                  {name}
-                  <span className="sr-only"> ({t.staff.soon})</span>
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <main className="flex flex-col gap-4 px-6 pt-2 pb-6">
-        <h2 className="sr-only">{p.sections[0]}</h2>
-        <div className="flex flex-col gap-4 md:flex-row">
-          {kpis.map((k) => (
-            <Kpi key={k.label} {...k} />
+      <h2 className="sr-only">{p.sections[0]}</h2>
+      <div className="flex flex-col gap-4 md:flex-row">
+        {kpis.map((k) => (
+          <Kpi key={k.label} {...k} />
+        ))}
+      </div>
+      {rows.map((row, i) => (
+        <div key={i} className="flex flex-col gap-4 md:flex-row">
+          {row.map((card) => (
+            <Bars key={card.title} {...card} />
           ))}
         </div>
-        {rows.map((row, i) => (
-          <div key={i} className="flex flex-col gap-4 md:flex-row">
-            {row.map((card) => (
-              <Bars key={card.title} {...card} />
-            ))}
-          </div>
-        ))}
-        <NoticeBanner tone="aviso" title={complaint.title} body={complaint.body} />
-        <p className="text-small text-texto-2">{p.footnote}</p>
-      </main>
+      ))}
+      <NoticeBanner tone="aviso" title={complaint.title} body={complaint.body} />
+      <p className="text-small text-texto-2">{p.footnote}</p>
     </>
   )
 }

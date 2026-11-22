@@ -3,6 +3,7 @@ import { menu, restaurant } from './catalog'
 import { useDemoFlags } from './demoFlags'
 import { zonedNow } from './schedule'
 import { useNow } from './useNow'
+import { usePanelSettings } from '../store/panelSettings'
 
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number)
@@ -17,7 +18,7 @@ export const isPromoDish = (dish: Dish): boolean => menu.promo?.dishId === dish.
  * minuto. Con ?forzar=abierto se muestra igual (es para presentar la demo a cualquier
  * hora); con ?forzar=cerrado, no.
  */
-export function usePromoActive(): boolean {
+export function usePromoInHours(): boolean {
   const { horario } = useDemoFlags()
   const now = useNow(60_000)
   const promo = menu.promo
@@ -26,6 +27,13 @@ export function usePromoActive(): boolean {
   if (horario === 'cerrado') return false
   const { minutes } = zonedNow(restaurant.schedule.timezone, new Date(now))
   return minutes >= toMinutes(promo.hours.from) && minutes < toMinutes(promo.hours.to)
+}
+
+/** ¿Se muestra la promo? Está en su horario y el dueño no la apagó (P4 Promos). */
+export function usePromoActive(): boolean {
+  const inHours = usePromoInHours()
+  const on = usePanelSettings((s) => s.promoOn)
+  return inHours && on
 }
 
 /**

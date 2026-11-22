@@ -380,7 +380,26 @@
       "complaint": {
         "title": "Queja de hoy · Enchilada ★★ · Mesa 3 · 7:40 pm",
         "body": "Calificación rápida en mesa. Te enteraste antes de que llegue a Google: hablá con la mesa o revisá la cocina."
-      }
+      },
+      "people": [
+        { "name": "Don Julio", "role": "Cocina" },
+        { "name": "María", "role": "Caja" },
+        { "name": "Carlos", "role": "Mesero" },
+        { "name": "Luis", "role": "Mesero" },
+        { "name": "Dueño", "role": "Dueño · puede cancelar" }
+      ],
+      "pinLog": [
+        "8:05 pm · María canceló FN-0130 · cliente se arrepintió",
+        "7:40 pm · Carlos cerró Mesa 4 sin cobro · cortesía",
+        "6:12 pm · Don Julio marcó agotado Maduro en gloria"
+      ],
+      "sampleComplaint": { "dishId": "enchilada", "author": "Mesa 3", "rating": 2, "time": "7:40 pm" },
+      "links": [
+        { "label": "Instagram (bio)", "src": "ig" },
+        { "label": "Facebook", "src": "fb" },
+        { "label": "Google (perfil)", "src": "google" },
+        { "label": "WhatsApp", "src": "wa" }
+      ]
     }
   },
   "texts": {
@@ -954,7 +973,91 @@
           "Horarios",
           "Reseñas"
         ],
-        "footnote": "Todos los números son de ejemplo. Cada pedido guarda su canal (mesa, en línea o mostrador) y su origen (Instagram, Facebook, Google…)."
+        "footnote": "Todos los números son de ejemplo. Cada pedido guarda su canal (mesa, en línea o mostrador) y su origen (Instagram, Facebook, Google…).",
+        "on": "Activo",
+        "off": "Apagado",
+        "menu": {
+          "title": "Menú",
+          "add": "Agregar plato",
+          "columns": ["Plato", "Etiqueta", "Precio", "Disponible"],
+          "available": "Disponible",
+          "soldOut": "Agotado",
+          "footnote": "Agotado en un toque: también desde cocina. Se oculta al instante en la app del cliente."
+        },
+        "tables": {
+          "title": "Mesas y QR",
+          "add": "Agregar mesa",
+          "rulesLabel": "Reglas de pedido en mesa",
+          "rules": {
+            "hours": { "title": "Solo en horario de atención", "body": "Fuera de horario el menú se ve, pero no deja pedir" },
+            "limit": { "title": "Límite por pedido", "body": "Hasta {max} platos por envío; más, se avisa a caja" },
+            "accept": { "title": "El mesero acepta el primer pedido", "body": "Activalo solo si aparecen pedidos falsos" }
+          },
+          "qrAlt": "Código QR de la {mesa}",
+          "download": "Descargar QR",
+          "downloadLabel": "Descargar el QR de la {mesa}",
+          "linksTitle": "Enlaces para redes · así sabés de dónde llega cada pedido en línea",
+          "copy": "Copiar",
+          "copied": "Copiado",
+          "copyLabel": "Copiar el enlace de {name}",
+          "copiedAlert": "Enlace de {name} copiado",
+          "footnote": "Próximamente: placas con NFC seguro (NTAG 424 DNA) que crean un enlace único en cada toque, para que una foto del QR no sirva para pedir desde fuera."
+        },
+        "people": {
+          "title": "Personal y PINs",
+          "add": "Agregar persona",
+          "pin": "PIN ••••",
+          "pinLabel": "PIN oculto",
+          "change": "Cambiar",
+          "changeLabel": "Cambiar el PIN de {name}",
+          "logTitle": "Registro de acciones con PIN del dueño",
+          "footnote": "Cancelar pedidos o cerrar mesas sin cobrar pide el PIN del dueño. Todo queda registrado."
+        },
+        "promos": {
+          "title": "Promos",
+          "add": "Nueva promo",
+          "webOnly": "Solo web",
+          "activeNow": "Activa ahora",
+          "outOfHours": "Fuera de horario: se ve de {from} a {to}",
+          "off": "Apagada",
+          "switchLabel": "Promo {name}",
+          "stateOn": "Encendida",
+          "stateOff": "Apagada",
+          "footnote": "Apagala y desaparece del inicio y del menú de la web al instante. Las promos son solo para pedidos en línea."
+        },
+        "hours": {
+          "title": "Horarios",
+          "edit": "Cambiar horario",
+          "weekTitle": "Atención",
+          "days": ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+          "range": "{open} a {close}",
+          "closed": "Cerrado",
+          "today": "Hoy",
+          "todayTitle": "Hoy",
+          "openNow": "Abierto ahora · cierra a las {close}",
+          "closedNow": "Cerrado ahora · abre a las {open}",
+          "closedToday": "Cerrado por hoy · mañana abre a las {open}",
+          "closeToday": "Cerrar hoy",
+          "closeTodayBody": "La mesa y la web dicen \"Cerrado\" y no dejan pedir. Mañana se abre solo.",
+          "outOfHoursAllowed": "Ojo: en Mesas y QR está apagado \"Solo en horario de atención\", así que se puede pedir a cualquier hora.",
+          "footnote": "El horario sale de la configuración del local. Cambiarlo desde aquí viene después."
+        },
+        "reviews": {
+          "title": "Reseñas",
+          "google": "En Google",
+          "googleCount": "{count} reseñas",
+          "app": "En la app",
+          "appCount": "{count} calificaciones",
+          "complaints": "Quejas",
+          "complaintsDetail": "1 o 2 estrellas",
+          "listTitle": "Lo que dicen en la app",
+          "complaintTag": "Queja",
+          "empty": "Todavía no hay reseñas escritas.",
+          "todayAt": "hoy · {time}",
+          "quickRating": "Calificación rápida en mesa, sin comentario.",
+          "openGoogle": "Ver en Google",
+          "footnote": "Las calificaciones de la app las dejan los clientes al pagar. Las de 1 y 2 estrellas salen primero, para que te enteres antes de que lleguen a Google."
+        }
       }
     }
   }

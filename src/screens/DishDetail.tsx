@@ -34,6 +34,7 @@ import { promoAllows, usePromoActive } from '../lib/promo'
 import { cartStore } from '../store/cart'
 import { useUi } from '../store/ui'
 import { useAvailability } from '../store/availability'
+import { itemLimit } from '../store/panelSettings'
 
 /**
  * Dos alternativas para un plato que hoy no se puede pedir: para un combo de
@@ -437,7 +438,7 @@ export function DishDetail() {
                 <QuantityStepper
                   value={quantity}
                   min={1}
-                  max={restaurant.ordering.maxItemsPerComanda}
+                  max={itemLimit()}
                   onIncrement={() => setQuantity((q) => q + 1)}
                   onDecrement={() => setQuantity((q) => Math.max(1, q - 1))}
                   itemName={dish.name}

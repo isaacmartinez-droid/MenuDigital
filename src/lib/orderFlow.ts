@@ -4,6 +4,7 @@ import { ApiError, sendComanda } from './api'
 import { fmt, t } from './text'
 import { cartStore, countItems } from '../store/cart'
 import { comandasStore } from '../store/comandas'
+import { itemLimit } from '../store/panelSettings'
 import { isTakeout } from './channel'
 
 /** Pasa las líneas del carrito a líneas de comanda, con nombres y precios congelados. */
@@ -66,7 +67,7 @@ export function submitCart(tableId: string, customer?: TakeoutCustomer): Promise
 async function doSubmit(tableId: string, customer?: TakeoutCustomer): Promise<SubmitResult> {
   const cart = cartStore(tableId).getState()
   if (!cart.items.length) return { ok: false, reason: 'empty' }
-  if (countItems(cart.items) > restaurant.ordering.maxItemsPerComanda) return { ok: false, reason: 'limit' }
+  if (countItems(cart.items) > itemLimit()) return { ok: false, reason: 'limit' }
   try {
     const { comanda, account } = await sendComanda({
       tableId,

@@ -1,8 +1,9 @@
 import { useStore } from 'zustand'
 import type { CartItem } from '../types/order'
-import { getDish, getExtra, getSide, restaurant, unitPrice } from '../lib/catalog'
+import { getDish, getExtra, getSide, unitPrice } from '../lib/catalog'
 import { newId } from '../lib/storage'
 import { tableStoreFactory } from './tableStore'
+import { itemLimit } from './panelSettings'
 
 /**
  * Carrito de la mesa: lo que este teléfono está armando y todavía no envió.
@@ -50,7 +51,6 @@ interface CartState {
   clear: () => void
 }
 
-const max = restaurant.ordering.maxItemsPerComanda
 
 const sameConfig = (a: CartItem, b: NewLine) =>
   a.dishId === b.dishId &&
@@ -89,7 +89,7 @@ const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
 
   add: (line) => {
     const { items } = get()
-    if (countItems(items) + line.quantity > max) return { ok: false, reason: 'limit' }
+    if (countItems(items) + line.quantity > itemLimit()) return { ok: false, reason: 'limit' }
     const existing = items.find((i) => sameConfig(i, line))
     if (existing) {
       set({ items: items.map((i) => (i === existing ? { ...i, quantity: i.quantity + line.quantity } : i)) })
@@ -125,7 +125,7 @@ const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
     const { items } = get()
     const line = items.find((i) => i.lineId === lineId)
     if (!line) return { ok: true, lineId }
-    if (countItems(items) - line.quantity + quantity > max) return { ok: false, reason: 'limit' }
+    if (countItems(items) - line.quantity + quantity > itemLimit()) return { ok: false, reason: 'limit' }
     set({
       items: items
         .map((i) => (i.lineId === lineId ? { ...i, quantity } : i))
@@ -141,7 +141,7 @@ const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
     const { items } = get()
     const old = items.find((i) => i.lineId === lineId)
     const rest = items.filter((i) => i.lineId !== lineId)
-    if (countItems(rest) + line.quantity > max) return { ok: false, reason: 'limit' }
+    if (countItems(rest) + line.quantity > itemLimit()) return { ok: false, reason: 'limit' }
     const note = line.note?.trim() || undefined
     const twin = rest.find((i) => sameConfig(i, line))
     if (twin) {

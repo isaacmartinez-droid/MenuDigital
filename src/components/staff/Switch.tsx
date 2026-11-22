@@ -8,10 +8,13 @@ interface SwitchProps {
   /** Texto del estado ("Hay" / "Agotado"), para el lector. */
   stateText: string
   id?: string
+  disabled?: boolean
+  /** Texto al pasar el mouse (por ejemplo, "Próximamente"). */
+  title?: string
 }
 
 /** Interruptor de 48 × 28 (P1c): verde con la bolita a la derecha = encendido. */
-export function Switch({ checked, onChange, label, stateText, id }: SwitchProps) {
+export function Switch({ checked, onChange, label, stateText, id, disabled, title }: SwitchProps) {
   return (
     <button
       id={id}
@@ -19,8 +22,10 @@ export function Switch({ checked, onChange, label, stateText, id }: SwitchProps)
       role="switch"
       aria-checked={checked}
       aria-label={`${label}: ${stateText}`}
+      disabled={disabled}
+      title={title}
       onClick={() => onChange(!checked)}
-      className="-my-2.5 grid min-h-12 shrink-0 place-items-center"
+      className="-my-2.5 grid min-h-12 shrink-0 place-items-center disabled:opacity-50"
     >
       <span
         aria-hidden

@@ -79,6 +79,14 @@ export interface PanelDemo {
   /** Filas de tarjetas con barras (título, unidad opcional y barras). */
   rows: { title: string; unit?: string; bars: PanelBar[] }[][]
   complaint: { title: string; body: string }
+  /** P4c: el personal de ejemplo y su rol. */
+  people: { name: string; role: string }[]
+  /** P4c: registro de acciones con PIN del dueño (de ejemplo). */
+  pinLog: string[]
+  /** Reseñas: la queja de ejemplo del día (la misma del Resumen), calificación rápida sin texto. */
+  sampleComplaint: { dishId: string; author: string; rating: number; time: string }
+  /** P4b: enlaces para redes; `src` es el ?src= que guarda el origen del pedido. */
+  links: { label: string; src: string }[]
 }
 
 /** Textos de interfaz. Se tipan a partir del JSON para que falte uno = error de TypeScript. */

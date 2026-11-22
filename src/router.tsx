@@ -77,7 +77,34 @@ const routes: RouteObject[] = [
         path: '/meseros/mesa/:mesa',
         lazy: async () => ({ Component: (await import('./screens/staff/Waiters')).WaiterTable }),
       },
-      { path: '/panel', lazy: async () => ({ Component: (await import('./screens/staff/OwnerPanel')).OwnerPanel }) },
+      {
+        path: '/panel',
+        lazy: async () => ({ Component: (await import('./screens/staff/panel/PanelLayout')).PanelLayout }),
+        children: [
+          { index: true, lazy: async () => ({ Component: (await import('./screens/staff/OwnerPanel')).OwnerPanel }) },
+          { path: 'menu', lazy: async () => ({ Component: (await import('./screens/staff/panel/PanelMenu')).PanelMenu }) },
+          {
+            path: 'mesas',
+            lazy: async () => ({ Component: (await import('./screens/staff/panel/PanelTables')).PanelTables }),
+          },
+          {
+            path: 'personal',
+            lazy: async () => ({ Component: (await import('./screens/staff/panel/PanelPeople')).PanelPeople }),
+          },
+          {
+            path: 'promos',
+            lazy: async () => ({ Component: (await import('./screens/staff/panel/PanelPromos')).PanelPromos }),
+          },
+          {
+            path: 'horarios',
+            lazy: async () => ({ Component: (await import('./screens/staff/panel/PanelHours')).PanelHours }),
+          },
+          {
+            path: 'resenas',
+            lazy: async () => ({ Component: (await import('./screens/staff/panel/PanelReviews')).PanelReviews }),
+          },
+        ],
+      },
     ],
   },
   { path: '*', element: <NotFound /> },

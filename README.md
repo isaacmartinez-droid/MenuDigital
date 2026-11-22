@@ -43,6 +43,9 @@ Hay dos canales en la misma app; la URL decide cuál:
   pestaña, los pedidos que se hagan en otra (mesa o web) esperan a que la cocina los mueva; la
   caja confirma los pedidos web y cobra las mesas, el mesero toma los llamados ("Voy"), y el
   teléfono del cliente se entera solo.
+  El panel tiene Resumen, Menú y agotados, Mesas y QR (con los QR de cada mesa), Personal y PINs,
+  Promos, Horarios y Reseñas; apagar un plato o la promo, o "Cerrar hoy", cambia la mesa y la web
+  al instante.
   Funciona dentro del mismo navegador. Detalle y guion de la demo en
   [docs/vista-personal.md](docs/vista-personal.md).
 
@@ -194,6 +197,7 @@ src/
                        TrackingBar, Comanda, StarRating, Header, PaymentNotice, …
   screens/             una por pantalla (Welcome, Menu, DishDetail, Order, Tracking, Bill, Paid…)
   screens/staff/       StaffLayout, Kitchen, Cashier, Waiters, OwnerPanel (cocina, caja, meseros y panel)
+  screens/staff/panel/ PanelLayout y las secciones del panel (menú, mesas y QR, personal, promos, horarios, reseñas)
   store/               cart, comandas, account (cuenta de mesa), availability (agotados), ui
   lib/                 api, server (servidor simulado), staff (tablero del personal), simulator,
                        orderFlow, money, schedule, demoFlags, hooks…
