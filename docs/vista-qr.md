@@ -492,7 +492,7 @@ con `fritanga-nica:llevar:<nombre>`; ver [vista-web.md 8](vista-web.md#8-datos-q
 | `callWaiter` | Llama al mesero con el motivo elegido |
 | `watchWaiterCall` | Avisa cuando el mesero confirma que va |
 | `requestBill` | Avisa a caja con lo que se paga, la propina, el método y el efectivo |
-| `waitForPayment` | Espera el cobro y devuelve el recibo |
+| `watchPayment` | Espera el cobro (simulado o desde la caja del personal) y devuelve el recibo; antes `waitForPayment` |
 | `rateDishes` | Guarda las reseñas |
 | `replaceComponent` | Registra el reemplazo de un plato agotado |
 

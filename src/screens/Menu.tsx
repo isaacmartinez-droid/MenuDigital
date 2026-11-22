@@ -34,6 +34,7 @@ import { Banknote, BellRing, ChevronRight, Clock, Flame } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { activeComanda, statusLabel } from '../lib/comandaStatus'
 import { Welcome } from './Welcome'
+import { useAvailability } from '../store/availability'
 
 type ToastState =
   | { kind: 'added'; key: string; lineId: string; title: string; body: string }
@@ -53,6 +54,8 @@ const normalize = (s: string) =>
  */
 export function Menu() {
   const mesa = useMesa()
+  // Si la cocina marca un agotado, la lista se reordena (agotados al final).
+  useAvailability()
   const takeout = isTakeout(mesa)
   // D2 (computadora, web): categorías a la izquierda, platos al centro y el carrito fijo a la derecha.
   const desktop = useIsDesktop() && takeout

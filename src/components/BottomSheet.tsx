@@ -26,6 +26,8 @@ export function BottomSheet({ open, onClose, title, description, children, foote
   const onCloseRef = useRef(onClose)
   const titleId = useId()
   const descId = useId()
+  // Un doble toque en el botón que abre la hoja caía en el botón de la hoja que queda en el mismo lugar.
+  const openedAt = useRef(0)
 
   useEffect(() => {
     onCloseRef.current = onClose
@@ -33,6 +35,7 @@ export function BottomSheet({ open, onClose, title, description, children, foote
 
   useEffect(() => {
     if (!open) return
+    openedAt.current = Date.now()
     const previouslyFocused = document.activeElement as HTMLElement | null
     const panel = panelRef.current
     const focusables = () => Array.from(panel?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])
@@ -76,7 +79,15 @@ export function BottomSheet({ open, onClose, title, description, children, foote
   if (!open) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50">
+    <div
+      className="fixed inset-0 z-50"
+      onClickCapture={(e) => {
+        if (Date.now() - openedAt.current < 400) {
+          e.stopPropagation()
+          e.preventDefault()
+        }
+      }}
+    >
       <div aria-hidden className="absolute inset-0 animate-fade-in bg-texto/45" onClick={onClose} />
       <div
         ref={panelRef}

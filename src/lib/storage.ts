@@ -68,5 +68,21 @@ export function clearTableStorage(tableId: string): void {
   }
 }
 
+/** Claves de localStorage que empiezan con `prefix` (para leer todas las mesas). */
+export function listKeys(prefix: string): string[] {
+  const s = area('local')
+  if (!s) return []
+  try {
+    const keys: string[] = []
+    for (let i = 0; i < s.length; i++) {
+      const k = s.key(i)
+      if (k?.startsWith(prefix)) keys.push(k)
+    }
+    return keys
+  } catch {
+    return []
+  }
+}
+
 /** Id corto y único (no depende de crypto.randomUUID, que exige HTTPS). */
 export const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`

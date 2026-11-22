@@ -77,8 +77,11 @@ export function stepClocks(comanda: Comanda, status: ComandaStatus): (string | u
   const sent = Date.parse(comanda.createdAt)
   const at = [sent, sent + processingMs, sent + processingMs + cookingMs, sent + processingMs + cookingMs + readyMs]
   const current = ORDER.indexOf(status)
+  // Con la cocina del personal, la hora de cada paso es la de verdad.
+  const real = comanda.kitchenLive ? comanda.statusTimes : undefined
   return at.map((ms, i) => {
-    if (i <= current) return clock(ms)
+    const realAt = real?.[ORDER[i]]
+    if (i <= current) return clock(realAt ? Date.parse(realAt) : ms)
     if (i === 2) return `~${clock(sent + readyEstimateMin * 60_000)}`
     return undefined
   })

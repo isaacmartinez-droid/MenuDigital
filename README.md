@@ -10,6 +10,7 @@ Documentación completa (pantallas, decisiones, arquitectura, config y pendiente
 
 - Vista QR, pedido en mesa: [docs/vista-qr.md](docs/vista-qr.md).
 - Vista web, para llevar: [docs/vista-web.md](docs/vista-web.md).
+- Vista del personal (cocina, caja y panel del dueño, demo): [docs/vista-personal.md](docs/vista-personal.md).
 - Fotos provisorias (Unsplash) y cómo reemplazarlas: [docs/fotos-provisorias.md](docs/fotos-provisorias.md).
 - Forma de trabajo: [CLAUDE.md](CLAUDE.md).
 
@@ -38,6 +39,13 @@ Hay dos canales en la misma app; la URL decide cuál:
   visita (`?src=ig`, `fb`, `google` o `wa`). En desarrollo, para volver a ver la bienvenida,
   borrar el almacenamiento del sitio.
 
+- **Personal (demo):** `/cocina`, `/caja` y `/panel` (tablet) y `/meseros` (celular). Con la cocina abierta en una
+  pestaña, los pedidos que se hagan en otra (mesa o web) esperan a que la cocina los mueva; la
+  caja confirma los pedidos web y cobra las mesas, el mesero toma los llamados ("Voy"), y el
+  teléfono del cliente se entera solo.
+  Funciona dentro del mismo navegador. Detalle y guion de la demo en
+  [docs/vista-personal.md](docs/vista-personal.md).
+
 En desarrollo, `/componentes` muestra el muestrario de componentes base.
 
 ## Flags de la demo
@@ -53,6 +61,7 @@ Se agregan a cualquier URL y quedan activos mientras la pestaña esté abierta.
 | `?forzar=mesa-nueva` | Borra todo lo de esa mesa en este navegador (pedidos, cuenta, nombre) y empieza de cero, con portada. |
 | `?forzar=ninguno` | Quita todos los forzados y vuelve al horario real. |
 | `?compas=0` | Sin compañeros de mesa simulados (Carlos y Teléfono 3). Por defecto están. |
+| `?forzar=ejemplos` | En `/cocina`, `/caja` o `/panel`: vuelve a crear los pedidos de ejemplo del personal. |
 | `?dia=martes` | El menú hace de cuenta que hoy es ese día, para ver los combos del día (`?dia=jueves`, `?dia=sabado` o `?dia=0`…`6`, con 0 = domingo). `?dia=hoy` vuelve al día real. |
 
 Sin señal (M9) no necesita flag: en Chrome, DevTools → Network → **Offline**.
@@ -130,7 +139,7 @@ que tendría la respuesta de una API.
 ## Conectar a una API real
 
 - **`src/lib/api.ts`** concentra todo lo que hoy se simula: `sendComanda`, `fetchAccount`,
-  `watchComanda`, `callWaiter`, `watchWaiterCall`, `requestBill`, `waitForPayment`,
+  `watchComanda`, `callWaiter`, `watchWaiterCall`, `requestBill`, `watchPayment`,
   `rateDishes` y `replaceComponent`. Cada función indica el endpoint sugerido ("API real:").
   Cambiando su interior por `fetch` (o WebSocket para los estados), las pantallas no cambian.
 - **`src/lib/catalog.ts`** es el único lugar que lee los JSON; ahí se reemplazarían por lo
@@ -184,6 +193,8 @@ src/
   components/          Button, Tag, DishCard, QuantityStepper, CartBar, Toast, BottomSheet,
                        TrackingBar, Comanda, StarRating, Header, PaymentNotice, …
   screens/             una por pantalla (Welcome, Menu, DishDetail, Order, Tracking, Bill, Paid…)
-  store/               cart, comandas, account (cuenta de mesa), ui
-  lib/                 api, simulator, orderFlow, money, schedule, demoFlags, hooks…
+  screens/staff/       StaffLayout, Kitchen, Cashier, Waiters, OwnerPanel (cocina, caja, meseros y panel)
+  store/               cart, comandas, account (cuenta de mesa), availability (agotados), ui
+  lib/                 api, server (servidor simulado), staff (tablero del personal), simulator,
+                       orderFlow, money, schedule, demoFlags, hooks…
 ```

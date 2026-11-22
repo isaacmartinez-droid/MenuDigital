@@ -5,7 +5,8 @@ import { WaiterButton } from '../components/WaiterButton'
 import { useOpenState } from '../lib/useOpenState'
 import { useUi } from '../store/ui'
 import { isValidTable } from '../lib/catalog'
-import { waitForPayment } from '../lib/api'
+import { watchPayment } from '../lib/api'
+import { keepOthersOpen, loadServer } from '../lib/server'
 import { useComandas } from '../store/comandas'
 import { closeTable } from '../lib/closeTable'
 import { submitCart } from '../lib/orderFlow'
@@ -96,18 +97,18 @@ function TableSession({ mesa }: { mesa: string }) {
 
   useKitchenUpdates(mesa)
 
+  // Caja cobra: al avisar a caja (simulado o desde la caja del personal) o, sin
+  // aviso, cuando la caja del personal cobra la mesa directamente.
+  const hasComandas = useComandas(mesa, (s) => s.comandas.some((c) => c.mine))
   useEffect(() => {
-    if (!billRequestedAt) return
-    let cancelled = false
-    void waitForPayment(mesa, billRequestedAt).then((receipt) => {
-      if (cancelled) return
+    if (!billRequestedAt && !hasComandas) return
+    return watchPayment(mesa, billRequestedAt, (receipt) => {
+      const before = loadServer(mesa)
       closeTable(mesa)
+      keepOthersOpen(mesa, before)
       navigate(paths.paid(mesa), { replace: true, state: { receipt } })
     })
-    return () => {
-      cancelled = true
-    }
-  }, [mesa, billRequestedAt, navigate])
+  }, [mesa, billRequestedAt, hasComandas, navigate])
 
   return null
 }

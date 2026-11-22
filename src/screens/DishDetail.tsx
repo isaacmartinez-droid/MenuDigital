@@ -33,6 +33,7 @@ import { cx } from '../lib/cx'
 import { promoAllows, usePromoActive } from '../lib/promo'
 import { cartStore } from '../store/cart'
 import { useUi } from '../store/ui'
+import { useAvailability } from '../store/availability'
 
 /**
  * Dos alternativas para un plato que hoy no se puede pedir: para un combo de
@@ -112,7 +113,13 @@ export function DishDetail() {
   const noteId = useId()
   const titleId = useId()
 
-  const [sideId, setSideId] = useState<string | undefined>(() => editing?.sideId ?? dish?.defaultSide)
+  const [chosenSide, setSideId] = useState<string | undefined>(() => editing?.sideId ?? dish?.defaultSide)
+  const soldOutSides = useAvailability()
+  // Si se acabó el elegido (o el que viene marcado), queda el primero que hay.
+  const sideId =
+    chosenSide && soldOutSides.includes(chosenSide)
+      ? (dish ? dishSides(dish) : []).find((s) => !soldOutSides.includes(s.id))?.id
+      : chosenSide
   const [extraIds, setExtraIds] = useState<string[]>(() => editing?.extraIds ?? [])
   const [note, setNote] = useState(() => editing?.note ?? '')
   const [quantity, setQuantity] = useState(() => editing?.quantity ?? 1)
@@ -135,7 +142,8 @@ export function DishDetail() {
     )
   }
 
-  const sides = dishSides(dish)
+  // Los acompañantes que la cocina marcó agotados no se ofrecen.
+  const sides = dishSides(dish).filter((s) => !soldOutSides.includes(s.id))
   const extras = dishExtras(dish)
   const maxExtras = dish.maxExtras ?? extras.length
   const extrasFull = extraIds.length >= maxExtras

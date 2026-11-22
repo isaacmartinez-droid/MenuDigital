@@ -8,6 +8,7 @@ import { fmt, t } from '../lib/text'
 import { Photo } from './Photo'
 import { Tag } from './Tag'
 import { AddButton, QuantityStepper } from './QuantityStepper'
+import { useAvailability } from '../store/availability'
 
 interface DishCardProps {
   dish: Dish
@@ -53,6 +54,8 @@ export function DishCard(props: DishCardProps) {
 }
 
 function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }: DishCardProps) {
+  // Se vuelve a dibujar si la cocina marca o desmarca el plato como agotado.
+  useAvailability()
   const soldOut = !dish.available
   const { badge, onDay } = dayInfo(dish, today)
   // Con día ("Combo de hoy" / "Solo los martes") esa etiqueta reemplaza a las de la lista.
@@ -110,6 +113,7 @@ function DishRow({ dish, quantity, canOrder, onAdd, onDecrement, onOpen, today }
 }
 
 function DishTile({ dish, quantity, canOrder, onAdd, onOpen, today, fluid, photoClassName, eager }: DishCardProps) {
+  useAvailability()
   const soldOut = !dish.available
   const { badge, onDay } = dayInfo(dish, today)
   const photoTag = badge ?? dishTags(dish)[0]

@@ -43,6 +43,44 @@ export interface DemoTableMate {
   items: { dishId: string; quantity: number; sideId?: string; extraIds?: string[] }[]
 }
 
+/**
+ * Mesa (o "llevar", o "mostrador") con pedidos de ejemplo para la cocina y la caja.
+ * minAgo: hace cuántos minutos se pidió; billMinAgo: si ya avisaron a caja.
+ */
+export interface StaffSeedTable {
+  table: string
+  billMinAgo?: number
+  /** Llamado al mesero de ejemplo: hace cuántos segundos y el motivo (id de waiterReasons). */
+  callSecAgo?: number
+  callReason?: string
+  comandas: {
+    number: number
+    /** null = "Teléfono {device}". */
+    name: string | null
+    device?: number
+    phone?: string
+    minAgo: number
+    status: string
+    note?: string
+    items: { dishId: string; quantity: number; sideId?: string; extraIds?: string[] }[]
+  }[]
+}
+
+/** Barra de un gráfico del panel: color es un token de color. */
+export interface PanelBar {
+  label: string
+  value: number
+  extra?: string
+  color: string
+}
+
+export interface PanelDemo {
+  kpis: { label: string; value: string; detail?: string }[]
+  /** Filas de tarjetas con barras (título, unidad opcional y barras). */
+  rows: { title: string; unit?: string; bars: PanelBar[] }[][]
+  complaint: { title: string; body: string }
+}
+
 /** Textos de interfaz. Se tipan a partir del JSON para que falte uno = error de TypeScript. */
 export type Texts = (typeof restaurantJson)['texts']
 
@@ -126,11 +164,24 @@ export interface RestaurantConfig {
     billPaidMs: number
     apiLatencyMs: number
   }
-  staff: { waiter: string; cashier: string }
+  /** Nombres del personal (de ejemplo): mesero, cajera, cocina y dueño. */
+  staff: { waiter: string; cashier: string; cook: string; owner: string }
+  /**
+   * Demo de las pantallas del personal (cocina, caja, panel) en el mismo navegador.
+   * heartbeatMs: cada cuánto la pantalla avisa que está abierta; liveWithinMs: hasta
+   * cuándo se la considera abierta; pollMs: cada cuánto se revisan los cambios de otra
+   * pestaña; lateMin: minutos desde el pedido para marcarlo "tarde"; seedsMaxAgeMin:
+   * después de esto los pedidos de ejemplo se vuelven a crear.
+   */
+  staffDemo: { heartbeatMs: number; liveWithinMs: number; pollMs: number; lateMin: number; seedsMaxAgeMin: number }
   waiterReasons: WaiterReasonOption[]
   demo: {
     tableMates: DemoTableMate[]
     paymentMethod: string
+    /** Pedidos de ejemplo de la cocina y la caja (los nombres son de ejemplo). */
+    staffSeeds: StaffSeedTable[]
+    /** Números de ejemplo del panel del dueño (P4). */
+    panel: PanelDemo
   }
   texts: Texts
 }

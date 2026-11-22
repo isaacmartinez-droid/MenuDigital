@@ -7,14 +7,25 @@
  * pantallas no cambian. Los puntos a reemplazar están marcados con "API real:".
  */
 import type { BillRequest, Channel, Comanda, ComandaItem, ComandaStatus, PayMethod, PayScope, Substitution } from '../types/order'
-import { getDish, getExtra, getSide, restaurant, unitPrice } from './catalog'
+import { restaurant } from './catalog'
 import { tipAmount } from './money'
 import { readDemoFlags } from './demoFlags'
-import { newId, readItem, tableKey, writeItem } from './storage'
+import { newId } from './storage'
 import { addReviews } from './reviews'
 import { msToNextStatus, simulatedStatus } from './simulator'
 import { fmt, t } from './text'
 import { isTakeout } from './channel'
+import {
+  comandaId,
+  itemsFromIds,
+  loadServer,
+  markNumbersUsed,
+  nextComandaNumber,
+  saveServer,
+  serverKey,
+  type ServerTable,
+} from './server'
+import { isStaffLive } from './staffLive'
 
 export class ApiError extends Error {
   readonly code: 'offline' | 'server'
@@ -53,7 +64,7 @@ export interface Receipt {
   paidAt: string
 }
 
-const { timings, ordering, staff } = restaurant
+const { timings, staff } = restaurant
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 const isOnline = () => (typeof navigator === 'undefined' ? true : navigator.onLine)
 
@@ -66,69 +77,15 @@ async function roundTrip<T>(fn: () => T, ms: number = timings.apiLatencyMs): Pro
 }
 
 /* ------------------------------------------------------------------ */
-/* "Servidor" simulado                                                  */
+/* "Servidor" simulado (lib/server.ts)                                  */
 /* ------------------------------------------------------------------ */
 
-interface ServerTable {
-  comandas: Comanda[]
-  matesSeeded: boolean
-  /** Lo que se pidió al avisar a caja (la propina se calcula al cobrar). */
-  bill?: BillRequest
-}
-
-const serverKey = (tableId: string) => tableKey(tableId, 'servidor')
-
-function loadServer(tableId: string): ServerTable {
-  try {
-    const raw = readItem('local', serverKey(tableId))
-    if (raw) return JSON.parse(raw) as ServerTable
-  } catch {
-    /* estado dañado: se empieza de cero */
-  }
-  return { comandas: [], matesSeeded: false }
-}
-
-const saveServer = (tableId: string, state: ServerTable) =>
-  writeItem('local', serverKey(tableId), JSON.stringify(state))
-
-const comandaId = (n: number) => `${ordering.comandaPrefix}-${String(n).padStart(4, '0')}`
-
-const nextNumber = (state: ServerTable) =>
-  state.comandas.length
-    ? Math.max(...state.comandas.map((c) => c.number)) + 1
-    : ordering.firstComandaNumber
-
-/** Convierte las líneas de un compañero simulado en líneas de comanda. */
-function mateItems(items: { dishId: string; quantity: number; sideId?: string; extraIds?: string[] }[]) {
-  return items.flatMap((line): ComandaItem[] => {
-    const dish = getDish(line.dishId)
-    if (!dish) return []
-    const extraIds = line.extraIds ?? []
-    const unit = unitPrice(dish, extraIds)
-    return [
-      {
-        dishId: dish.id,
-        name: dish.name,
-        quantity: line.quantity,
-        sideId: line.sideId,
-        sideName: getSide(line.sideId)?.name,
-        extras: extraIds.flatMap((id) => {
-          const e = getExtra(id)
-          return e ? [{ id: e.id, name: e.name, price: e.price }] : []
-        }),
-        unitPrice: unit,
-        lineTotal: unit * line.quantity,
-      },
-    ]
-  })
-}
-
 /** Simula que otros teléfonos de la mesa también pidieron (se apaga con ?compas=0). */
-function seedTableMates(state: ServerTable, tableId: string, createdAt: string) {
+function seedTableMates(state: ServerTable, tableId: string, createdAt: string, live: boolean) {
   if (state.matesSeeded || !readDemoFlags().compas) return
   for (const mate of restaurant.demo.tableMates) {
     if (state.comandas.some((c) => c.number === mate.comandaNumber)) continue
-    const items = mateItems(mate.items)
+    const items = itemsFromIds(mate.items)
     state.comandas.push({
       id: comandaId(mate.comandaNumber),
       number: mate.comandaNumber,
@@ -141,6 +98,7 @@ function seedTableMates(state: ServerTable, tableId: string, createdAt: string) 
       createdAt,
       statusAt: createdAt,
       substitutions: [],
+      ...(live ? { kitchenLive: true, statusTimes: { recibida: createdAt, 'en-el-comal': createdAt } } : {}),
     })
   }
   state.matesSeeded = true
@@ -161,7 +119,9 @@ export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda
   return roundTrip(() => {
     const state = loadServer(input.tableId)
     const now = new Date().toISOString()
-    const number = nextNumber(state)
+    const number = nextComandaNumber(state)
+    // Con la cocina abierta en otra pestaña (demo del personal), el pedido espera a que la cocina lo mueva.
+    const live = isStaffLive()
     const comanda: Comanda = {
       id: comandaId(number),
       number,
@@ -178,13 +138,35 @@ export async function sendComanda(input: NewComanda): Promise<{ comanda: Comanda
       createdAt: now,
       statusAt: now,
       substitutions: [],
+      ...(live ? { kitchenLive: true, statusTimes: { recibida: now } } : {}),
     }
     state.comandas.push(comanda)
     // Los compañeros simulados son de la mesa; el pedido para llevar es solo de este cliente.
-    if (!isTakeout(input.tableId)) seedTableMates(state, input.tableId, now)
+    if (!isTakeout(input.tableId)) seedTableMates(state, input.tableId, now, live)
     saveServer(input.tableId, state)
+    markNumbersUsed(state.comandas.map((c) => c.number))
     return { comanda, account: state.comandas }
   })
+}
+
+/**
+ * Escucha los cambios que hace el personal en el "servidor" de una mesa: otra
+ * pestaña escribe en localStorage y esta se entera por el evento storage (y,
+ * por las dudas, revisando cada pocos segundos). API real: WebSocket.
+ */
+function watchServer(tableId: string, onChange: (state: ServerTable) => void): () => void {
+  const key = serverKey(tableId)
+  const check = () => onChange(loadServer(tableId))
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === key || e.key === null) check()
+  }
+  window.addEventListener('storage', onStorage)
+  const id = window.setInterval(check, restaurant.staffDemo.pollMs)
+  check()
+  return () => {
+    window.removeEventListener('storage', onStorage)
+    window.clearInterval(id)
+  }
 }
 
 /** Cuenta completa de la mesa. API real: GET /api/mesas/:mesa/cuenta */
@@ -196,7 +178,22 @@ export async function fetchAccount(tableId: string): Promise<Comanda[]> {
  * Sigue el estado de una comanda y avisa cada cambio.
  * API real: WebSocket o polling a GET /api/comandas/:id. Devuelve la función para dejar de escuchar.
  */
-export function watchComanda(comanda: Comanda, onStatus: (status: ComandaStatus) => void): () => void {
+export function watchComanda(
+  comanda: Comanda,
+  onStatus: (status: ComandaStatus, statusTimes?: Comanda['statusTimes']) => void,
+): () => void {
+  // Con la cocina del personal abierta, el estado lo cambia la cocina (otra pestaña).
+  if (comanda.kitchenLive) {
+    let last = ''
+    return watchServer(comanda.tableId, (state) => {
+      const current = state.comandas.find((c) => c.id === comanda.id)
+      if (!current) return
+      const signature = `${current.status}|${JSON.stringify(current.statusTimes ?? {})}`
+      if (signature === last) return
+      last = signature
+      onStatus(current.status, current.statusTimes)
+    })
+  }
   let timer = 0
   let stopped = false
   const tick = () => {
@@ -214,20 +211,30 @@ export function watchComanda(comanda: Comanda, onStatus: (status: ComandaStatus)
 
 /**
  * Avisa a los meseros con el motivo. Resuelve cuando el aviso quedó registrado.
+ * Queda en el "servidor" de la mesa, así lo ve la pantalla de Meseros (P3).
  * API real: POST /api/mesas/:mesa/llamados { motivo }
  */
-export async function callWaiter(tableId: string, reason: string): Promise<void> {
-  void tableId
-  void reason
-  return roundTrip(() => undefined, 300)
+export async function callWaiter(tableId: string, reason: string, at: number): Promise<void> {
+  return roundTrip(() => {
+    const state = loadServer(tableId)
+    state.calls = [...(state.calls ?? []), { at, reason, live: isStaffLive() }]
+    saveServer(tableId, state)
+  }, 300)
 }
 
 /**
  * Avisa cuando un mesero toma el llamado ("Carlos va en camino").
- * Simulado: a los timings.waiterAckMs de haber llamado; sobrevive a recargas.
+ * - Con el personal abierto (otra pestaña), cuando el mesero toca "Voy".
+ * - Si no, simulado a los timings.waiterAckMs de haber llamado; sobrevive a recargas.
  * API real: WebSocket con el evento "llamado tomado". Devuelve la función para dejar de escuchar.
  */
-export function watchWaiterCall(calledAt: number, onAck: (waiter: string) => void): () => void {
+export function watchWaiterCall(tableId: string, calledAt: number, onAck: (waiter: string) => void): () => void {
+  if (isStaffLive()) {
+    return watchServer(tableId, (state) => {
+      const call = state.calls?.find((c) => c.at === calledAt)
+      if (call?.ackAt) onAck(call.waiter ?? staff.waiter)
+    })
+  }
   const id = window.setTimeout(() => onAck(staff.waiter), Math.max(0, calledAt + timings.waiterAckMs - Date.now()))
   return () => window.clearTimeout(id)
 }
@@ -240,21 +247,13 @@ export function watchWaiterCall(calledAt: number, onAck: (waiter: string) => voi
 export async function requestBill(tableId: string, request: BillRequest): Promise<{ cashier: string }> {
   return roundTrip(() => {
     const state = loadServer(tableId)
-    saveServer(tableId, { ...state, bill: request })
+    saveServer(tableId, { ...state, bill: request, billAt: new Date().toISOString() })
     return { cashier: staff.cashier }
   })
 }
 
-/**
- * Espera a que caja cobre y cierre la mesa (simulado a los timings.billPaidMs).
- * API real: WebSocket con el evento "mesa cerrada".
- */
-export async function waitForPayment(tableId: string, sinceMs: number): Promise<Receipt> {
-  // "Pasá a caja" queda timings.billPaidMs (10 min); con ?forzar=pago-rapido, 5 s.
-  const delay = readDemoFlags().pagoRapido ? 5000 : timings.billPaidMs
-  const remaining = Math.max(0, sinceMs + delay - Date.now())
-  await wait(remaining)
-  const state = loadServer(tableId)
+/** Recibo simulado (sin caja del personal): lo que pidió el teléfono al avisar. */
+function simulatedReceipt(tableId: string, state: ServerTable): Receipt {
   const scope = state.bill?.scope ?? 'table'
   const paidComandas = scope === 'mine' ? state.comandas.filter((c) => c.mine) : state.comandas
   const subtotal = paidComandas.reduce((s, c) => s + c.total, 0)
@@ -272,6 +271,63 @@ export async function waitForPayment(tableId: string, sinceMs: number): Promise<
     change: method === 'efectivo' && cash && cash > total ? cash - total : null,
     cashier: staff.cashier,
     paidAt: new Date().toISOString(),
+  }
+}
+
+/** El cobro de caja que incluyó lo de este teléfono, si ya lo hubo. */
+function paymentForMe(tableId: string, state: ServerTable): Receipt | null {
+  const mine = state.comandas.filter((c) => c.mine)
+  if (!mine.length || !mine.every((c) => c.paid)) return null
+  const payment = [...(state.payments ?? [])].reverse().find((p) => mine.some((c) => p.comandaIds.includes(c.id)))
+  if (!payment) return null
+  return {
+    tableId,
+    scope: payment.scope,
+    subtotal: payment.subtotal,
+    tip: payment.tip,
+    total: payment.total,
+    method: payment.method,
+    change: payment.change,
+    cashier: payment.cashier,
+    paidAt: payment.at,
+  }
+}
+
+/**
+ * Espera a que caja cobre lo de este teléfono y cierre la mesa.
+ * - Si la caja del personal está abierta (otra pestaña), avisa cuando cobra.
+ * - Si este teléfono avisó a caja (sinceMs), además se simula el cobro a los
+ *   timings.billPaidMs (con ?forzar=pago-rapido, 5 s), lo que pase primero.
+ * Devuelve la función para dejar de esperar. API real: WebSocket con el evento "mesa cerrada".
+ */
+export function watchPayment(tableId: string, sinceMs: number | null, onPaid: (receipt: Receipt) => void): () => void {
+  let done = false
+  let timer = 0
+  // El primer chequeo es inmediato: puede terminar antes de tener con qué dejar de escuchar.
+  const watch: { stop?: () => void } = {}
+  const finish = (receipt: Receipt) => {
+    if (done) return
+    done = true
+    window.clearTimeout(timer)
+    watch.stop?.()
+    onPaid(receipt)
+  }
+  watch.stop = watchServer(tableId, (state) => {
+    const receipt = paymentForMe(tableId, state)
+    if (receipt) finish(receipt)
+  })
+  if (done) watch.stop()
+  if (sinceMs !== null && !done) {
+    const delay = readDemoFlags().pagoRapido ? 5000 : timings.billPaidMs
+    timer = window.setTimeout(
+      () => finish(simulatedReceipt(tableId, loadServer(tableId))),
+      Math.max(0, sinceMs + delay - Date.now()),
+    )
+  }
+  return () => {
+    done = true
+    window.clearTimeout(timer)
+    watch.stop?.()
   }
 }
 

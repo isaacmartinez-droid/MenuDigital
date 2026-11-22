@@ -11,7 +11,8 @@ interface ComandasState {
   comandas: Comanda[]
   /** Reemplaza la cuenta con la que devuelve el servidor. */
   setAccount: (comandas: Comanda[]) => void
-  setStatus: (id: string, status: ComandaStatus) => void
+  /** Nuevo estado; con la cocina del personal, también la hora de cada paso. */
+  setStatus: (id: string, status: ComandaStatus, statusTimes?: Comanda['statusTimes']) => void
   addSubstitution: (id: string, sub: Substitution) => void
 }
 
@@ -24,16 +25,25 @@ const store = tableStoreFactory<ComandasState>('comandas', () => (set, get) => (
       comandas: incoming.map((c) => {
         const mine = local.get(c.id)
         return mine
-          ? { ...c, status: mine.status, statusAt: mine.statusAt, substitutions: mine.substitutions.length ? mine.substitutions : c.substitutions }
+          ? {
+              ...c,
+              status: mine.status,
+              statusAt: mine.statusAt,
+              statusTimes: mine.statusTimes ?? c.statusTimes,
+              substitutions: mine.substitutions.length ? mine.substitutions : c.substitutions,
+            }
           : c
       }),
     })
   },
-  setStatus: (id, status) =>
+  setStatus: (id, status, statusTimes) =>
     set({
-      comandas: get().comandas.map((c) =>
-        c.id === id && c.status !== status ? { ...c, status, statusAt: new Date().toISOString() } : c,
-      ),
+      comandas: get().comandas.map((c) => {
+        if (c.id !== id) return c
+        const times = statusTimes ? { statusTimes } : {}
+        if (c.status === status) return statusTimes ? { ...c, ...times } : c
+        return { ...c, status, statusAt: statusTimes?.[status] ?? new Date().toISOString(), ...times }
+      }),
     }),
   addSubstitution: (id, sub) =>
     set({

@@ -78,7 +78,8 @@
     "billPaidMs": 600000,
     "apiLatencyMs": 600
   },
-  "staff": { "waiter": "Carlos", "cashier": "María" },
+  "staff": { "waiter": "Carlos", "cashier": "María", "cook": "Don Julio", "owner": "Dueño" },
+  "staffDemo": { "heartbeatMs": 4000, "liveWithinMs": 1800000, "pollMs": 1500, "lateMin": 12, "seedsMaxAgeMin": 180 },
   "waiterReasons": [
     { "id": "mesero", "title": "Que venga el mesero", "hint": "Para pedir algo o preguntar" },
     { "id": "servilletas", "title": "Servilletas o salsa" },
@@ -99,7 +100,288 @@
         "items": [{ "dishId": "fresco-de-cacao", "quantity": 2 }]
       }
     ],
-    "paymentMethod": "Tarjeta"
+    "paymentMethod": "Tarjeta",
+    "staffSeeds": [
+      {
+        "table": "6",
+        "billMinAgo": 1,
+        "comandas": [
+          {
+            "number": 131,
+            "name": "Ana",
+            "minAgo": 40,
+            "status": "entregada",
+            "items": [
+              {
+                "dishId": "fritanga-tradicional",
+                "quantity": 1,
+                "sideId": "gallo-pinto",
+                "extraIds": [
+                  "queso-frito-extra"
+                ]
+              }
+            ]
+          },
+          {
+            "number": 132,
+            "name": "Carlos",
+            "minAgo": 38,
+            "status": "entregada",
+            "items": [
+              {
+                "dishId": "enchilada",
+                "quantity": 2
+              }
+            ]
+          },
+          {
+            "number": 133,
+            "name": null,
+            "device": 3,
+            "minAgo": 35,
+            "status": "entregada",
+            "items": [
+              {
+                "dishId": "fresco-de-cacao",
+                "quantity": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "table": "3",
+        "comandas": [
+          {
+            "number": 137,
+            "name": "Carmen",
+            "minAgo": 14,
+            "status": "en-el-comal",
+            "note": "Sin repollo",
+            "items": [
+              {
+                "dishId": "fritanga-tradicional",
+                "quantity": 1,
+                "sideId": "gallo-pinto",
+                "extraIds": [
+                  "queso-frito-extra"
+                ]
+              },
+              {
+                "dishId": "enchilada",
+                "quantity": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "table": "2",
+        "callSecAgo": 30,
+        "callReason": "mesero",
+        "comandas": [
+          {
+            "number": 139,
+            "name": null,
+            "device": 1,
+            "minAgo": 1,
+            "status": "recibida",
+            "note": "Una sin repollo",
+            "items": [
+              {
+                "dishId": "fritanga-tradicional",
+                "quantity": 2,
+                "sideId": "gallo-pinto"
+              },
+              {
+                "dishId": "fresco-de-cacao",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "table": "mostrador",
+        "comandas": [
+          {
+            "number": 136,
+            "name": "Mostrador",
+            "minAgo": 18,
+            "status": "lista",
+            "items": [
+              {
+                "dishId": "carne-asada",
+                "quantity": 1,
+                "sideId": "yuca"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "table": "llevar",
+        "comandas": [
+          {
+            "number": 138,
+            "name": "Ana",
+            "phone": "88880000",
+            "minAgo": 2,
+            "status": "recibida",
+            "items": [
+              {
+                "dishId": "combo-para-dos",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "panel": {
+      "kpis": [
+        {
+          "label": "Vendido hoy",
+          "value": "C$ 8,450",
+          "detail": "+12% vs. viernes pasado"
+        },
+        {
+          "label": "Pedidos",
+          "value": "37",
+          "detail": "Ticket promedio C$ 228"
+        },
+        {
+          "label": "Tiempo en cocina",
+          "value": "13 min",
+          "detail": "promedio"
+        },
+        {
+          "label": "Respuesta del mesero",
+          "value": "45 s",
+          "detail": "12 llamadas hoy"
+        }
+      ],
+      "rows": [
+        [
+          {
+            "title": "Pedidos por canal · ¿local o en línea?",
+            "bars": [
+              {
+                "label": "En el local · mesa (QR)",
+                "value": 24,
+                "extra": "C$ 5,480",
+                "color": "verde"
+              },
+              {
+                "label": "En línea · para llevar",
+                "value": 9,
+                "extra": "C$ 2,050",
+                "color": "azul-logo"
+              },
+              {
+                "label": "En el local · mostrador",
+                "value": 4,
+                "extra": "C$ 920",
+                "color": "texto-2"
+              },
+              {
+                "label": "Domicilio (próximamente)",
+                "value": 0,
+                "color": "borde"
+              }
+            ]
+          },
+          {
+            "title": "¿De dónde llegan a la web?",
+            "bars": [
+              {
+                "label": "Instagram",
+                "value": 5,
+                "color": "promo"
+              },
+              {
+                "label": "Facebook",
+                "value": 2,
+                "color": "azul-logo"
+              },
+              {
+                "label": "Google",
+                "value": 1,
+                "color": "ambar"
+              },
+              {
+                "label": "Enlace directo",
+                "value": 1,
+                "color": "texto-2"
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "title": "Formas de pago",
+            "unit": "%",
+            "bars": [
+              {
+                "label": "Efectivo",
+                "value": 62,
+                "color": "verde"
+              },
+              {
+                "label": "Tarjeta",
+                "value": 38,
+                "color": "azul-logo"
+              }
+            ]
+          },
+          {
+            "title": "Horas pico",
+            "unit": " pedidos",
+            "bars": [
+              {
+                "label": "4 a 6 pm",
+                "value": 8,
+                "color": "verde"
+              },
+              {
+                "label": "6 a 8 pm",
+                "value": 19,
+                "color": "ambar"
+              },
+              {
+                "label": "8 a 10 pm",
+                "value": 10,
+                "color": "verde"
+              }
+            ]
+          },
+          {
+            "title": "Más vendidos",
+            "bars": [
+              {
+                "label": "Fritanga tradicional",
+                "value": 21,
+                "color": "verde"
+              },
+              {
+                "label": "Enchilada",
+                "value": 14,
+                "color": "verde"
+              },
+              {
+                "label": "Combo para dos",
+                "value": 6,
+                "color": "verde"
+              }
+            ]
+          }
+        ]
+      ],
+      "complaint": {
+        "title": "Queja de hoy · Enchilada ★★ · Mesa 3 · 7:40 pm",
+        "body": "Calificación rápida en mesa. Te enteraste antes de que llegue a Google: hablá con la mesa o revisá la cocina."
+      }
+    }
   },
   "texts": {
     "common": {
@@ -526,7 +808,154 @@
         "entregada": { "title": "¡Gracias por tu compra!", "body": "Esperamos verte pronto." }
       },
       "pickedUp": "Recogida",
+      "notifyAskBody": "Te llega un aviso cuando empecemos a cocinar y cuando esté lista para recoger.",
       "activeBarReady": "Tu orden {id} está lista · pasá a recogerla"
+    },
+    "staff": {
+      "navLabel": "Secciones del personal",
+      "areas": {
+        "cocina": "Cocina",
+        "caja": "Caja",
+        "meseros": "Meseros",
+        "panel": "Panel"
+      },
+      "soon": "Próximamente",
+      "justNow": "recién",
+      "ago": "hace {min} min",
+      "channelTable": "{mesa} · {name}",
+      "channelTakeout": "Para llevar · {name}",
+      "counter": "Mostrador",
+      "takeout": "Para llevar",
+      "agoSec": "hace {s} s",
+      "kitchen": {
+        "soundOn": "Sonido activado",
+        "soundOff": "Tocá para activar el sonido",
+        "soldOutButton": "Agotados",
+        "columns": [
+          "Nuevos",
+          "Cocinando",
+          "Listos"
+        ],
+        "empty": "Nada por ahora",
+        "start": "A cocinar",
+        "ready": "Lista",
+        "delivered": "Entregado",
+        "late": "tarde",
+        "otherComanda": "otra comanda de la {mesa}",
+        "notified": {
+          "mesa": "Avisamos al mesero",
+          "llevar": "Avisamos a caja y por WhatsApp",
+          "mostrador": "Avisamos a caja"
+        },
+        "note": "Nota: {note}",
+        "itemNote": "Nota · {dish}: {note}",
+        "newAlert": "Nuevo pedido: {id}",
+        "soldOutTitle": "¿Qué se acabó?",
+        "soldOutBody": "Se oculta al instante en la app. Si alguien ya lo pidió, le preguntamos si lo cambia.",
+        "sideSuffix": "{name} (acompañante)",
+        "available": "Hay",
+        "soldOut": "Agotado",
+        "done": "Listo"
+      },
+      "cashier": {
+        "newOrder": "Nuevo pedido",
+        "dayClose": "Corte del día",
+        "tabsLabel": "Pedidos de caja",
+        "tabConfirm": "Por confirmar · {n}",
+        "tabCharge": "Por cobrar · {n}",
+        "tabInProgress": "En curso · {n}",
+        "comingToPay": "Viene a pagar a caja",
+        "eating": "Comiendo · cuenta abierta",
+        "scopeTable": "Todo junto",
+        "scopeMine": "Cada quien lo suyo",
+        "phones": "{n} teléfonos",
+        "phone": "1 teléfono",
+        "statusComing": "Viene a pagar",
+        "statusOpen": "Cuenta abierta",
+        "detailComingTable": "Viene a caja · pagan todo junto",
+        "detailComingMine": "Viene a caja · {name} paga lo suyo",
+        "total": "Total",
+        "tip": "Propina",
+        "howToCharge": "Cómo cobrar",
+        "together": "Todo junto",
+        "perPerson": "Por persona",
+        "pickPerson": "Tocá a quién le cobrás.",
+        "paidPerson": "Pagado",
+        "print": "Imprimir cuenta",
+        "charge": "Cobrar · {total}",
+        "pinNote": "Cerrar sin cobrar o cancelar pide el PIN del dueño. ¿Pedidos raros? Bloqueá la mesa: deja de recibir pedidos.",
+        "block": "Bloquear mesa",
+        "confirmTitle": "Confirmalo antes de cocinar",
+        "confirmBody": "Se abre WhatsApp con el mensaje listo: \"Hola {name}, recibimos tu orden {id}…\"",
+        "confirmWhatsApp": "Confirmar por WhatsApp",
+        "confirmed": "Ya respondió · pasar a cocina",
+        "confirmHint": "Si no responde en 10 minutos queda \"Sin confirmar\" y podés cancelarlo.",
+        "sentToKitchen": "{id} pasó a cocina",
+        "waMessage": "Hola {name}, recibimos tu orden {id} en Fritanga Nica: {items}. Total {total}, pagás al recoger. ¿Te la preparamos?",
+        "emptyCharge": "No hay cuentas por cobrar.",
+        "emptyConfirm": "No hay pedidos por confirmar.",
+        "chargeTitle": "Cobrar {who}",
+        "method": "Método",
+        "cash": "Efectivo",
+        "card": "Tarjeta",
+        "received": "Recibido",
+        "quick": "Montos rápidos",
+        "change": "Cambio",
+        "missing": "Faltan {amount}",
+        "printTicket": "Imprimir ticket (si hay impresora)",
+        "chargeAndClose": "Cobrar y cerrar mesa",
+        "chargePerson": "Cobrar a {name}",
+        "closedTitle": "{mesa} cobrada y cerrada",
+        "closedBody": "{total} con {method} · la sesión del QR terminó; los próximos clientes empiezan una cuenta nueva.",
+        "personPaidTitle": "{name} pagó lo suyo",
+        "personPaidBody": "{total} con {method} · la cuenta de la {mesa} sigue abierta para los demás.",
+        "methodCash": "efectivo",
+        "methodCard": "tarjeta"
+      },
+      "waiters": {
+        "tabsLabel": "Vista de meseros",
+        "tabAlerts": "Avisos · {n}",
+        "tabTables": "Mesas",
+        "calling": "Te llama · \"{reason}\"",
+        "callingSub": "{ago} · si nadie va en 1 min avisamos a todos",
+        "go": "Voy",
+        "coming": "Vas en camino",
+        "comingSub": "El cliente ya ve \"{waiter} va en camino\"",
+        "done": "Atendido",
+        "paying": "Está pagando en caja · {total}",
+        "payingSub": "Al cobrar, la mesa queda libre",
+        "clean": "Mesa limpia",
+        "ready": "{id} · Lista",
+        "readySub": "Llevar {items}",
+        "delivered": "Entregado",
+        "footnote": "Los pedidos de las mesas van directo a la cocina. Vos solo atendés llamadas y llevás lo que está listo.",
+        "empty": "No hay avisos por ahora.",
+        "states": {
+          "free": "Libre",
+          "calling": "Te llama",
+          "ordering": "Pidiendo",
+          "eating": "Comiendo",
+          "eatingPhones": "Comiendo · {n} tel.",
+          "paying": "Pagando en caja"
+        },
+        "tableSummary": "{phones} · abierta {ago} · {total}",
+        "addOrder": "Agregar pedido a esta mesa",
+        "addOrderHint": "Si alguien de la mesa no tiene celular, agregás su pedido aquí y queda en la misma cuenta.",
+        "back": "Volver a las mesas"
+      },
+      "panel": {
+        "sectionsLabel": "Secciones del panel",
+        "sections": [
+          "Resumen",
+          "Menú y agotados",
+          "Mesas y QR",
+          "Personal y PINs",
+          "Promos",
+          "Horarios",
+          "Reseñas"
+        ],
+        "footnote": "Todos los números son de ejemplo. Cada pedido guarda su canal (mesa, en línea o mostrador) y su origen (Instagram, Facebook, Google…)."
+      }
     }
   }
 }

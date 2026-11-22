@@ -740,7 +740,8 @@ Para empezar de cero: borrar los datos del sitio en el navegador.
 
 **De la web:**
 - Ninguna etapa del Figma pendiente. Lo que sigue es el sistema real (backend): pedidos que
-  lleguen de verdad, pantallas de cocina y caja y panel del dueño.
+  lleguen de verdad. La demo de cocina, caja y panel del dueño está en
+  [vista-personal.md](vista-personal.md).
 
 **Del cliente:**
 - Dirección, número de WhatsApp y enlace real del perfil de Google (con su calificación,

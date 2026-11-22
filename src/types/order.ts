@@ -73,6 +73,33 @@ export interface Comanda {
   /** ISO del último cambio de estado. */
   statusAt: string
   substitutions: Substitution[]
+  /**
+   * true si se envió con la cocina abierta (demo con pantallas del personal):
+   * el estado lo cambia la cocina, no el simulador de tiempos.
+   */
+  kitchenLive?: boolean
+  /** Hora (ISO) de cada paso, cuando lo cambia la cocina. */
+  statusTimes?: Partial<Record<ComandaStatus, string>>
+  /** Para llevar: cuándo caja lo confirmó por WhatsApp y lo pasó a cocina. */
+  confirmedAt?: string
+  /** true cuando caja ya cobró esta comanda. */
+  paid?: boolean
+}
+
+/** Un cobro de caja: toda la mesa o lo de una persona. */
+export interface Payment {
+  comandaIds: string[]
+  scope: PayScope
+  subtotal: number
+  tip: number
+  total: number
+  method: PayMethod
+  /** Con cuánto pagó en efectivo y el vuelto. */
+  received: number | null
+  change: number | null
+  cashier: string
+  /** ISO */
+  at: string
 }
 
 /** Comanda lista para enviar que espera conexión (M9). */

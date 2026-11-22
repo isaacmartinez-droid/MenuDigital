@@ -158,7 +158,8 @@ const carts = tableStoreFactory<CartState>('pedido', () => (set, get) => ({
 
   setCustomerName: (customerName) => set({ customerName }),
   setKitchenNote: (kitchenNote) => set({ kitchenNote }),
-  clear: () => set({ items: [], pendingSend: false }),
+  // Al enviar se vacía todo, también la nota para la cocina (si no, se repetía en el pedido siguiente).
+  clear: () => set({ items: [], kitchenNote: '', pendingSend: false }),
 }))
 
 export const cartStore = carts.get

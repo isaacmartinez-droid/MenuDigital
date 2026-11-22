@@ -13,6 +13,7 @@ import { Header } from '../components/Header'
 import { StatusCard } from '../components/StatusCard'
 import { Comanda } from '../components/Comanda'
 import { SoldOutSheet } from '../components/SoldOutSheet'
+import { useAvailability } from '../store/availability'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Button } from '../components/Button'
@@ -31,7 +32,7 @@ import { isTakeout } from '../lib/channel'
 import { comandasStore, useComandas } from '../store/comandas'
 
 /** Estado de una orden en pastilla: verde en curso, ámbar lista, gris entregada. */
-function StatusChip({ status }: { status: ComandaModel['status'] }) {
+function StatusChip({ status, takeout }: { status: ComandaModel['status']; takeout: boolean }) {
   return (
     <span
       className={cx(
@@ -43,10 +44,14 @@ function StatusChip({ status }: { status: ComandaModel['status'] }) {
             : 'bg-verde-suave text-verde',
       )}
     >
-      {statusLabel(status)}
+      {stepName(status, takeout)}
     </span>
   )
 }
+
+/** Nombre del paso; para llevar, "Entregada" se dice "Recogida". */
+const stepName = (status: ComandaModel['status'], takeout: boolean) =>
+  takeout && status === 'entregada' ? t.web.pickedUp : statusLabel(status)
 
 /** M4g: primer plato de la comanda con una parte que puede agotarse en cocina. */
 function findReplaceable(comanda: ComandaModel | undefined) {
@@ -86,6 +91,8 @@ export function Tracking() {
   }, [notifyJustOn])
 
   const soldOut = findReplaceable(comanda)
+  // La cocina marcó agotado el acompañante (P1c): se pregunta si se cambia, como con ?forzar=agotado.
+  const soldOutSides = useAvailability()
   const alreadyReplaced = Boolean(
     soldOut &&
       comanda?.substitutions.some((s) => s.dishId === soldOut.item.dishId && s.componentId === soldOut.component.id),
@@ -94,7 +101,9 @@ export function Tracking() {
   const [replacing, setReplacing] = useState(false)
   const [replacedText, setReplacedText] = useState<string | null>(null)
   const showSoldOut = Boolean(
-    flags.agotado && soldOut && comanda?.mine && comanda.status !== 'entregada' && !alreadyReplaced && !soldOutDismissed,
+    (flags.agotado || (soldOut && soldOutSides.includes(soldOut.component.id))) &&
+      soldOut &&
+      comanda?.mine && comanda.status !== 'entregada' && !alreadyReplaced && !soldOutDismissed,
   )
 
   useEffect(() => {
@@ -183,7 +192,7 @@ export function Tracking() {
               <h2 id="avisos" className="text-dish text-texto">
                 {t.tracking.notifyAskTitle}
               </h2>
-              <p className="mt-0.5 text-small text-texto-2">{t.tracking.notifyAskBody}</p>
+              <p className="mt-0.5 text-small text-texto-2">{takeout ? t.web.notifyAskBody : t.tracking.notifyAskBody}</p>
               <div className="mt-3 flex items-center gap-1">
                 <button
                   type="button"
@@ -259,7 +268,7 @@ export function Tracking() {
                   <button
                     type="button"
                     onClick={() => navigate(paths.tracking(mesa, c.id), { replace: true })}
-                    aria-label={`${fmt(t.tracking.openOrder, { id: c.id })} · ${statusLabel(c.status)}`}
+                    aria-label={`${fmt(t.tracking.openOrder, { id: c.id })} · ${stepName(c.status, takeout)}`}
                     className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left"
                   >
                     <span className="min-w-0 flex-1">
@@ -268,7 +277,7 @@ export function Tracking() {
                         {c.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')}
                       </span>
                     </span>
-                    <StatusChip status={c.status} />
+                    <StatusChip status={c.status} takeout={takeout} />
                     <ChevronRight size={18} strokeWidth={2} aria-hidden className="shrink-0 text-texto-2" />
                   </button>
                 </li>

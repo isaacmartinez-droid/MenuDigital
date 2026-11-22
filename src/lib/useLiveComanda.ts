@@ -13,7 +13,7 @@ export function useLiveComanda(mesa: string, comandaId: string) {
     if (!createdAt || delivered || !watchable) return
     const current = comandasStore(mesa).getState().comandas.find((c) => c.id === comandaId)
     if (!current) return
-    return watchComanda(current, (status) => comandasStore(mesa).getState().setStatus(comandaId, status))
+    return watchComanda(current, (status, times) => comandasStore(mesa).getState().setStatus(comandaId, status, times))
   }, [mesa, comandaId, createdAt, delivered, watchable])
 
   return comanda

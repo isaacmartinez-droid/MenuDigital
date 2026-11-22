@@ -25,7 +25,7 @@ export function useKitchenUpdates(mesa: string) {
     if (!pending) return
     const stops = pending.split(',').map((id) => {
       const comanda = store.getState().comandas.find((c) => c.id === id)
-      return comanda ? watchComanda(comanda, (status) => store.getState().setStatus(id, status)) : undefined
+      return comanda ? watchComanda(comanda, (status, times) => store.getState().setStatus(id, status, times)) : undefined
     })
     return () => stops.forEach((stop) => stop?.())
   }, [store, pending])

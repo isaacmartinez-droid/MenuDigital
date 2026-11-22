@@ -24,6 +24,7 @@ import { paths, useMesa } from '../lib/useMesa'
 import { comandasStore, useComandas } from '../store/comandas'
 import { useCart } from '../store/cart'
 import { accountStore, useAccount } from '../store/account'
+import { scrollBehavior } from '../lib/motion'
 
 const sumTotals = (list: Comanda[]) => list.reduce((sum, c) => sum + c.total, 0)
 
@@ -593,7 +594,16 @@ function MethodPicker({
   const cashId = useId()
   const account = () => accountStore(mesa).getState()
   // Tocar la opción elegida la desmarca (es opcional).
-  const choose = (m: PayMethod) => account().setPayMethod(method === m ? null : m)
+  const choose = (m: PayMethod) => {
+    account().setPayMethod(method === m ? null : m)
+    // El campo de efectivo aparece abajo, detrás de la barra de "Avisar a caja": se sube al centro
+    // para que se vea y el toque no caiga en la barra.
+    if (m === 'efectivo' && method !== m) {
+      requestAnimationFrame(() =>
+        document.getElementById(cashId)?.scrollIntoView({ block: 'center', behavior: scrollBehavior() }),
+      )
+    }
+  }
 
   return (
     <section aria-labelledby="como-pagas" className="mt-5">

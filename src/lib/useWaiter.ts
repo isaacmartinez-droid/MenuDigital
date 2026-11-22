@@ -31,7 +31,7 @@ export function useWaiter(mesa: string) {
   // Espera a que un mesero tome el aviso (también después de recargar).
   useEffect(() => {
     if (!call || call.ackAt) return
-    return watchWaiterCall(call.at, (waiter) => accountStore(mesa).getState().ackWaiterCall(waiter))
+    return watchWaiterCall(mesa, call.at, (waiter) => accountStore(mesa).getState().ackWaiterCall(waiter))
   }, [call, mesa])
 
   useEffect(() => {
@@ -59,8 +59,9 @@ export function useWaiter(mesa: string) {
   const send = async (reason: string) => {
     const account = accountStore(mesa).getState()
     account.startWaiterCall(reason)
+    const at = accountStore(mesa).getState().waiterCall?.at ?? Date.now()
     try {
-      await callWaiter(mesa, reason)
+      await callWaiter(mesa, reason, at)
     } catch {
       account.cancelWaiterCall()
       setNotice({ kind: 'offline', key: newId() })

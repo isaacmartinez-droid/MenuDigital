@@ -1,4 +1,4 @@
-import { createBrowserRouter, type RouteObject } from 'react-router'
+import { Navigate, createBrowserRouter, type RouteObject } from 'react-router'
 import { InvalidTable } from './screens/InvalidTable'
 import { NotFound } from './screens/NotFound'
 import { MesaLayout } from './screens/MesaLayout'
@@ -62,6 +62,22 @@ const routes: RouteObject[] = [
       { path: 'cuenta', lazy: async () => ({ Component: (await screens.bill()).Bill }) },
       { path: 'cuenta/pagada', lazy: async () => ({ Component: (await screens.paid()).Paid }) },
       { path: '*', element: <InvalidTable /> },
+    ],
+  },
+  // Personal: cocina, caja y panel (tablet) y meseros (celular). Se bajan solo si se abren.
+  {
+    lazy: async () => ({ Component: (await import('./screens/staff/StaffLayout')).StaffLayout }),
+    errorElement: <RouteError />,
+    children: [
+      { path: '/personal', element: <Navigate to="/cocina" replace /> },
+      { path: '/cocina', lazy: async () => ({ Component: (await import('./screens/staff/Kitchen')).Kitchen }) },
+      { path: '/caja', lazy: async () => ({ Component: (await import('./screens/staff/Cashier')).Cashier }) },
+      { path: '/meseros', lazy: async () => ({ Component: (await import('./screens/staff/Waiters')).Waiters }) },
+      {
+        path: '/meseros/mesa/:mesa',
+        lazy: async () => ({ Component: (await import('./screens/staff/Waiters')).WaiterTable }),
+      },
+      { path: '/panel', lazy: async () => ({ Component: (await import('./screens/staff/OwnerPanel')).OwnerPanel }) },
     ],
   },
   { path: '*', element: <NotFound /> },
