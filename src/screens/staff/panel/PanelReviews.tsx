@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { StarRating } from '../../../components/StarRating'
 import { Tag } from '../../../components/Tag'
 import { menu, restaurant } from '../../../lib/catalog'
 import { cx } from '../../../lib/cx'
 import { loadReviews } from '../../../lib/reviews'
+import { readItem } from '../../../lib/storage'
 import { fmt, t } from '../../../lib/text'
 import { localDateKey } from '../../../store/panelSettings'
 import { PanelCard } from './parts'
@@ -19,6 +20,8 @@ interface Row {
   /** Cuándo, si no es una fecha ("hoy · 7:40 pm"). */
   when?: string
 }
+
+const REVIEWS_KEY = `${restaurant.id}:resenas`
 
 /** Una reseña de 1 o 2 estrellas es una queja. */
 const isComplaint = (rating: number) => rating <= 2
@@ -47,8 +50,20 @@ function Stat({ label, value, detail, tone }: { label: string; value: string; de
 export function PanelReviews() {
   const m = t.staff.panel.reviews
   const google = restaurant.web.google
+  // Las reseñas que dejan los clientes al pagar llegan desde otra pestaña: se escucha su clave.
+  const reviewsRaw = useSyncExternalStore(
+    (onChange) => {
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === REVIEWS_KEY || e.key === null) onChange()
+      }
+      window.addEventListener('storage', onStorage)
+      return () => window.removeEventListener('storage', onStorage)
+    },
+    () => readItem('local', REVIEWS_KEY),
+  )
 
   const { rows, average, count, complaints } = useMemo(() => {
+    void reviewsRaw
     const nameOf = new Map(menu.dishes.map((d) => [d.id, d.name]))
     // La queja de ejemplo del día (la misma del Resumen) cuenta como una calificación más.
     const sample = restaurant.demo.panel.sampleComplaint
@@ -75,7 +90,7 @@ export function PanelReviews() {
     }
     all.sort((a, b) => Number(isComplaint(b.rating)) - Number(isComplaint(a.rating)) || b.date.localeCompare(a.date))
     return { rows: all, average: n ? sum / n : 0, count: n, complaints: all.filter((r) => isComplaint(r.rating)).length }
-  }, [m.todayAt])
+  }, [m.todayAt, reviewsRaw])
 
   return (
     <>

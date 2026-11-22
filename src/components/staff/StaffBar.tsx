@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { restaurant } from '../../lib/catalog'
 import { cx } from '../../lib/cx'
 import { t } from '../../lib/text'
+import { readSession } from '../../lib/staffSession'
 
 export type StaffArea = 'cocina' | 'caja' | 'meseros' | 'panel'
 
@@ -31,8 +32,13 @@ interface StaffBarProps {
  * entre Cocina, Caja, Meseros y Panel, y a la derecha la información, los
  * botones y quién entró.
  */
+/** Rol que corresponde a cada área (para mostrar a quien entró con PIN). */
+const ROLE_OF: Record<StaffArea, string> = { cocina: 'cocina', caja: 'caja', meseros: 'mesero', panel: 'dueno' }
+
 export function StaffBar({ area, info, actions, user }: StaffBarProps) {
   const { logo } = restaurant
+  const session = readSession()
+  const who = session && session.role === ROLE_OF[area] ? session.name : user
   return (
     <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-borde bg-tarjeta px-6 py-3">
       <div className="flex items-center gap-3">
@@ -74,7 +80,7 @@ export function StaffBar({ area, info, actions, user }: StaffBarProps) {
       <div className="flex flex-wrap items-center gap-3">
         {info}
         {actions}
-        <span className="rounded-completo bg-fondo px-3 py-2 text-small font-medium text-texto">{user}</span>
+        <span className="rounded-completo bg-fondo px-3 py-2 text-small font-medium text-texto">{who}</span>
       </div>
     </header>
   )

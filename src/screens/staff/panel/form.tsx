@@ -58,7 +58,7 @@ export function FormDialog({ title, submitLabel, onClose, onSubmit, children, ex
     if (onSubmit()) onClose()
   }
   return (
-    <StaffDialog title={title} onClose={onClose} width={width}>
+    <StaffDialog title={title} onClose={onClose} width={width} dismissOnBackdrop={false}>
       <form onSubmit={submit} noValidate className="mt-4 flex min-h-0 flex-col">
         <div className="-mx-1 flex min-h-0 flex-col gap-4 overflow-y-auto px-1 pb-1">{children}</div>
         <div className="mt-5 flex shrink-0 flex-wrap items-center gap-3">

@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { Photo } from '../../../components/Photo'
 import { Tag } from '../../../components/Tag'
 import { Switch } from '../../../components/staff/Switch'
 import { cx } from '../../../lib/cx'
 import { shortRange, useActivePromos, usePromos, type PromoView } from '../../../lib/promo'
 import { fmt, t } from '../../../lib/text'
-import { catalogStore } from '../../../store/catalogEdits'
+import { catalogSnapshot, catalogStore, restoreCatalog, useCatalog, type PromoDef } from '../../../store/catalogEdits'
+import { logAction } from '../../../lib/actionLog'
 import { panelSettingsStore } from '../../../store/panelSettings'
-import { useSavedNote } from './formUtils'
+import { focusPanelAction, useSavedNote } from './formUtils'
 import { PanelCard, PanelHeader, PanelNote } from './parts'
 import { PromoDialog } from './PromoDialog'
 
@@ -32,6 +33,8 @@ export function PanelPromos() {
   const promos = usePromos()
   const activeIds = new Set(useActivePromos().map((p) => p.id))
   const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState<PromoDef | null>(null)
+  const created = useCatalog((s) => s.promos)
   const [note, showNote] = useSavedNote()
 
   const setOn = (p: PromoView, on: boolean) =>
@@ -67,9 +70,22 @@ export function PanelPromos() {
                 {!p.builtIn && (
                   <button
                     type="button"
+                    onClick={() => setEditing(created.find((x) => x.id === p.id) ?? null)}
+                    aria-label={fmt(m.editLabel, { name: p.title })}
+                    className="grid size-12 place-items-center rounded-completo text-texto-2 hover:bg-fondo hover:text-texto"
+                  >
+                    <Pencil aria-hidden size={20} />
+                  </button>
+                )}
+                {!p.builtIn && (
+                  <button
+                    type="button"
                     onClick={() => {
+                      const before = catalogSnapshot()
                       catalogStore.getState().removePromo(p.id)
-                      showNote(m.removed)
+                      logAction('promoDeleted', { name: p.title })
+                      showNote(m.removed, () => restoreCatalog(before))
+                      focusPanelAction()
                     }}
                     aria-label={fmt(m.removeLabel, { name: p.title })}
                     className="grid size-12 place-items-center rounded-completo text-texto-2 hover:bg-fondo hover:text-texto"
@@ -81,7 +97,6 @@ export function PanelPromos() {
                   checked={p.on}
                   onChange={(v) => setOn(p, v)}
                   label={fmt(m.switchLabel, { name: p.title })}
-                  stateText={p.on ? m.stateOn : m.stateOff}
                 />
               </PanelCard>
             </li>
@@ -90,6 +105,7 @@ export function PanelPromos() {
       </ul>
       <PanelNote>{m.footnote}</PanelNote>
       {creating && <PromoDialog onClose={() => setCreating(false)} onSaved={showNote} />}
+      {editing && <PromoDialog promo={editing} onClose={() => setEditing(null)} onSaved={showNote} />}
     </>
   )
 }

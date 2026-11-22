@@ -5,7 +5,8 @@ import { cx } from '../../../lib/cx'
 import { formatMoney } from '../../../lib/money'
 import { isPromoDish, promoLabel, shortRange } from '../../../lib/promo'
 import { fmt, t } from '../../../lib/text'
-import { catalogStore } from '../../../store/catalogEdits'
+import { catalogStore, type PromoDef } from '../../../store/catalogEdits'
+import { logAction } from '../../../lib/actionLog'
 import { Field, FormDialog } from './form'
 import { describedBy, inputClass } from './formUtils'
 
@@ -16,18 +17,27 @@ const WEEK = [1, 2, 3, 4, 5, 6, 0]
  * cómo se llama, días, horario y dónde se ve, con la tarjeta tal como la verá el
  * cliente. Al crearla, aparece en el inicio y el menú (y en la mesa si es "Web y mesa").
  */
-export function PromoDialog({ onClose, onSaved }: { onClose: () => void; onSaved: (text: string) => void }) {
+export function PromoDialog({
+  promo,
+  onClose,
+  onSaved,
+}: {
+  /** La promo a editar, o nada para crear una. */
+  promo?: PromoDef
+  onClose: () => void
+  onSaved: (text: string) => void
+}) {
   const m = t.staff.panel.promos
   const id = useId()
   const dishes = menu.dishes.filter((d) => !isPromoDish(d) && !d.tags.includes('promo'))
-  const [dishId, setDishId] = useState(dishes[0]?.id ?? '')
-  const [quantity, setQuantity] = useState(2)
-  const [price, setPrice] = useState('')
-  const [label, setLabel] = useState<string | null>(null)
-  const [days, setDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6])
-  const [from, setFrom] = useState('16:00')
-  const [to, setTo] = useState('19:00')
-  const [where, setWhere] = useState<'web' | 'todos'>('web')
+  const [dishId, setDishId] = useState(promo?.dishId ?? dishes[0]?.id ?? '')
+  const [quantity, setQuantity] = useState(promo?.quantity ?? 2)
+  const [price, setPrice] = useState(promo ? String(promo.price) : '')
+  const [label, setLabel] = useState<string | null>(promo?.label ?? null)
+  const [days, setDays] = useState<number[]>(promo?.days ?? [0, 1, 2, 3, 4, 5, 6])
+  const [from, setFrom] = useState(promo?.from ?? '16:00')
+  const [to, setTo] = useState(promo?.to ?? '19:00')
+  const [where, setWhere] = useState<'web' | 'todos'>(promo?.where ?? 'web')
   const [tried, setTried] = useState(false)
 
   const dish = dishes.find((d) => d.id === dishId)
@@ -37,10 +47,11 @@ export function PromoDialog({ onClose, onSaved }: { onClose: () => void; onSaved
   const normal = (dish?.price ?? 0) * quantity
   const errors = {
     label: !finalLabel ? m.errorLabel : '',
-    price: !(amount > 0) ? m.errorPrice : '',
+    price: !(amount > 0) ? m.errorPrice : normal && amount >= normal ? fmt(m.errorExpensive, { normal: formatMoney(normal) }) : '',
     days: !days.length ? m.errorDays : '',
-    hours: !from || !to || to <= from ? m.errorHours : '',
+    hours: !from || !to || to === from ? m.errorHours : '',
   }
+  const overnight = Boolean(from && to && to < from)
   const show = (key: keyof typeof errors) => (tried ? errors[key] : '')
   const title = fmt(m.cardTitle, { label: finalLabel || '…', price: amount > 0 ? formatMoney(amount) : 'C$ …' })
 
@@ -51,15 +62,23 @@ export function PromoDialog({ onClose, onSaved }: { onClose: () => void; onSaved
       document.getElementById(`${id}-${first}`)?.focus()
       return false
     }
-    catalogStore.getState().addPromo({ dishId, quantity, price: amount, label: finalLabel, days, from, to, where })
-    onSaved(fmt(m.created, { title }))
+    const data = { dishId, quantity, price: amount, label: finalLabel, days, from, to, where }
+    if (promo) {
+      catalogStore.getState().updatePromo(promo.id, data)
+      logAction('promoUpdated', { name: title })
+      onSaved(fmt(m.updated, { title }))
+    } else {
+      catalogStore.getState().addPromo(data)
+      logAction('promoCreated', { name: title })
+      onSaved(fmt(m.created, { title }))
+    }
     return true
   }
 
   const toggleDay = (d: number) => setDays((list) => (list.includes(d) ? list.filter((x) => x !== d) : [...list, d]))
 
   return (
-    <FormDialog title={m.newTitle} submitLabel={m.create} onClose={onClose} onSubmit={save}>
+    <FormDialog title={promo ? m.editTitle : m.newTitle} submitLabel={promo ? m.save : m.create} onClose={onClose} onSubmit={save}>
       <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-4">
         <Field id={`${id}-dish`} label={m.dish}>
           <select id={`${id}-dish`} value={dishId} onChange={(e) => setDishId(e.target.value)} className={inputClass()}>
@@ -117,7 +136,7 @@ export function PromoDialog({ onClose, onSaved }: { onClose: () => void; onSaved
         </Field>
       </div>
 
-      <fieldset className="flex flex-col gap-2">
+      <fieldset className="flex flex-col gap-2" aria-describedby={show('days') ? `${id}-days-e` : undefined}>
         <legend className="mb-2 text-dish text-texto">{m.days}</legend>
         <div id={`${id}-days`} tabIndex={-1} className="flex flex-wrap gap-2 outline-none">
           {WEEK.map((d) => {
@@ -139,7 +158,11 @@ export function PromoDialog({ onClose, onSaved }: { onClose: () => void; onSaved
             )
           })}
         </div>
-        {show('days') && <p className="text-small text-promo">{show('days')}</p>}
+        {show('days') && (
+          <p id={`${id}-days-e`} className="text-small text-promo">
+            {show('days')}
+          </p>
+        )}
       </fieldset>
 
       <div className="grid grid-cols-2 gap-4">
@@ -154,8 +177,15 @@ export function PromoDialog({ onClose, onSaved }: { onClose: () => void; onSaved
             className={inputClass(Boolean(show('hours')))}
           />
         </Field>
-        <Field id={`${id}-to`} label={m.to}>
-          <input id={`${id}-to`} type="time" value={to} onChange={(e) => setTo(e.target.value)} className={inputClass()} />
+        <Field id={`${id}-to`} label={m.to} hint={overnight ? m.overnight : undefined}>
+          <input
+            id={`${id}-to`}
+            type="time"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            aria-describedby={describedBy(`${id}-to`, overnight ? m.overnight : undefined)}
+            className={inputClass()}
+          />
         </Field>
       </div>
 

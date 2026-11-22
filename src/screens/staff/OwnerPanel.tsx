@@ -1,7 +1,12 @@
+import { useMemo } from 'react'
+import { Link } from 'react-router'
 import { NoticeBanner } from '../../components/NoticeBanner'
+import { formatMoney } from '../../lib/money'
+import { ledgerSinceLastClose, useBoard } from '../../lib/staff'
+import type { Channel } from '../../types/order'
 import { restaurant } from '../../lib/catalog'
 import { cx } from '../../lib/cx'
-import { t } from '../../lib/text'
+import { fmt, t } from '../../lib/text'
 import type { PanelBar } from '../../types/restaurant'
 
 /** Color de cada barra (token del diseño → clase). */
@@ -54,16 +59,59 @@ function Bars({ title, unit = '', bars }: { title: string; unit?: string; bars: 
   )
 }
 
+/** Canal de cada barra de "Pedidos por canal" (en el orden de demo.panel). */
+const CHANNEL_ROWS: (Channel | null)[] = ['mesa', 'llevar', 'mostrador', null]
+
 /**
  * P4 Panel del dueño · Resumen: vendido, pedidos, tiempo en cocina y respuesta del
  * mesero; pedidos por canal (local contra en línea), de dónde llegan a la web,
- * formas de pago, horas pico y más vendidos, y la queja del día. Todos los números
- * son de ejemplo (demo.panel en restaurant.json). La barra y las secciones van en
- * PanelLayout.
+ * formas de pago, horas pico y más vendidos, y la queja del día (con link a Reseñas).
+ * Si hay cobros de caja hoy (el mismo registro del corte del día), Vendido, Pedidos,
+ * canales y formas de pago salen de ahí; lo demás, y todo si no hay cobros, es de
+ * ejemplo (demo.panel). La barra y las secciones van en PanelLayout.
  */
 export function OwnerPanel() {
-  const { kpis, rows, complaint } = restaurant.demo.panel
+  const demo = restaurant.demo.panel
   const p = t.staff.panel
+  // Se recalcula con cada cobro (en esta pestaña u otra).
+  const tables = useBoard()
+  const { kpis, rows, real } = useMemo(() => {
+    void tables
+    const ledger = ledgerSinceLastClose()
+    if (!ledger.length) return { kpis: demo.kpis, rows: demo.rows, real: false }
+    const sold = ledger.reduce((s, e) => s + e.total, 0)
+    const orders = ledger.reduce((s, e) => s + e.comandas, 0)
+    const cash = ledger.filter((e) => e.method === 'efectivo').reduce((s, e) => s + e.total, 0)
+    const cashPct = sold ? Math.round((cash / sold) * 100) : 0
+    const realKpis = demo.kpis.map((k, i) =>
+      i === 0
+        ? { ...k, value: formatMoney(sold), detail: ledger.length === 1 ? p.soldRealOne : fmt(p.soldReal, { n: ledger.length }) }
+        : i === 1
+          ? { ...k, value: String(orders), detail: fmt(p.ticketReal, { amount: formatMoney(orders ? Math.round(sold / orders) : 0) }) }
+          : k,
+    )
+    const realRows = demo.rows.map((row, r) =>
+      row.map((card, c) => {
+        if (r === 0 && c === 0) {
+          return {
+            ...card,
+            bars: card.bars.map((bar, i) => {
+              const ch = CHANNEL_ROWS[i]
+              const list = ch ? ledger.filter((e) => e.byChannel[ch]) : []
+              const amount = ch ? list.reduce((s, e) => s + (e.byChannel[ch] ?? 0), 0) : 0
+              return { ...bar, value: list.length, extra: amount ? formatMoney(amount) : undefined }
+            }),
+          }
+        }
+        if (r === 1 && c === 0) {
+          return { ...card, bars: card.bars.map((bar, i) => ({ ...bar, value: i === 0 ? cashPct : 100 - cashPct })) }
+        }
+        return card
+      }),
+    )
+    return { kpis: realKpis, rows: realRows, real: true }
+  }, [tables, demo, p])
+  const { complaint } = demo
 
   return (
     <>
@@ -81,7 +129,10 @@ export function OwnerPanel() {
         </div>
       ))}
       <NoticeBanner tone="aviso" title={complaint.title} body={complaint.body} />
-      <p className="text-small text-texto-2">{p.footnote}</p>
+      <Link to="/panel/resenas" className="-mt-2 inline-flex min-h-11 items-center self-start text-dish text-verde">
+        {p.seeReviews} →
+      </Link>
+      <p className="text-small text-texto-2">{real ? p.footnoteReal : p.footnote}</p>
     </>
   )
 }

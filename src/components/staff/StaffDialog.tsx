@@ -16,6 +16,8 @@ interface StaffDialogProps {
   width: 520 | 560
   /** Elemento que recibe el foco al abrir (si no, la ventana). */
   initialFocus?: RefObject<HTMLElement | null>
+  /** false = tocar afuera no la cierra (formularios: no perder lo escrito). */
+  dismissOnBackdrop?: boolean
 }
 
 /**
@@ -23,7 +25,15 @@ interface StaffDialogProps {
  * con la ✕, tocando afuera o con Esc; el foco queda adentro y vuelve a donde
  * estaba al cerrar.
  */
-export function StaffDialog({ title, description, onClose, children, width, initialFocus }: StaffDialogProps) {
+export function StaffDialog({
+  title,
+  description,
+  onClose,
+  children,
+  width,
+  initialFocus,
+  dismissOnBackdrop = true,
+}: StaffDialogProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const close = useRef(onClose)
   const titleId = useId()
@@ -73,7 +83,13 @@ export function StaffDialog({ title, description, onClose, children, width, init
 
   return createPortal(
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-6">
-      <div aria-hidden className="fixed inset-0 animate-fade-in bg-texto/50" onClick={() => close.current()} />
+      <div
+        aria-hidden
+        className="fixed inset-0 animate-fade-in bg-texto/50"
+        onClick={() => {
+          if (dismissOnBackdrop) close.current()
+        }}
+      />
       <div
         ref={panelRef}
         role="dialog"

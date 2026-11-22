@@ -6,8 +6,11 @@ import { restaurant } from '../../../lib/catalog'
 import { downloadQr, prettyUrl, publicBase, qrSvg } from '../../../lib/qr'
 import { fmt, t, tableLabel } from '../../../lib/text'
 import { panelSettingsStore, usePanelSettings } from '../../../store/panelSettings'
-import { catalogStore, isAddedTable, useCatalog } from '../../../store/catalogEdits'
-import { useSavedNote } from './formUtils'
+import { catalogSnapshot, catalogStore, isAddedTable, restoreCatalog, useCatalog } from '../../../store/catalogEdits'
+import { focusPanelAction, useSavedNote } from './formUtils'
+import { logAction } from '../../../lib/actionLog'
+import { loadServer } from '../../../lib/server'
+import { clearTableStorage } from '../../../lib/storage'
 import { PanelCard, PanelHeader, PanelNote } from './parts'
 
 /** Una regla de pedido en mesa con su interruptor. */
@@ -24,8 +27,6 @@ function Rule({
   onChange: (v: boolean) => void
   disabled?: boolean
 }) {
-  const on = t.staff.panel.on
-  const off = t.staff.panel.off
   return (
     <PanelCard className="flex flex-1 items-center gap-3 p-4">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -36,7 +37,6 @@ function Rule({
         checked={checked}
         onChange={onChange}
         label={title}
-        stateText={checked ? on : off}
         disabled={disabled}
         title={disabled ? t.staff.soon : undefined}
       />
@@ -45,7 +45,7 @@ function Rule({
 }
 
 /** Tarjeta de una mesa: su QR, la dirección y "Descargar QR" (y "Quitar" si la agregó el dueño). */
-function TableCard({ mesa, onRemove }: { mesa: string; onRemove?: () => void }) {
+function TableCard({ mesa, onRemove, blockedReason }: { mesa: string; onRemove?: () => void; blockedReason?: string }) {
   const m = t.staff.panel.tables
   const url = `${publicBase()}/m/${mesa}`
   const label = tableLabel(mesa)
@@ -79,8 +79,10 @@ function TableCard({ mesa, onRemove }: { mesa: string; onRemove?: () => void }) 
         <button
           type="button"
           onClick={onRemove}
-          aria-label={fmt(m.removeLabel, { mesa: label })}
-          className="grid size-11 shrink-0 place-items-center self-start rounded-completo text-texto-2 hover:bg-fondo hover:text-texto"
+          disabled={Boolean(blockedReason)}
+          title={blockedReason}
+          aria-label={blockedReason ? `${fmt(m.removeLabel, { mesa: label })}: ${blockedReason}` : fmt(m.removeLabel, { mesa: label })}
+          className="grid size-11 shrink-0 place-items-center self-start rounded-completo text-texto-2 hover:bg-fondo hover:text-texto disabled:opacity-40"
         >
           <Trash2 aria-hidden size={18} />
         </button>
@@ -144,8 +146,11 @@ export function PanelTables() {
 
   const addTable = () => {
     const n = catalogStore.getState().addTable()
+    logAction('tableAdded', { mesa: tableLabel(n) })
     showNote(fmt(m.added, { mesa: tableLabel(n), n }))
   }
+  // Una mesa con cuenta abierta no se puede quitar (el cliente quedaría en "QR no válido").
+  const hasOpenAccount = (mesa: string) => loadServer(mesa).comandas.some((c) => !c.paid && !c.rejectedAt)
 
   return (
     <>
@@ -167,11 +172,17 @@ export function PanelTables() {
           <li key={mesa}>
             <TableCard
               mesa={mesa}
+              blockedReason={isAddedTable(mesa) && hasOpenAccount(mesa) ? fmt(m.removeBlocked, { mesa: tableLabel(mesa) }) : undefined}
               onRemove={
                 isAddedTable(mesa)
                   ? () => {
+                      const before = catalogSnapshot()
                       catalogStore.getState().removeTable(mesa)
-                      showNote(fmt(m.removed, { mesa: tableLabel(mesa) }))
+                      // Si se vuelve a agregar con el mismo número, empieza limpia.
+                      clearTableStorage(mesa)
+                      logAction('tableRemoved', { mesa: tableLabel(mesa) })
+                      showNote(fmt(m.removed, { mesa: tableLabel(mesa) }), () => restoreCatalog(before))
+                      focusPanelAction()
                     }
                   : undefined
               }

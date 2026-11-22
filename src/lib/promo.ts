@@ -87,7 +87,10 @@ export function inSchedule(p: { hours: { from: string; to: string }; days: numbe
   if (horario === 'cerrado') return false
   if (!p.days.includes(day)) return false
   if (horario === 'abierto') return true
-  return minutes >= toMinutes(p.hours.from) && minutes < toMinutes(p.hours.to)
+  const from = toMinutes(p.hours.from)
+  const to = toMinutes(p.hours.to)
+  // Si termina antes de empezar, cruza la medianoche (ej. 9 pm a 1 am).
+  return to > from ? minutes >= from && minutes < to : minutes >= from || minutes < to
 }
 
 /**

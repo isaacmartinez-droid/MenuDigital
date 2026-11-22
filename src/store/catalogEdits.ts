@@ -62,14 +62,21 @@ interface CatalogEditsState {
   people: StaffPerson[] | null
   /** El horario; null = el de la config. */
   schedule: ScheduleRange[] | null
-  saveDish: (id: string | null, edit: DishEdit) => string
+  /** Devuelve el id, o null si no entró en el almacenamiento (y no se guardó nada). */
+  saveDish: (id: string | null, edit: DishEdit) => string | null
+  /** Plato de menu.json: vuelve a como venía. */
+  resetDish: (id: string) => void
+  /** Borra un plato agregado y las promos que lo usan. */
   removeDish: (id: string) => void
   addPromo: (promo: Omit<PromoDef, 'id' | 'on'>) => void
+  updatePromo: (id: string, promo: Omit<PromoDef, 'id' | 'on'>) => void
   setPromoOn: (id: string, on: boolean) => void
   removePromo: (id: string) => void
   addTable: () => string
   removeTable: (mesa: string) => void
   addPerson: (person: Omit<StaffPerson, 'id'>) => void
+  updatePerson: (id: string, data: Pick<StaffPerson, 'name' | 'role'>) => void
+  removePerson: (id: string) => void
   setPin: (id: string, pin: string) => void
   /** null = volver al de la config. */
   setSchedule: (ranges: ScheduleRange[] | null) => void
@@ -98,21 +105,40 @@ export const catalogStore = createStore<CatalogEditsState>()(
       people: null,
       schedule: null,
       saveDish: (id, edit) => {
+        const before = catalogSnapshot()
         const added = get().addedDishes
+        let savedId: string
         if (id && added.some((d) => d.id === id)) {
           set({ addedDishes: added.map((d) => (d.id === id ? { ...d, ...edit } : d)) })
-          return id
-        }
-        if (id) {
+          savedId = id
+        } else if (id) {
           set({ dishEdits: { ...get().dishEdits, [id]: edit } })
-          return id
+          savedId = id
+        } else {
+          const dish: Dish = { id: `plato-${newId()}`, available: true, ...edit }
+          set({ addedDishes: [...added, dish] })
+          savedId = dish.id
         }
-        const dish: Dish = { id: `plato-${newId()}`, available: true, ...edit }
-        set({ addedDishes: [...added, dish] })
-        return dish.id
+        // Las fotos ocupan lugar: si no entró en localStorage, se deshace (si no, se perdería al recargar).
+        if (!isPersisted()) {
+          restoreCatalog(before)
+          return null
+        }
+        return savedId
       },
-      removeDish: (id) => set({ addedDishes: get().addedDishes.filter((d) => d.id !== id) }),
+      resetDish: (id) => {
+        const rest = { ...get().dishEdits }
+        delete rest[id]
+        set({ dishEdits: rest })
+      },
+      removeDish: (id) =>
+        set({
+          addedDishes: get().addedDishes.filter((d) => d.id !== id),
+          // Una promo sin su plato quedaría con el nombre vacío: se va con él.
+          promos: get().promos.filter((p) => p.dishId !== id),
+        }),
       addPromo: (promo) => set({ promos: [...get().promos, { ...promo, id: newId(), on: true }] }),
+      updatePromo: (id, promo) => set({ promos: get().promos.map((p) => (p.id === id ? { ...p, ...promo } : p)) }),
       setPromoOn: (id, on) => set({ promos: get().promos.map((p) => (p.id === id ? { ...p, on } : p)) }),
       removePromo: (id) => set({ promos: get().promos.filter((p) => p.id !== id) }),
       addTable: () => {
@@ -123,6 +149,9 @@ export const catalogStore = createStore<CatalogEditsState>()(
       },
       removeTable: (mesa) => set({ addedTables: get().addedTables.filter((m) => m !== mesa) }),
       addPerson: (person) => set({ people: [...(get().people ?? defaultPeople()), { ...person, id: newId() }] }),
+      updatePerson: (id, data) =>
+        set({ people: (get().people ?? defaultPeople()).map((p) => (p.id === id ? { ...p, ...data } : p)) }),
+      removePerson: (id) => set({ people: (get().people ?? defaultPeople()).filter((p) => p.id !== id) }),
       setPin: (id, pin) => set({ people: (get().people ?? defaultPeople()).map((p) => (p.id === id ? { ...p, pin } : p)) }),
       setSchedule: (schedule) => set({ schedule }),
     }),
@@ -141,23 +170,49 @@ export const catalogStore = createStore<CatalogEditsState>()(
   ),
 )
 
+type Snapshot = Pick<CatalogEditsState, 'addedDishes' | 'dishEdits' | 'promos' | 'addedTables' | 'people' | 'schedule'>
+
+const partial = (s: CatalogEditsState): Snapshot => ({
+  addedDishes: s.addedDishes,
+  dishEdits: s.dishEdits,
+  promos: s.promos,
+  addedTables: s.addedTables,
+  people: s.people,
+  schedule: s.schedule,
+})
+
+/** Cómo está todo ahora, para "Deshacer" un borrado. */
+export const catalogSnapshot = (): Snapshot => partial(catalogStore.getState())
+export const restoreCatalog = (snapshot: Snapshot) => catalogStore.setState(snapshot)
+
+/** ¿Lo que hay en memoria quedó guardado en localStorage? (false = no hay espacio). */
+function isPersisted(): boolean {
+  try {
+    const raw = window.localStorage.getItem(KEY)
+    const saved = raw ? (JSON.parse(raw) as { state?: Snapshot }).state : undefined
+    return JSON.stringify(saved) === JSON.stringify(catalogSnapshot())
+  } catch {
+    return false
+  }
+}
+
 /** El plato de una promo nueva (va en Combos, con la etiqueta Promo). */
 export const promoDishId = (promo: PromoDef) => `promo-${promo.id}`
 
-function promoDish(promo: PromoDef, base: Dish | undefined): Dish {
+function promoDish(promo: PromoDef, base: Dish): Dish {
   const p = t.staff.panel.promos
   return {
     id: promoDishId(promo),
     name: fmt(p.dishName, { label: promo.label }),
     category: 'combos',
     price: promo.price,
-    shortDescription: fmt(p.dishShort, { quantity: promo.quantity, dish: base?.name ?? '' }),
+    shortDescription: fmt(p.dishShort, { quantity: promo.quantity, dish: base.name }),
     description: fmt(p.dishDescription, { label: promo.label, price: formatMoney(promo.price) }),
-    includes: `${promo.quantity} × ${base?.name ?? ''}`,
-    image: base?.image,
+    includes: `${promo.quantity} × ${base.name}`,
+    image: base.image,
     tags: ['promo'],
-    extras: base?.extras,
-    maxExtras: base?.maxExtras,
+    extras: base.extras,
+    maxExtras: base.maxExtras,
     days: promo.days.length === 7 ? undefined : promo.days,
     available: true,
   }
@@ -193,7 +248,11 @@ function apply({ addedDishes, dishEdits, promos, addedTables, schedule }: Catalo
   }
   const extra = [
     ...addedDishes.map(live),
-    ...promos.map((p) => live(promoDish(p, baseDishes.find((d) => d.id === p.dishId) ?? addedDishes.find((d) => d.id === p.dishId)))),
+    ...promos.flatMap((p) => {
+      const base = baseDishes.find((d) => d.id === p.dishId) ?? addedDishes.find((d) => d.id === p.dishId)
+      // Sin su plato (datos viejos), la promo no se muestra.
+      return base ? [live(promoDish(p, base))] : []
+    }),
   ]
   menu.dishes.splice(0, menu.dishes.length, ...baseDishes, ...extra)
   syncDishIndex()

@@ -98,7 +98,6 @@ export function PanelHours() {
               checked={closedToday}
               onChange={(v) => panelSettingsStore.getState().setClosedToday(v)}
               label={m.closeToday}
-              stateText={closedToday ? t.staff.panel.on : t.staff.panel.off}
             />
           </div>
           {!onlyInHours && !closedToday && <p className="text-small text-texto-2">{m.outOfHoursAllowed}</p>}

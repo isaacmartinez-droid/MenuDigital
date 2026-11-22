@@ -29,6 +29,7 @@ cómo se conecta con la mesa y la web, y lo que falta. La mesa está en
 11. [Limitaciones](#11-limitaciones)
 12. [Pendiente](#12-pendiente)
 13. [Hallazgos de las pruebas con agentes](#13-hallazgos-de-las-pruebas-con-agentes)
+14. [Revisión senior del panel](#14-revisión-senior-del-panel)
 
 ---
 
@@ -421,6 +422,8 @@ propina, método, recibido, vuelto, cajera y hora).
 | Ajustes del panel (promo, reglas, cerrar hoy) | `fritanga-nica:panel` |
 | Platos, promos, mesas, personal y horario del panel | `fritanga-nica:catalogo` |
 | Registro de cobros y cortes del día | `fritanga-nica:caja:cobros`, `fritanga-nica:caja:cortes` |
+| Registro de cambios (P4c) | `fritanga-nica:registro` |
+| Quién entró con PIN (en la pestaña) | `fritanga-nica:personal:sesion` (sessionStorage) |
 | Último número de comanda | `fritanga-nica:ultimo-numero` |
 
 **API real:** el tablero (`lib/staff.ts`) se reemplaza por `GET /api/cocina` y `GET /api/caja`
@@ -442,6 +445,7 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 | `src/store/panelSettings.ts` | Ajustes del panel compartidos entre pestañas: promo, reglas y "Cerrar hoy" |
 | `src/store/catalogEdits.ts` | Lo que agrega o cambia el dueño (platos, promos, mesas, personal, horario), aplicado sobre `menu` y `restaurant` |
 | `src/lib/qr.ts` | QR de mesa con la marca, en el navegador, y su descarga |
+| `src/lib/actionLog.ts`, `staffSession.ts` | Registro de cambios y quién entró con PIN |
 | `src/lib/useTableServer.ts` | El teléfono lee lo que marcó el personal (mesa bloqueada, pedido aceptado o rechazado) |
 | `src/components/staff/PrintSheet.tsx` | Ticket de 72 mm para imprimir (cuenta y corte) |
 | `src/screens/staff/ManualOrder.tsx`, `DayClose.tsx` | P2c Nuevo pedido (caja y mesero) y P2d Corte del día |
@@ -471,7 +475,8 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
   (`aria-current`) y lo que no está hecho se anuncia como "Próximamente".
 - Las pestañas de caja, "Cómo cobrar", "Por persona" y "Método" son grupos de radio: Tab entra a
   la opción elegida y las flechas cambian.
-- Los interruptores de agotados son `role="switch"` con el nombre y el estado ("Enchilada: Hay").
+- Los interruptores son `role="switch"` con el nombre del plato o la regla; el estado lo da
+  `aria-checked` (sin repetirlo en el nombre).
   Lo mismo los del panel ("Cerrar hoy: Apagado").
 - El panel usa tablas y listas de verdad (`th` por plato), cada QR tiene su texto ("Código QR de
   la Mesa 1"), "Copiar" y "Descargar QR" dicen de qué son, y al copiar se anuncia.
@@ -502,8 +507,8 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 
 - Del Figma: nada (las 20 pantallas del personal están pasadas).
 - Que el PIN proteja de verdad las pantallas (hoy las direcciones directas entran sin PIN).
-- Del panel: editar o borrar promos ya creadas, borrar personas y que el registro de acciones
-  sea real.
+- Del panel (ver 14): editar la promo del día (días y horario), editar acompañantes y extras de
+  un plato, reportes por fecha, exportar e historial completo.
 - Del sistema real: backend para que los pedidos lleguen entre dispositivos, WhatsApp de
   confirmación de verdad, impresora de tickets y los números reales del panel.
 
@@ -548,3 +553,33 @@ demo**:
 **No eran errores** (propio de una demo sin backend): navegadores distintos reciben el mismo
 FN-0142; sin el personal abierto los pedidos avanzan solos; los textos "(ejemplo)"; "Abierto" a
 las 11 pm con `?forzar=abierto`.
+
+## 14. Revisión senior del panel
+
+El 2026-11-22 un agente revisó el panel como desarrollador senior (código y app, a 1280 y 768 px).
+Su veredicto: bien armado para la demo; le faltaba editar lo ya creado y había tres fallas que se
+notaban. Se aplicó en la rama `revision-panel` (la rama `plantilla-mesa` ya estaba subida):
+
+| Hallazgo | Cómo quedó |
+|---|---|
+| Borrar un plato dejaba viva su promo, con el nombre vacío | Se borra la promo con él; la ventana avisa antes ("Este plato está en una promo…") y se puede deshacer |
+| Con el almacenamiento lleno, la foto "se guardaba" y se perdía al recargar | `saveDish` comprueba que quedó guardado; si no, deshace y dice "No hay espacio para más fotos…". Las fotos bajaron a 480 px |
+| Un horario que cierra antes de abrir se guardaba sin preguntar | Avisa "cierra antes de abrir; si cierra pasada la medianoche, tocá Guardar de nuevo"; abrir y cerrar a la misma hora es error |
+| No se podían editar las promos creadas | Lápiz en cada promo nueva: abre la misma ventana con sus datos |
+| El Resumen no cambiaba con los cobros de la demo | Si hay cobros hoy, Vendido, Pedidos (con ticket promedio), canales y formas de pago salen del registro de caja; la nota lo aclara |
+| Se borraba con un toque, sin deshacer | El aviso verde trae **Deshacer** durante 5 s (platos, promos, mesas, personas, volver al original) |
+| Personas: no se podían quitar ni cambiar | **Editar** (nombre, rol y Quitar); tiene que quedar al menos un dueño |
+| La promo del día se editaba también en Menú | Los platos de promo ya no salen en Menú (se manejan en Promos) |
+| Una promo podía costar más que lo normal | Error: "La promo tiene que costar menos que lo normal (C$ 120)" |
+| Tocar fuera de una ventana borraba el formulario | Las ventanas con formulario solo se cierran con ✕, Cancelar o Esc |
+| La nota de Personal prometía un PIN para cancelar que no existe | Texto corregido; el registro ahora es **real** (lo que se cambia en el panel y en caja, con quién y a qué hora) y los ejemplos quedan aparte |
+| Quitar una mesa con cuenta abierta | No se puede ("cobrala antes de quitarla"); al quitarla se limpia lo guardado de esa mesa |
+| Menú sin buscar ni filtrar | Buscador y filtro por categoría; "Volver al original" para los platos de `menu.json`; la etiqueta Promo ya no se puede poner a mano |
+| Las promos no podían cruzar la medianoche | Ahora sí ("Termina pasada la medianoche") |
+| Accesibilidad: foco perdido al borrar, errores sin enlazar, estado repetido en los interruptores | El foco vuelve al botón principal; errores de días y horas con `aria-describedby`; interruptores sin el estado en el nombre |
+| Reseñas no se actualizaban; la queja del Resumen no llevaba a Reseñas | Se actualizan solas (evento `storage`) y el Resumen tiene "Ver en Reseñas →" |
+| La barra siempre decía "Dueño"; PIN como 1234 o 0000 | Muestra a quien entró con PIN (si es de esa área); los PIN nuevos no pueden ser triviales (los de la demo quedan) |
+
+**Para el sistema real (anotado, no se hizo):** que el PIN proteja las pantallas (hoy los links
+directos entran, a propósito, para la demo); reportes por fecha, exportar e historial completo;
+editar la promo del día; acompañantes y extras por plato; responder y filtrar reseñas.

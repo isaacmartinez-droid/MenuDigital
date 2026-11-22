@@ -6,6 +6,7 @@ import { NoticeBanner } from '../../components/NoticeBanner'
 import { ChannelChip } from '../../components/staff/ChannelChip'
 import { ChargeDialog } from '../../components/staff/ChargeDialog'
 import { PrintSheet } from '../../components/staff/PrintSheet'
+import { logAction } from '../../lib/actionLog'
 import { Segmented } from '../../components/staff/Segmented'
 import { StaffBar } from '../../components/staff/StaffBar'
 import { TAKEOUT } from '../../lib/channel'
@@ -489,6 +490,7 @@ function TableDetail({
             icon={blocked ? <Unlock size={18} aria-hidden /> : <Lock size={18} aria-hidden />}
             onClick={() => {
               setBlocked(table, !blocked)
+              logAction(blocked ? 'tableUnblocked' : 'tableBlocked', { mesa })
               onCharged({ tone: 'positivo', title: fmt(blocked ? c.unblockedNotice : c.blockedNotice, { mesa }) })
             }}
           >

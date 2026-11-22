@@ -5,6 +5,7 @@ import { restaurant } from '../../lib/catalog'
 import { cx } from '../../lib/cx'
 import { fmt, t } from '../../lib/text'
 import { peopleOf, useCatalog, type StaffRole } from '../../store/catalogEdits'
+import { saveSession } from '../../lib/staffSession'
 
 const p = t.staff.pin
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'] as const
@@ -53,6 +54,7 @@ export function PinLogin() {
       return
     }
     const home = HOME[person.role]
+    saveSession({ name: person.name, role: person.role })
     setWelcome(fmt(p.welcome, { name: person.name, area: t.staff.areas[home.area] }))
     window.setTimeout(() => navigate(home.path), 600)
   }

@@ -17,6 +17,7 @@ export function PanelHeader({ title, action, onAction }: { title: string; action
           disabled={!onAction}
           title={onAction ? undefined : t.staff.soon}
           onClick={onAction}
+          data-panel-action
           icon={<Plus aria-hidden size={20} />}
         >
           {action}

@@ -392,7 +392,7 @@
       "pinLog": [
         "8:05 pm · María canceló FN-0130 · cliente se arrepintió",
         "7:40 pm · Carlos cerró Mesa 4 sin cobro · cortesía",
-        "6:12 pm · Don Julio marcó agotado Maduro en gloria"
+        "6:12 pm · Dueño cerró la Mesa 2 sin cobro · se fueron sin pagar"
       ],
       "sampleComplaint": { "dishId": "enchilada", "author": "Mesa 3", "rating": 2, "time": "7:40 pm" },
       "links": [
@@ -1079,6 +1079,31 @@
         "on": "Activo",
         "off": "Apagado",
         "cancel": "Cancelar",
+        "undo": "Deshacer",
+        "undone": "Listo, quedó como antes.",
+        "footnoteReal": "Vendido, pedidos, canales y formas de pago salen de los cobros de caja de hoy; lo demás es de ejemplo.",
+        "seeReviews": "Ver en Reseñas",
+        "soldReal": "{n} cobros en caja hoy",
+        "soldRealOne": "1 cobro en caja hoy",
+        "ticketReal": "Ticket promedio {amount}",
+        "log": {
+          "entry": "{time} · {who} {action}",
+          "dishSaved": "guardó el plato {name}",
+          "dishDeleted": "borró el plato {name}",
+          "dishReset": "devolvió {name} a como venía",
+          "promoCreated": "creó la promo {name}",
+          "promoUpdated": "cambió la promo {name}",
+          "promoDeleted": "borró la promo {name}",
+          "tableAdded": "agregó la {mesa}",
+          "tableRemoved": "quitó la {mesa}",
+          "personAdded": "agregó a {name}",
+          "personUpdated": "cambió los datos de {name}",
+          "personRemoved": "quitó a {name}",
+          "pinChanged": "cambió el PIN de {name}",
+          "hoursChanged": "cambió el horario",
+          "tableBlocked": "bloqueó la {mesa}",
+          "tableUnblocked": "desbloqueó la {mesa}"
+        },
         "roles": { "cocina": "Cocina", "caja": "Caja", "mesero": "Mesero", "dueno": "Dueño · puede cancelar" },
         "roleNames": { "cocina": "Cocina", "caja": "Caja", "mesero": "Mesero", "dueno": "Dueño" },
         "menu": {
@@ -1114,6 +1139,16 @@
           "errorName": "Escribí el nombre del plato.",
           "errorPrice": "Escribí un precio mayor que 0.",
           "errorShort": "Escribí una línea corta.",
+          "noSpace": "No hay espacio para más fotos en este navegador. Probá con una foto más chica, sin foto, o borrá otro plato con foto.",
+          "deletedWithPromos": "{name} borrado del menú, junto con su promo.",
+          "deletePromoWarn": "Este plato está en una promo ({promos}): si lo borrás, la promo también se borra.",
+          "reset": "Volver al original",
+          "resetDone": "{name} volvió a como venía.",
+          "search": "Buscar plato",
+          "categoryFilter": "Categoría",
+          "allCategories": "Todas",
+          "emptyFilter": "No hay platos con ese filtro.",
+          "count": "{n} platos",
           "footnote": "Agotado en un toque: también desde cocina. Se oculta al instante en la app del cliente."
         },
         "tables": {
@@ -1138,6 +1173,7 @@
           "added": "{mesa} agregada, con su QR. Ya se puede pedir desde /m/{n}.",
           "removed": "{mesa} quitada.",
           "newTag": "Nueva",
+          "removeBlocked": "La {mesa} tiene una cuenta abierta: cobrala antes de quitarla.",
           "footnote": "Próximamente: placas con NFC seguro (NTAG 424 DNA) que crean un enlace único en cada toque, para que una foto del QR no sirva para pedir desde fuera."
         },
         "people": {
@@ -1163,8 +1199,19 @@
           "errorPin": "El PIN son 4 números.",
           "errorMatch": "Los dos PIN no coinciden.",
           "errorTaken": "Ese PIN ya lo usa {name}.",
-          "logTitle": "Registro de acciones con PIN del dueño",
-          "footnote": "Cancelar pedidos o cerrar mesas sin cobrar pide el PIN del dueño. Todo queda registrado."
+          "errorTrivial": "Elegí un PIN más difícil: no 1234 ni el mismo número cuatro veces.",
+          "edit": "Editar",
+          "editLabel": "Editar a {name}",
+          "editTitle": "Editar a {name}",
+          "save": "Guardar",
+          "remove": "Quitar",
+          "updated": "{name} guardado.",
+          "removed": "{name} quitado.",
+          "errorLastOwner": "Tiene que quedar al menos un dueño.",
+          "logEmpty": "Todavía no hay cambios en este navegador.",
+          "logExamples": "Así se verá con el sistema real (ejemplos):",
+          "logTitle": "Registro de cambios",
+          "footnote": "Cada quien entra a su pantalla con su PIN desde /personal. Lo que se cambia en el panel y en caja queda en el registro. Con el sistema real, cancelar un pedido o cerrar una mesa sin cobrar va a pedir el PIN del dueño."
         },
         "promos": {
           "title": "Promos",
@@ -1208,7 +1255,14 @@
           "errorLabel": "Escribí cómo se llama la promo.",
           "errorPrice": "Escribí el precio de la promo.",
           "errorDays": "Elegí al menos un día.",
-          "errorHours": "La hora de fin tiene que ser después de la de inicio.",
+          "errorHours": "La hora de fin no puede ser igual a la de inicio.",
+          "overnight": "Termina pasada la medianoche.",
+          "errorExpensive": "La promo tiene que costar menos que lo normal ({normal}).",
+          "edit": "Editar",
+          "editLabel": "Editar la promo {name}",
+          "editTitle": "Editar promo",
+          "save": "Guardar cambios",
+          "updated": "Promo guardada: {title}.",
           "pluralStop": ["con", "de", "del", "en", "y", "a", "al", "para", "sin"]
         },
         "hours": {
@@ -1237,7 +1291,9 @@
           "save": "Guardar horario",
           "saved": "Horario guardado.",
           "reset": "Volver al horario original",
-          "errorHours": "Completá las dos horas de {day}."
+          "errorHours": "Completá las dos horas de {day}.",
+          "errorSame": "{day}: abre y cierra a la misma hora.",
+          "overnightWarn": "{days}: cierra antes de abrir. Si cierra pasada la medianoche, tocá \"Guardar horario\" de nuevo."
         },
         "reviews": {
           "title": "Reseñas",

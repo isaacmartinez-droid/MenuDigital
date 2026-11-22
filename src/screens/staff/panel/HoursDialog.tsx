@@ -4,6 +4,7 @@ import { restaurant } from '../../../lib/catalog'
 import { fmt, t } from '../../../lib/text'
 import type { ScheduleRange } from '../../../types/restaurant'
 import { catalogStore } from '../../../store/catalogEdits'
+import { logAction } from '../../../lib/actionLog'
 import { FormDialog } from './form'
 import { inputClass } from './formUtils'
 
@@ -46,16 +47,36 @@ export function HoursDialog({ onClose, onSaved }: { onClose: () => void; onSaved
     return out
   })
   const [tried, setTried] = useState(false)
-  const missing = WEEK.find((d) => !rows[d].closed && (!rows[d].open || !rows[d].close))
+  // Días que cierran antes de abrir: se avisa una vez ("¿cierra pasada la medianoche?").
+  const [overnightOk, setOvernightOk] = useState('')
+  const open = WEEK.filter((d) => !rows[d].closed)
+  const missing = open.find((d) => !rows[d].open || !rows[d].close)
+  const same = open.find((d) => rows[d].open && rows[d].open === rows[d].close)
+  const overnight = open.filter((d) => rows[d].open && rows[d].close && rows[d].close < rows[d].open)
+  const overnightKey = overnight.map((d) => `${d}:${rows[d].open}-${rows[d].close}`).join(',')
+  const bad = missing ?? same
+  const errorText =
+    missing !== undefined
+      ? fmt(m.errorHours, { day: m.days[missing] })
+      : same !== undefined
+        ? fmt(m.errorSame, { day: m.days[same] })
+        : ''
+  const warnOvernight = tried && overnight.length > 0 && overnightOk === overnightKey
   const set = (day: number, patch: Partial<DayRow>) => setRows((r) => ({ ...r, [day]: { ...r[day], ...patch } }))
 
   const save = () => {
     setTried(true)
-    if (missing !== undefined) {
-      document.getElementById(`${id}-${missing}-open`)?.focus()
+    if (bad !== undefined) {
+      document.getElementById(`${id}-${bad}-open`)?.focus()
+      return false
+    }
+    // Primera vez: avisa; si vuelve a guardar sin cambiar esas horas, es que cierra pasada la medianoche.
+    if (overnight.length && overnightOk !== overnightKey) {
+      setOvernightOk(overnightKey)
       return false
     }
     catalogStore.getState().setSchedule(toRanges(rows))
+    logAction('hoursChanged')
     onSaved(m.saved)
     return true
   }
@@ -102,7 +123,8 @@ export function HoursDialog({ onClose, onSaved }: { onClose: () => void; onSaved
           {WEEK.map((day) => {
             const row = rows[day]
             const name = m.days[day]
-            const bad = tried && missing === day
+            const rowBad = tried && bad === day
+            const rowWarn = warnOvernight && overnight.includes(day)
             return (
               <tr key={day} className="border-t border-borde">
                 <th scope="row" className="py-2 pr-3 text-left text-body font-normal text-texto">
@@ -116,8 +138,9 @@ export function HoursDialog({ onClose, onSaved }: { onClose: () => void; onSaved
                     disabled={row.closed}
                     onChange={(e) => set(day, { open: e.target.value })}
                     aria-label={fmt(m.openLabel, { day: name })}
-                    aria-invalid={bad}
-                    className={`${inputClass(bad)} disabled:opacity-40`}
+                    aria-invalid={rowBad}
+                    aria-describedby={rowBad ? `${id}-e` : rowWarn ? `${id}-w` : undefined}
+                    className={`${inputClass(rowBad)} disabled:opacity-40`}
                   />
                 </td>
                 <td className="py-2 pr-2">
@@ -127,8 +150,9 @@ export function HoursDialog({ onClose, onSaved }: { onClose: () => void; onSaved
                     disabled={row.closed}
                     onChange={(e) => set(day, { close: e.target.value })}
                     aria-label={fmt(m.closeLabel, { day: name })}
-                    aria-invalid={bad}
-                    className={`${inputClass(bad)} disabled:opacity-40`}
+                    aria-invalid={rowBad}
+                    aria-describedby={rowBad ? `${id}-e` : rowWarn ? `${id}-w` : undefined}
+                    className={`${inputClass(rowBad || rowWarn)} disabled:opacity-40`}
                   />
                 </td>
                 <td className="py-2">
@@ -147,9 +171,14 @@ export function HoursDialog({ onClose, onSaved }: { onClose: () => void; onSaved
           })}
         </tbody>
       </table>
-      {tried && missing !== undefined && (
-        <p role="alert" className="text-small text-promo">
-          {fmt(m.errorHours, { day: m.days[missing] })}
+      {tried && errorText && (
+        <p id={`${id}-e`} role="alert" className="text-small text-promo">
+          {errorText}
+        </p>
+      )}
+      {warnOvernight && !errorText && (
+        <p id={`${id}-w`} role="alert" className="text-small text-promo">
+          {fmt(m.overnightWarn, { days: overnight.map((d) => m.days[d]).join(', ') })}
         </p>
       )}
     </FormDialog>

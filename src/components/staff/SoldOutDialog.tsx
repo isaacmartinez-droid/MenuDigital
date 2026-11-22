@@ -47,7 +47,7 @@ export function SoldOutDialog({ onClose }: { onClose: () => void }) {
         {rows.map((r) => (
           <li key={r.key} className="flex items-center justify-between gap-4 py-2">
             <span className={cx('text-dish', r.on ? 'text-texto' : 'text-texto-2')}>{r.name}</span>
-            <Switch checked={r.on} onChange={r.set} label={r.name} stateText={r.on ? k.available : k.soldOut} />
+            <Switch checked={r.on} onChange={r.set} label={r.name} />
           </li>
         ))}
       </ul>

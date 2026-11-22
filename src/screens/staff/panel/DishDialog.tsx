@@ -5,12 +5,13 @@ import { Photo } from '../../../components/Photo'
 import { menu } from '../../../lib/catalog'
 import { fmt, t } from '../../../lib/text'
 import type { Dish } from '../../../types/menu'
-import { catalogStore, isAddedDish } from '../../../store/catalogEdits'
+import { catalogSnapshot, catalogStore, isAddedDish, restoreCatalog } from '../../../store/catalogEdits'
+import { logAction } from '../../../lib/actionLog'
 import { Field, FormDialog } from './form'
 import { describedBy, inputClass } from './formUtils'
 
 /** Lado mayor de la foto guardada (en px): liviana para localStorage y suficiente para el detalle. */
-const PHOTO_MAX = 640
+const PHOTO_MAX = 480
 
 /** Achica la foto elegida y la devuelve como data: URI (WebP si el navegador puede, si no JPEG). */
 async function shrinkPhoto(file: File): Promise<string> {
@@ -24,8 +25,8 @@ async function shrinkPhoto(file: File): Promise<string> {
     canvas.width = Math.round(img.naturalWidth * scale)
     canvas.height = Math.round(img.naturalHeight * scale)
     canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height)
-    const webp = canvas.toDataURL('image/webp', 0.8)
-    return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.8)
+    const webp = canvas.toDataURL('image/webp', 0.75)
+    return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.75)
   } finally {
     URL.revokeObjectURL(url)
   }
@@ -35,7 +36,10 @@ interface DishDialogProps {
   /** El plato a editar, o nada para agregar uno nuevo. */
   dish?: Dish
   onClose: () => void
-  onSaved: (text: string) => void
+  /** Aviso al guardar o borrar; con `undo`, el aviso ofrece "Deshacer". */
+  onSaved: (text: string, undo?: () => void) => void
+  /** Se borró el plato: el foco tiene que ir a otro lado (el lápiz ya no existe). */
+  onDeleted?: () => void
 }
 
 /**
@@ -43,7 +47,7 @@ interface DishDialogProps {
  * nombre, categoría, precio, línea corta, descripción, etiqueta y foto. Al guardar,
  * la mesa y la web lo ven al instante. Los platos agregados se pueden borrar.
  */
-export function DishDialog({ dish, onClose, onSaved }: DishDialogProps) {
+export function DishDialog({ dish, onClose, onSaved, onDeleted }: DishDialogProps) {
   const m = t.staff.panel.menu
   const id = useId()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -56,7 +60,13 @@ export function DishDialog({ dish, onClose, onSaved }: DishDialogProps) {
   const [image, setImage] = useState(dish?.image ?? '')
   const [photoError, setPhotoError] = useState('')
   const [tried, setTried] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const removable = dish && isAddedDish(dish.id)
+  const edited = dish && !removable && Boolean(catalogStore.getState().dishEdits[dish.id])
+  // Promos que usan este plato: si se borra el plato, se van con él.
+  const promosOfDish = dish ? catalogStore.getState().promos.filter((p) => p.dishId === dish.id) : []
+  // La etiqueta Promo es de los platos de promo (se crean desde Promos).
+  const tags = menu.tags.filter((x) => x.id !== 'promo')
 
   const amount = Number(price.replace(/[^\d]/g, ''))
   const errors = {
@@ -74,7 +84,7 @@ export function DishDialog({ dish, onClose, onSaved }: DishDialogProps) {
     }
     // Las etiquetas que no se editan acá (si el plato tenía más de una) se conservan.
     const rest = dish?.tags.slice(1) ?? []
-    catalogStore.getState().saveDish(dish?.id ?? null, {
+    const savedId = catalogStore.getState().saveDish(dish?.id ?? null, {
       name: name.trim(),
       category,
       price: amount,
@@ -83,6 +93,11 @@ export function DishDialog({ dish, onClose, onSaved }: DishDialogProps) {
       tags: tag ? [tag, ...rest.filter((x) => x !== tag)] : rest,
       image: image || undefined,
     })
+    if (!savedId) {
+      setSaveError(m.noSpace)
+      return false
+    }
+    logAction('dishSaved', { name: name.trim() })
     onSaved(fmt(m.saved, { name: name.trim() }))
     return true
   }
@@ -104,19 +119,40 @@ export function DishDialog({ dish, onClose, onSaved }: DishDialogProps) {
       onClose={onClose}
       onSubmit={save}
       extra={
-        removable && (
-          <Button
-            variant="secondary"
-            icon={<Trash2 aria-hidden size={18} />}
-            onClick={() => {
-              catalogStore.getState().removeDish(dish.id)
-              onSaved(fmt(m.deleted, { name: dish.name }))
-              onClose()
-            }}
-          >
-            {m.delete}
-          </Button>
-        )
+        <>
+          {removable && (
+            <Button
+              variant="secondary"
+              icon={<Trash2 aria-hidden size={18} />}
+              onClick={() => {
+                const before = catalogSnapshot()
+                catalogStore.getState().removeDish(dish.id)
+                logAction('dishDeleted', { name: dish.name })
+                onSaved(fmt(promosOfDish.length ? m.deletedWithPromos : m.deleted, { name: dish.name }), () =>
+                  restoreCatalog(before),
+                )
+                onClose()
+                onDeleted?.()
+              }}
+            >
+              {m.delete}
+            </Button>
+          )}
+          {edited && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const before = catalogSnapshot()
+                catalogStore.getState().resetDish(dish.id)
+                logAction('dishReset', { name: dish.name })
+                onSaved(fmt(m.resetDone, { name: dish.name }), () => restoreCatalog(before))
+                onClose()
+              }}
+            >
+              {m.reset}
+            </Button>
+          )}
+        </>
       }
     >
       <Field id={`${id}-name`} label={m.name} error={show('name')}>
@@ -179,7 +215,7 @@ export function DishDialog({ dish, onClose, onSaved }: DishDialogProps) {
       <Field id={`${id}-tag`} label={m.tag}>
         <select id={`${id}-tag`} value={tag} onChange={(e) => setTag(e.target.value)} className={inputClass()}>
           <option value="">{m.noTag}</option>
-          {menu.tags.map((x) => (
+          {tags.map((x) => (
             <option key={x.id} value={x.id}>
               {x.label}
             </option>
@@ -217,6 +253,16 @@ export function DishDialog({ dish, onClose, onSaved }: DishDialogProps) {
           </p>
         )}
       </div>
+      {removable && promosOfDish.length > 0 && (
+        <p className="text-small text-texto-2">
+          {fmt(m.deletePromoWarn, { promos: promosOfDish.map((p) => p.label).join(', ') })}
+        </p>
+      )}
+      {saveError && (
+        <p role="alert" className="text-small text-promo">
+          {saveError}
+        </p>
+      )}
     </FormDialog>
   )
 }
