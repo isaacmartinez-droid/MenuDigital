@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter, type RouteObject } from 'react-router'
+import { createBrowserRouter, type RouteObject } from 'react-router'
 import { InvalidTable } from './screens/InvalidTable'
 import { NotFound } from './screens/NotFound'
 import { MesaLayout } from './screens/MesaLayout'
@@ -69,7 +69,7 @@ const routes: RouteObject[] = [
     lazy: async () => ({ Component: (await import('./screens/staff/StaffLayout')).StaffLayout }),
     errorElement: <RouteError />,
     children: [
-      { path: '/personal', element: <Navigate to="/cocina" replace /> },
+      { path: '/personal', lazy: async () => ({ Component: (await import('./screens/staff/PinLogin')).PinLogin }) },
       { path: '/cocina', lazy: async () => ({ Component: (await import('./screens/staff/Kitchen')).Kitchen }) },
       { path: '/caja', lazy: async () => ({ Component: (await import('./screens/staff/Cashier')).Cashier }) },
       {

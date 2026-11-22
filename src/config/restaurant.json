@@ -1053,6 +1053,17 @@
         "rejected": "{id} rechazado.",
         "blockedState": "Bloqueada"
       },
+      "pin": {
+        "title": "Entrá con tu PIN",
+        "progress": "{n} de 4 números",
+        "keypad": "Teclado del PIN",
+        "delete": "Borrar",
+        "deleteLabel": "Borrar el último número",
+        "wrong": "Ese PIN no es de nadie. Probá de nuevo.",
+        "welcome": "Hola, {name}. Entrando a {area}…",
+        "footnote": "Cada quien ve solo lo suyo: cocina, caja, meseros o dueño.",
+        "demoHint": "Demo: Don Julio 1111 · María 2222 · Carlos 3333 · Dueño 0000"
+      },
       "panel": {
         "sectionsLabel": "Secciones del panel",
         "sections": [

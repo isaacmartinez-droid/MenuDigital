@@ -39,7 +39,7 @@ Hay dos canales en la misma app; la URL decide cuál:
   visita (`?src=ig`, `fb`, `google` o `wa`). En desarrollo, para volver a ver la bienvenida,
   borrar el almacenamiento del sitio.
 
-- **Personal (demo):** `/cocina`, `/caja` y `/panel` (tablet) y `/meseros` (celular). Con la cocina abierta en una
+- **Personal (demo):** `/personal` (entrar con PIN: 1111 cocina, 2222 caja, 3333 meseros, 0000 dueño), `/cocina`, `/caja` y `/panel` (tablet) y `/meseros` (celular). Con la cocina abierta en una
   pestaña, los pedidos que se hagan en otra (mesa o web) esperan a que la cocina los mueva; la
   caja confirma los pedidos web y cobra las mesas, el mesero toma los llamados ("Voy"), y el
   teléfono del cliente se entera solo.

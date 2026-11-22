@@ -40,7 +40,7 @@ las tres que más le sirven al dueño para decidir, fieles al plugin (`pCocina`,
 
 | Hecho | Para después |
 |---|---|
-| P1 Cocina, P1a y P1b (las comandas pasan de columna), P1c Agotados | P0 Entrar con PIN |
+| P0 Entrar con PIN, P1 Cocina, P1a y P1b (las comandas pasan de columna), P1c Agotados | |
 | P2 Caja · por cobrar, P2a por confirmar, P2b Cobrar, P2e mesa cerrada, P2c Nuevo pedido, P2d Corte del día | |
 | Caja sin diseño en el Figma (boceto aprobado el 2026-11-22): Imprimir cuenta, Bloquear mesa, pestaña En curso | |
 | P3 Meseros: avisos, Voy y Atendido (P3a, P3b), P3m Mesas, P3d detalle de mesa, Agregar pedido a esta mesa, Aceptar o rechazar el primer pedido | |
@@ -70,7 +70,7 @@ caja, los meseros ni el panel.
 | `/panel/promos` | Promos | `screens/staff/panel/PanelPromos.tsx` |
 | `/panel/horarios` | Horarios | `screens/staff/panel/PanelHours.tsx` |
 | `/panel/resenas` | Reseñas | `screens/staff/panel/PanelReviews.tsx` |
-| `/personal` | Lleva a `/cocina` (todavía no hay PIN) | `router.tsx` |
+| `/personal` | P0 Entrar con PIN: cada quien entra a su pantalla | `screens/staff/PinLogin.tsx` |
 
 Todas cuelgan de `StaffLayout`; las del panel, además, de `PanelLayout` (la barra y las
 secciones). Se bajan solo si se abren: no le suman peso a la mesa ni a la
@@ -122,6 +122,16 @@ Comparten el "servidor" simulado de localStorage, el mismo que ya usaban la mesa
 **Barra superior (todas):** logo y área, pestañas **Cocina · Caja · Meseros · Panel** (Meseros,
 deshabilitada) y a la derecha la información, los botones y quién entró ("Don Julio", "María",
 "Dueño", de `staff` en la config).
+
+### 4.0 P0 Entrar con PIN (`PinLogin.tsx`)
+
+- `/personal`: logo, "Entrá con tu PIN", cuatro puntos, el teclado (1–9, 0 y **Borrar**) y "Cada
+  quien ve solo lo suyo: cocina, caja, meseros o dueño". También acepta el teclado de la
+  computadora.
+- Con el PIN de una persona (P4c) dice "Hola, María. Entrando a Caja…" y la lleva a su pantalla:
+  Cocina → `/cocina`, Caja → `/caja`, Mesero → `/meseros`, Dueño → `/panel`. Con uno que no es de
+  nadie, los puntos se ponen rojos y dice "Ese PIN no es de nadie. Probá de nuevo."
+- Abajo, los PIN de la demo. Es un prototipo: las direcciones directas siguen entrando sin PIN.
 
 ### 4.1 P1 Cocina (`Kitchen.tsx`)
 
@@ -490,7 +500,8 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 
 ## 12. Pendiente
 
-- Del Figma: P0 PIN.
+- Del Figma: nada (las 20 pantallas del personal están pasadas).
+- Que el PIN proteja de verdad las pantallas (hoy las direcciones directas entran sin PIN).
 - Del panel: editar o borrar promos ya creadas, borrar personas y que el registro de acciones
   sea real.
 - Del sistema real: backend para que los pedidos lleguen entre dispositivos, WhatsApp de
