@@ -33,3 +33,23 @@ export function PromoCard({ promo, subtitle, onClick }: PromoCardProps) {
     </button>
   )
 }
+
+/**
+ * Las promos que se ven ahora: una ocupa todo el ancho; si hay más, van en una fila que
+ * se desliza de costado (cada tarjeta al 85 %, para que se note que hay otra).
+ */
+export function PromoRow<P extends Promo & { id: string }>({ promos, onOpen }: { promos: P[]; onOpen: (promo: P) => void }) {
+  if (promos.length === 1) {
+    const [only] = promos
+    return <PromoCard promo={only} subtitle={only.subtitle} onClick={() => onOpen(only)} />
+  }
+  return (
+    <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 tablet:-mx-8 tablet:px-8">
+      {promos.map((p) => (
+        <li key={p.id} className="w-[85%] max-w-[480px] shrink-0 snap-start">
+          <PromoCard promo={p} subtitle={p.subtitle} onClick={() => onOpen(p)} />
+        </li>
+      ))}
+    </ul>
+  )
+}

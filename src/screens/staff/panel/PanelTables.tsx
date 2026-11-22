@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Trash2 } from 'lucide-react'
+import { Tag } from '../../../components/Tag'
 import { Switch } from '../../../components/staff/Switch'
 import { restaurant } from '../../../lib/catalog'
 import { downloadQr, prettyUrl, publicBase, qrSvg } from '../../../lib/qr'
 import { fmt, t, tableLabel } from '../../../lib/text'
 import { panelSettingsStore, usePanelSettings } from '../../../store/panelSettings'
+import { catalogStore, isAddedTable, useCatalog } from '../../../store/catalogEdits'
+import { useSavedNote } from './formUtils'
 import { PanelCard, PanelHeader, PanelNote } from './parts'
 
 /** Una regla de pedido en mesa con su interruptor. */
@@ -40,8 +44,8 @@ function Rule({
   )
 }
 
-/** Tarjeta de una mesa: su QR, la dirección y "Descargar QR". */
-function TableCard({ mesa }: { mesa: string }) {
+/** Tarjeta de una mesa: su QR, la dirección y "Descargar QR" (y "Quitar" si la agregó el dueño). */
+function TableCard({ mesa, onRemove }: { mesa: string; onRemove?: () => void }) {
   const m = t.staff.panel.tables
   const url = `${publicBase()}/m/${mesa}`
   const label = tableLabel(mesa)
@@ -54,8 +58,11 @@ function TableCard({ mesa }: { mesa: string }) {
         className="size-16 shrink-0 overflow-hidden rounded-chico [&_svg]:block [&_svg]:size-full"
         dangerouslySetInnerHTML={{ __html: svg }}
       />
-      <div className="flex min-w-0 flex-col gap-1">
-        <h3 className="text-dish text-texto">{label}</h3>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <h3 className="flex items-center gap-2 text-dish text-texto">
+          {label}
+          {onRemove && <Tag tone="contorno">{m.newTag}</Tag>}
+        </h3>
         <p className="truncate text-small text-texto-2" title={prettyUrl(url)}>
           {prettyUrl(url)}
         </p>
@@ -68,6 +75,16 @@ function TableCard({ mesa }: { mesa: string }) {
           {m.download}
         </button>
       </div>
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={fmt(m.removeLabel, { mesa: label })}
+          className="grid size-11 shrink-0 place-items-center self-start rounded-completo text-texto-2 hover:bg-fondo hover:text-texto"
+        >
+          <Trash2 aria-hidden size={18} />
+        </button>
+      )}
     </PanelCard>
   )
 }
@@ -119,11 +136,20 @@ export function PanelTables() {
   const limit = usePanelSettings((s) => s.itemLimit)
   const { setOnlyInHours, setItemLimit } = panelSettingsStore.getState()
   const [announce, setAnnounce] = useState('')
+  const [note, showNote] = useSavedNote()
+  // Se vuelve a dibujar cuando el dueño agrega o quita una mesa.
+  useCatalog((s) => s.addedTables)
   const base = publicBase()
+
+  const addTable = () => {
+    const n = catalogStore.getState().addTable()
+    showNote(fmt(m.added, { mesa: tableLabel(n), n }))
+  }
 
   return (
     <>
-      <PanelHeader title={m.title} action={m.add} />
+      <PanelHeader title={m.title} action={m.add} onAction={addTable} />
+      {note}
       <section aria-label={m.rulesLabel} className="flex flex-col gap-4 lg:flex-row">
         <Rule title={m.rules.hours.title} body={m.rules.hours.body} checked={onlyInHours} onChange={setOnlyInHours} />
         <Rule
@@ -138,7 +164,17 @@ export function PanelTables() {
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {restaurant.tables.map((mesa) => (
           <li key={mesa}>
-            <TableCard mesa={mesa} />
+            <TableCard
+              mesa={mesa}
+              onRemove={
+                isAddedTable(mesa)
+                  ? () => {
+                      catalogStore.getState().removeTable(mesa)
+                      showNote(fmt(m.removed, { mesa: tableLabel(mesa) }))
+                    }
+                  : undefined
+              }
+            />
           </li>
         ))}
       </ul>

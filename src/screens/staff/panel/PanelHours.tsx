@@ -7,6 +7,10 @@ import { formatClock, zonedNow } from '../../../lib/schedule'
 import { fmt, t } from '../../../lib/text'
 import { useOpenState } from '../../../lib/useOpenState'
 import { isClosedToday, panelSettingsStore, usePanelSettings } from '../../../store/panelSettings'
+import { useState } from 'react'
+import { useCatalog } from '../../../store/catalogEdits'
+import { HoursDialog } from './HoursDialog'
+import { useSavedNote } from './formUtils'
 import { PanelCard, PanelNote } from './parts'
 
 const toMinutes = (hhmm: string) => {
@@ -30,6 +34,10 @@ export function PanelHours() {
   const closedToday = isClosedToday(closedOn)
   const state = useOpenState()
   const today = zonedNow(timezone).day
+  // Se vuelve a dibujar cuando el dueño cambia el horario.
+  useCatalog((s) => s.schedule)
+  const [editing, setEditing] = useState(false)
+  const [note, showNote] = useSavedNote()
 
   const status = closedToday
     ? fmt(m.closedToday, { open: state.opensAt ?? '' })
@@ -41,11 +49,11 @@ export function PanelHours() {
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-title-lg text-texto">{m.title}</h2>
-        <Button variant="secondary" disabled title={t.staff.soon}>
+        <Button variant="secondary" onClick={() => setEditing(true)}>
           {m.edit}
-          <span className="sr-only"> ({t.staff.soon})</span>
         </Button>
       </div>
+      {note}
       <div className="flex flex-col items-start gap-4 lg:flex-row">
         <PanelCard className="w-full flex-1 px-4 pb-2">
           <h3 className="py-3 text-dish text-texto">{m.weekTitle}</h3>
@@ -97,6 +105,7 @@ export function PanelHours() {
         </PanelCard>
       </div>
       <PanelNote>{m.footnote}</PanelNote>
+      {editing && <HoursDialog onClose={() => setEditing(false)} onSaved={showNote} />}
     </>
   )
 }

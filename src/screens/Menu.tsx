@@ -9,12 +9,12 @@ import { DishCard } from '../components/DishCard'
 import { Carousel } from '../components/Carousel'
 import { COMBOS_CATEGORY, bestSellersFor, combosFor, isOnDay, useToday } from '../lib/combos'
 import { isTakeout } from '../lib/channel'
-import { PromoCard } from '../components/PromoCard'
+import { PromoRow } from '../components/PromoCard'
 import { WhatsAppButton } from '../components/WhatsAppButton'
 import { DesktopNav } from '../components/DesktopNav'
 import { SideCart } from '../components/SideCart'
 import { useIsDesktop } from '../lib/useMediaQuery'
-import { promoAllows, usePromoActive } from '../lib/promo'
+import { promoAllows, useActivePromos } from '../lib/promo'
 import { CartBar, BottomDock, DockSpacer } from '../components/CartBar'
 import { Toast } from '../components/Toast'
 import { NoticeBanner } from '../components/NoticeBanner'
@@ -61,8 +61,8 @@ export function Menu() {
   const desktop = useIsDesktop() && takeout
   // Alto de lo que queda fijo arriba al saltar a una sección: las pestañas, o la barra de navegación.
   const stickyTop = desktop ? 96 : TABS_HEIGHT + 8
-  // Promo del día: solo en la web y en su horario (promo.hours).
-  const promoActive = usePromoActive()
+  // Promos que se ven ahora (encendidas, en su día y horario); la tarjeta va solo en la web.
+  const promoActive = useActivePromos()
   const navigate = useNavigate()
   const items = useCart(mesa, (s) => s.items)
   const openState = useOpenState()
@@ -191,8 +191,7 @@ export function Menu() {
   // La promo es solo de la web y en su horario (en la mesa no aparece ni en Combos).
   const combos = combosFor(today).filter((d) => promoAllows(d, takeout, promoActive))
   const bestSellers = bestSellersFor(today)
-  const promo = takeout && promoActive ? menu.promo : undefined
-  const promoDish = promo ? getDish(promo.dishId) : undefined
+  const promos = takeout ? promoActive : []
   // Búsqueda sin resultados: se sugieren los más vendidos que se pueden pedir hoy.
   const suggestions = bestSellers.filter((d) => d.available && isOnDay(d, today)).slice(0, 4)
   // Sin combos cargados, la categoría "combos" no tiene pestaña ni sección.
@@ -284,7 +283,7 @@ export function Menu() {
             <nav aria-label={t.menu.categoriesLabel} className="sticky top-[96px] flex flex-col gap-1">
               <p className="mb-1 px-3 text-small tracking-[0.08em] text-texto-2 uppercase">{t.web.categoriesTitle}</p>
               {[
-                ...(promo ? [{ id: 'promos', name: t.web.promosTitle }] : []),
+                ...(promos.length ? [{ id: 'promos', name: t.web.promosTitle }] : []),
                 ...(bestSellers.length ? [{ id: 'mas-vendidos-grilla', name: t.menu.bestSellers }] : []),
                 ...categories.map((c) => ({ id: `cat-${c.id}`, name: c.id === COMBOS_CATEGORY ? t.combos.title : c.name })),
               ].map((item) => {
@@ -388,12 +387,14 @@ export function Menu() {
                 />
 
                 {/* W3: promo del día, arriba de los más vendidos. */}
-                {promo && (
+                {promos.length > 0 && (
                   <div id="promos" className="mb-4 px-4 desktop:mt-6 desktop:mb-8" style={{ scrollMarginTop: stickyTop }}>
-                    <PromoCard
-                      promo={promo}
-                      subtitle={promo.subtitle}
-                      onClick={() => (promoDish ? openDish(promoDish) : undefined)}
+                    <PromoRow
+                      promos={promos}
+                      onOpen={(p) => {
+                        const dish = getDish(p.dishId)
+                        if (dish) openDish(dish)
+                      }}
                     />
                   </div>
                 )}

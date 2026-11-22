@@ -4,15 +4,23 @@ import { Button } from '../../../components/Button'
 import { cx } from '../../../lib/cx'
 import { t } from '../../../lib/text'
 
-/** Título de la sección ("Menú") y, a la derecha, su botón principal (todavía "Próximamente"). */
-export function PanelHeader({ title, action }: { title: string; action?: string }) {
+/**
+ * Título de la sección ("Menú") y, a la derecha, su botón principal ("Agregar plato").
+ * Sin `onAction`, el botón queda deshabilitado con "Próximamente".
+ */
+export function PanelHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="text-title-lg text-texto">{title}</h2>
       {action && (
-        <Button disabled title={t.staff.soon} icon={<Plus aria-hidden size={20} />}>
+        <Button
+          disabled={!onAction}
+          title={onAction ? undefined : t.staff.soon}
+          onClick={onAction}
+          icon={<Plus aria-hidden size={20} />}
+        >
           {action}
-          <span className="sr-only"> ({t.staff.soon})</span>
+          {!onAction && <span className="sr-only"> ({t.staff.soon})</span>}
         </Button>
       )}
     </div>

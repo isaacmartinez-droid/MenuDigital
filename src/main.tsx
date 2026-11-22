@@ -10,12 +10,15 @@ import '@fontsource/figtree/latin-700.css'
 import '@fontsource/caveat/latin-700.css'
 import './theme/index.css'
 
+// Lo que cambia el dueño en el panel (platos, promos, mesas, horario) y los agotados de la
+// cocina: se aplican al menú antes de dibujar.
+import './store/catalogEdits'
+import './store/availability'
+
 import { applyTheme } from './theme/applyTheme'
 import { restaurant } from './lib/catalog'
 import { prefetchScreens, router } from './router'
 import { registerNotificationWorker } from './lib/notifications'
-// Agotados que marca la cocina: se aplican al menú antes de dibujar.
-import './store/availability'
 
 applyTheme(restaurant)
 // Avisos del seguimiento: al tocar uno, la app va a esa orden sin recargar.

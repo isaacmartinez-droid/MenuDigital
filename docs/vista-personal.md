@@ -43,14 +43,14 @@ las tres que más le sirven al dueño para decidir, fieles al plugin (`pCocina`,
 | P1 Cocina, P1a y P1b (las comandas pasan de columna), P1c Agotados | P0 Entrar con PIN |
 | P2 Caja · por cobrar, P2a por confirmar, P2b Cobrar, P2e mesa cerrada | P2c Pedido manual, P2d Corte del día |
 | P3 Meseros: avisos, Voy y Atendido (P3a, P3b), P3m Mesas, P3d detalle de mesa | Aceptar o rechazar el primer pedido de la mesa |
-| P4 Panel · Resumen, P4a Menú y agotados, P4b Mesas y QR, P4c Personal y PINs | Agregar plato, mesa, persona o promo; cambiar PIN y horario |
+| P4 Panel · Resumen, P4a Menú y agotados, P4b Mesas y QR, P4c Personal y PINs | |
+| Panel: Agregar y editar plato, Agregar y quitar mesa, Agregar persona, Cambiar PIN, Nueva promo y Cambiar horario (sin diseño en el Figma: boceto aprobado el 2026-11-22) | |
 | Panel · Promos, Horarios y Reseñas (sin diseño en el Figma: boceto aprobado el 2026-11-21) | |
 
 Lo que es para después **se ve, pero no hace nada**. Está deshabilitado y el lector de pantalla
 dice "Próximamente". Eso incluye "Agregar pedido a esta mesa" (meseros), "Nuevo pedido", "Corte del día", "Imprimir
-cuenta", "Bloquear mesa", la pestaña "En curso" de caja y, en el panel, "Agregar plato", "Agregar
-mesa", "Agregar persona", "Nueva promo", "Cambiar" (PIN), "Cambiar horario" y la regla "El mesero
-acepta el primer pedido".
+cuenta", "Bloquear mesa", la pestaña "En curso" de caja y, en el panel, la regla "El mesero acepta
+el primer pedido".
 
 ## 2. Rutas
 
@@ -231,15 +231,23 @@ Sin la barra de tablet: "Meseros" y "Carlos" arriba, y las pestañas **Avisos ·
 
 ### 4.7 P4a Menú y agotados (`PanelMenu.tsx`)
 
-- "Menú" y **Agregar plato** (deshabilitado). Tabla con Plato (foto), Etiqueta, Precio y
-  Disponible, con **los 17 platos del menú** (el Figma dibuja 5 de ejemplo).
+- "Menú" y **Agregar plato**. Tabla con Plato (foto), Etiqueta, Precio, Disponible y un lápiz para
+  editar, con **los 17 platos del menú** (el Figma dibuja 5 de ejemplo) más los agregados (con
+  "Nuevo").
+- **Ventana del plato** (agregar o editar): nombre, categoría, precio, línea corta, descripción,
+  etiqueta y foto. La foto se elige de la computadora y el navegador la achica a 640 px (WebP) para
+  guardarla en localStorage. Al guardar, la mesa y la web lo ven al instante (y la cocina en
+  "Agotados"). Los platos agregados se pueden borrar; los de `menu.json`, solo editar.
+- Los platos de las promos nuevas no salen acá: se manejan en Promos.
 - Etiqueta: la del plato (Más vendido, La de la casa, Combo, Promo) o "Agotado" si no tiene y está
   apagado, como en el Figma.
 - El interruptor es el mismo agotado de la cocina: el cliente lo ve al instante.
 
 ### 4.8 P4b Mesas y QR (`PanelTables.tsx`)
 
-- **Agregar mesa** (deshabilitado) y las tres reglas: "Solo en horario de atención" y "Límite por
+- **Agregar mesa** suma la siguiente (Mesa 9, 10…) con su QR, y `/m/9` empieza a funcionar. Las
+  agregadas tienen "Nueva" y se pueden quitar.
+- Las tres reglas: "Solo en horario de atención" y "Límite por
   pedido" funcionan (ver 3); "El mesero acepta el primer pedido" está apagada y deshabilitada.
 - Las 8 mesas con su **QR de verdad** (el mismo diseño de `npm run qr`, hecho en el navegador con
   `lib/qr.ts`), la dirección y **Descargar QR** (baja `mesa-N.svg` con el logo adentro).
@@ -250,20 +258,33 @@ Sin la barra de tablet: "Meseros" y "Carlos" arriba, y las pestañas **Avisos ·
 ### 4.9 P4c Personal y PINs (`PanelPeople.tsx`)
 
 - Don Julio (Cocina), María (Caja), Carlos y Luis (Mesero) y Dueño (puede cancelar), cada uno con
-  "PIN ••••" y **Cambiar** (deshabilitado). **Agregar persona** (deshabilitado).
+  "PIN ••••" y **Cambiar**, que abre "Cambiar el PIN de María" (el nuevo, dos veces).
+- **Agregar persona:** nombre, rol (Cocina, Caja, Mesero o Dueño) y PIN dos veces. El PIN son 4
+  números y no puede repetirse ("Ese PIN ya lo usa Don Julio"), porque con él se entra en
+  `/personal` (P0).
+- PINs de ejemplo: Don Julio 1111, María 2222, Carlos 3333, Luis 4444 y Dueño 0000
+  (`demo.panel.people`).
 - "Registro de acciones con PIN del dueño", con tres líneas de ejemplo (`demo.panel.pinLog`).
 
 ### 4.10 Promos, Horarios y Reseñas (sin diseño en el Figma)
 
 Se hicieron con el boceto aprobado, con las mismas piezas que el resto del panel.
 
-- **Promos:** la promo del día (foto, "2 enchiladas por C$ 160", "Solo web · Hoy de 4 a 7 pm"),
-  si se ve ahora ("Activa ahora", "Fuera de horario: se ve de 4:00 pm a 7:00 pm" o "Apagada") y
-  su interruptor. **Nueva promo** deshabilitado.
+- **Promos:** la promo del día y las creadas, cada una con foto, "2 enchiladas por C$ 160", dónde
+  se ve y cuándo ("Solo web · Todos los días · 4 a 7 pm"), si se ve ahora ("Activa ahora", "Fuera
+  de horario ahora" o "Apagada") y su interruptor. Las creadas se pueden borrar.
+- **Nueva promo:** plato, cantidad, precio (con "Normal C$ 500 · ahorran C$ 80"), cómo se llama
+  (se arma solo: "2 carnes asadas", y se puede cambiar), días, desde y hasta, y dónde (Solo web o
+  Web y mesa), con la tarjeta tal como la verá el cliente. Al crearla:
+  - se suma un plato "Promo: 2 carnes asadas" en Combos, con sus días;
+  - el inicio y el menú de la web muestran las promos activas; si hay más de una, en una fila que
+    se desliza de costado;
+  - si es "Web y mesa", la mesa la ve en Combos (la del día sigue siendo solo web).
 - **Horarios:** el horario de cada día, de lunes a domingo, con "Hoy" marcado; la tarjeta **Hoy**
   con el estado ("Abierto ahora · cierra a las 10:00 pm", "Cerrado por hoy · mañana abre a las
-  4:00 pm") y **Cerrar hoy**. Si la regla "Solo en horario" está apagada, lo avisa. **Cambiar
-  horario** deshabilitado.
+  4:00 pm") y **Cerrar hoy**. Si la regla "Solo en horario" está apagada, lo avisa.
+- **Cambiar horario:** a qué hora abre y cierra cada día, o "Cerrado". Cambia al instante
+  "Abierto / Cerrado" en la mesa y la web, y se puede volver al horario original.
 - **Reseñas:** tres números (Google ★ 4.8 · 120, la app y las quejas) y la lista "Lo que dicen en
   la app": primero las de 1 y 2 estrellas (con "Queja"), después las demás, de la más nueva a la
   más vieja. Junta las de `menu.json`, las que dejan los clientes al pagar (en este navegador) y la
@@ -358,6 +379,7 @@ propina, método, recibido, vuelto, cajera y hora).
 | Pedidos de ejemplo | `fritanga-nica:personal:ejemplos` |
 | Agotados de la cocina | `fritanga-nica:agotados` |
 | Ajustes del panel (promo, reglas, cerrar hoy) | `fritanga-nica:panel` |
+| Platos, promos, mesas, personal y horario del panel | `fritanga-nica:catalogo` |
 | Último número de comanda | `fritanga-nica:ultimo-numero` |
 
 **API real:** el tablero (`lib/staff.ts`) se reemplaza por `GET /api/cocina` y `GET /api/caja`
@@ -377,10 +399,11 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 | `src/lib/beep.ts` | El sonido de pedido nuevo |
 | `src/store/availability.ts` | Agotados compartidos entre pestañas |
 | `src/store/panelSettings.ts` | Ajustes del panel compartidos entre pestañas: promo, reglas y "Cerrar hoy" |
+| `src/store/catalogEdits.ts` | Lo que agrega o cambia el dueño (platos, promos, mesas, personal, horario), aplicado sobre `menu` y `restaurant` |
 | `src/lib/qr.ts` | QR de mesa con la marca, en el navegador, y su descarga |
 | `src/components/staff/` | `StaffBar`, `ChannelChip`, `KitchenTicket`, `Segmented`, `Switch`, `StaffDialog`, `SoldOutDialog`, `ChargeDialog` |
 | `src/screens/staff/` | `StaffLayout`, `Kitchen`, `Cashier`, `Waiters`, `OwnerPanel` |
-| `src/screens/staff/panel/` | `PanelLayout`, `PanelMenu`, `PanelTables`, `PanelPeople`, `PanelPromos`, `PanelHours`, `PanelReviews` y `parts` |
+| `src/screens/staff/panel/` | `PanelLayout`, `PanelMenu`, `PanelTables`, `PanelPeople`, `PanelPromos`, `PanelHours`, `PanelReviews`, `parts`, las ventanas (`DishDialog`, `PromoDialog`, `PersonDialog`, `HoursDialog`) y el formulario (`form`, `formUtils`) |
 
 **Cambiados:**
 - `api.ts`: `sendComanda` marca `kitchenLive`; `watchComanda` sigue a la cocina cuando
@@ -392,7 +415,9 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 - `DishCard`, `DishDetail`, `Menu` y `Tracking`: reaccionan a los agotados de la cocina.
 - `router.tsx`, `main.tsx`, `storage.ts` (`listKeys`) y los tipos.
 - Por el panel: `useOpenState` (Cerrar hoy y la regla de horario), `promo.ts` (`usePromoInHours`
-  y la promo apagada), `cart.ts`, `orderFlow.ts` y `DishDetail` (el límite sale de `itemLimit()`),
+  y varias promos: `useActivePromos`, `promoAllows`), `PromoCard` (`PromoRow`), `Home`,
+  `HomeDesktop`, `Menu`, `catalog.ts` (`syncDishIndex`), `images.ts` (fotos `data:`),
+  `SoldOutDialog` (platos agregados), `cart.ts`, `orderFlow.ts` y `DishDetail` (el límite sale de `itemLimit()`),
   `Switch` (puede quedar deshabilitado), `vite.config.ts` (QR fuera del paquete común) y
   `qrcode` pasó a dependencias de la app.
 
@@ -433,7 +458,8 @@ con aviso por WebSocket, y sus acciones por `PATCH /api/comandas/:id` (estado, c
 
 - Del Figma: P0 PIN, P2c Pedido manual, P2d Corte del día y aceptar el primer pedido de la mesa
   (meseros).
-- Del panel: agregar o editar platos, mesas, personas y promos, cambiar PINs y el horario.
+- Del panel: editar o borrar promos ya creadas, borrar personas y que el registro de acciones
+  sea real.
 - Del sistema real: backend para que los pedidos lleguen entre dispositivos, WhatsApp de
   confirmación de verdad, impresora de tickets y los números reales del panel.
 

@@ -3,6 +3,7 @@ import { restaurant } from './catalog'
 import { useDemoFlags } from './demoFlags'
 import { getOpenState, nextOpening, todayClosing, zonedNow, type OpenState } from './schedule'
 import { isClosedToday, usePanelSettings } from '../store/panelSettings'
+import { useCatalog } from '../store/catalogEdits'
 
 const { ranges, timezone } = restaurant.schedule
 
@@ -24,6 +25,8 @@ export function useOpenState(): OpenState {
   const { horario: forzar } = useDemoFlags()
   const closedOn = usePanelSettings((s) => s.closedOn)
   const onlyInHours = usePanelSettings((s) => s.onlyInHours)
+  // El dueño puede cambiar el horario desde el panel (se aplica sobre restaurant.schedule).
+  useCatalog((s) => s.schedule)
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {

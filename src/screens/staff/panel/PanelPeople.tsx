@@ -1,37 +1,45 @@
+import { useState } from 'react'
 import { restaurant } from '../../../lib/catalog'
 import { fmt, t } from '../../../lib/text'
+import { peopleOf, useCatalog, type StaffPerson } from '../../../store/catalogEdits'
+import { useSavedNote } from './formUtils'
 import { PanelCard, PanelHeader, PanelNote } from './parts'
+import { PersonDialog, PinDialog } from './PersonDialog'
 
 /**
  * P4c Panel · Personal y PINs: quién trabaja, su rol y su PIN (oculto), y el
- * registro de lo que se hizo con el PIN del dueño. Todo de ejemplo; cambiar el PIN
- * y agregar personas vienen con el PIN de entrada (P0).
+ * registro de lo que se hizo con el PIN del dueño (de ejemplo). "Agregar persona" y
+ * "Cambiar" abren su ventana; los PIN sirven para entrar desde /personal (P0).
  */
 export function PanelPeople() {
   const m = t.staff.panel.people
-  const { people, pinLog } = restaurant.demo.panel
+  const people = peopleOf(useCatalog((s) => s.people))
+  const { pinLog } = restaurant.demo.panel
+  const [adding, setAdding] = useState(false)
+  const [changing, setChanging] = useState<StaffPerson | null>(null)
+  const [note, showNote] = useSavedNote()
 
   return (
     <>
-      <PanelHeader title={m.title} action={m.add} />
+      <PanelHeader title={m.title} action={m.add} onAction={() => setAdding(true)} />
+      {note}
       <div className="flex flex-col items-start gap-4 lg:flex-row">
         <PanelCard className="w-full flex-1 px-4">
           <ul>
             {people.map((person, i) => (
-              <li key={person.name} className={i ? 'border-t border-borde' : undefined}>
+              <li key={person.id} className={i ? 'border-t border-borde' : undefined}>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
                   <span className="min-w-0 flex-1 text-dish text-texto">{person.name}</span>
-                  <span className="w-[200px] text-body text-texto-2">{person.role}</span>
+                  <span className="w-[200px] text-body text-texto-2">{t.staff.panel.roles[person.role]}</span>
                   <span className="text-body text-texto-2">
                     <span aria-hidden>{m.pin}</span>
                     <span className="sr-only">{m.pinLabel}</span>
                   </span>
                   <button
                     type="button"
-                    disabled
-                    title={t.staff.soon}
-                    aria-label={`${fmt(m.changeLabel, { name: person.name })} (${t.staff.soon})`}
-                    className="-my-2 min-h-11 text-dish text-verde disabled:opacity-60"
+                    onClick={() => setChanging(person)}
+                    aria-label={fmt(m.changeLabel, { name: person.name })}
+                    className="-my-2 min-h-11 text-dish text-verde"
                   >
                     {m.change}
                   </button>
@@ -52,6 +60,8 @@ export function PanelPeople() {
         </PanelCard>
       </div>
       <PanelNote>{m.footnote}</PanelNote>
+      {adding && <PersonDialog onClose={() => setAdding(false)} onSaved={showNote} />}
+      {changing && <PinDialog person={changing} onClose={() => setChanging(null)} onSaved={showNote} />}
     </>
   )
 }

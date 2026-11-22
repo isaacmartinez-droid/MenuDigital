@@ -30,7 +30,7 @@ import { useGoBack } from '../lib/useGoBack'
 import { paths, useMesa } from '../lib/useMesa'
 import { isTakeout } from '../lib/channel'
 import { cx } from '../lib/cx'
-import { promoAllows, usePromoActive } from '../lib/promo'
+import { promoAllows, useActivePromos } from '../lib/promo'
 import { cartStore } from '../store/cart'
 import { useUi } from '../store/ui'
 import { useAvailability } from '../store/availability'
@@ -107,7 +107,7 @@ export function DishDetail() {
   const editing = editingId ? cartStore(mesa).getState().items.find((i) => i.lineId === editingId) : undefined
   const goBack = useGoBack(editing ? paths.order(mesa) : paths.menu(mesa))
   const openState = useOpenState()
-  const promoActive = usePromoActive()
+  const promoActive = useActivePromos()
   const today = useToday()
   const sideGroup = useId()
   const extrasGroup = useId()

@@ -16,6 +16,12 @@ const sides = new Map(menu.sides.map((s) => [s.id, s]))
 const extras = new Map(menu.extras.map((e) => [e.id, e]))
 const tags = new Map(menu.tags.map((t) => [t.id, t]))
 
+/** Vuelve a indexar los platos (el panel agrega platos y promos; ver store/catalogEdits). */
+export function syncDishIndex(): void {
+  dishes.clear()
+  for (const d of menu.dishes) dishes.set(d.id, d)
+}
+
 export const getDish = (id: string): Dish | undefined => dishes.get(id)
 export const getSide = (id: string | undefined): SideOption | undefined => (id ? sides.get(id) : undefined)
 export const getExtra = (id: string): Extra | undefined => extras.get(id)

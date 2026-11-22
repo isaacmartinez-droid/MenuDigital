@@ -5,10 +5,10 @@ import { Button } from '../components/Button'
 import { BottomDock, DockSpacer } from '../components/CartBar'
 import { Carousel } from '../components/Carousel'
 import { DishCard } from '../components/DishCard'
-import { PromoCard } from '../components/PromoCard'
+import { PromoRow } from '../components/PromoCard'
 import { WhatsAppButton } from '../components/WhatsAppButton'
 import { TAKEOUT } from '../lib/channel'
-import { getSide, menu, restaurant } from '../lib/catalog'
+import { getSide, restaurant } from '../lib/catalog'
 import { bestSellersFor, useToday } from '../lib/combos'
 import { cx } from '../lib/cx'
 import { hoursOn, scheduleLines } from '../lib/hours'
@@ -19,7 +19,7 @@ import { paths } from '../lib/useMesa'
 import { cartStore, dishQuantity, useCart } from '../store/cart'
 import { useUi } from '../store/ui'
 import { useIsDesktop } from '../lib/useMediaQuery'
-import { usePromoActive } from '../lib/promo'
+import { useActivePromos } from '../lib/promo'
 import { HomeDesktop } from './HomeDesktop'
 
 const { web } = restaurant
@@ -38,7 +38,7 @@ export function Home() {
   const today = useToday()
   const items = useCart(TAKEOUT, (s) => s.items)
   const bestSellers = bestSellersFor(today)
-  const promo = usePromoActive() ? menu.promo : undefined
+  const promos = useActivePromos()
   const goMenu = () => navigate(paths.menu(TAKEOUT))
   // Horario de hoy para la tablet: "Abierto hoy · 4:00 pm a 10:00 pm".
   const todayHours = hoursOn(today)
@@ -162,9 +162,9 @@ export function Home() {
             </section>
 
             {/* Promo del día */}
-            {promo && (
+            {promos.length > 0 && (
               <div className="px-4 tablet:px-8">
-                <PromoCard promo={promo} subtitle={promo.subtitle} onClick={goMenu} />
+                <PromoRow promos={promos} onOpen={goMenu} />
               </div>
             )}
 

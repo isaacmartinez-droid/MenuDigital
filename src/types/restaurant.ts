@@ -79,8 +79,8 @@ export interface PanelDemo {
   /** Filas de tarjetas con barras (título, unidad opcional y barras). */
   rows: { title: string; unit?: string; bars: PanelBar[] }[][]
   complaint: { title: string; body: string }
-  /** P4c: el personal de ejemplo y su rol. */
-  people: { name: string; role: string }[]
+  /** P4c: el personal de ejemplo, su rol (cocina, caja, mesero, dueno) y su PIN (P0). */
+  people: { name: string; role: string; pin: string }[]
   /** P4c: registro de acciones con PIN del dueño (de ejemplo). */
   pinLog: string[]
   /** Reseñas: la queja de ejemplo del día (la misma del Resumen), calificación rápida sin texto. */

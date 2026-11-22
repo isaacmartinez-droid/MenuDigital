@@ -4,12 +4,13 @@ import { menu } from '../../lib/catalog'
 import { cx } from '../../lib/cx'
 import { fmt, t } from '../../lib/text'
 import { availabilityStore } from '../../store/availability'
+import { useCatalogVersion } from '../../store/catalogEdits'
 import { Button } from '../Button'
 import { StaffDialog } from './StaffDialog'
 import { Switch } from './Switch'
 
-/** Platos en el orden de las categorías del menú. */
-const dishes = menu.categories.flatMap((c) => menu.dishes.filter((d) => d.category === c.id))
+/** Platos en el orden de las categorías del menú (con los que agregó el dueño). */
+const dishesInOrder = () => menu.categories.flatMap((c) => menu.dishes.filter((d) => d.category === c.id))
 
 /**
  * P1c "¿Qué se acabó?": un interruptor por plato y por acompañante. Al apagarlo,
@@ -22,6 +23,8 @@ export function SoldOutDialog({ onClose }: { onClose: () => void }) {
   const soldOutSides = useStore(availabilityStore, (s) => s.soldOutSides)
   const { setDish, setSide } = availabilityStore.getState()
   const listId = useId()
+  useCatalogVersion()
+  const dishes = dishesInOrder()
 
   const rows = [
     ...dishes.map((d) => ({

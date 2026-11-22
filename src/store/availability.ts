@@ -3,6 +3,7 @@ import { createStore } from 'zustand/vanilla'
 import { persist } from 'zustand/middleware'
 import { menu, restaurant } from '../lib/catalog'
 import { safeLocalStorage } from './tableStore'
+import { onCatalogApplied, useCatalogVersion } from './catalogEdits'
 
 /**
  * Agotados que marca la cocina ("¿Qué se acabó?", P1c). Se guardan en este
@@ -53,6 +54,8 @@ function apply({ dishes }: AvailabilityState) {
 }
 apply(availabilityStore.getState())
 availabilityStore.subscribe(apply)
+// El panel rearmó el menú (plato o promo nueva): se vuelven a aplicar los agotados.
+onCatalogApplied(() => apply(availabilityStore.getState()))
 
 // Otra pestaña (la cocina) cambió los agotados: se vuelven a leer.
 if (typeof window !== 'undefined') {
@@ -68,6 +71,7 @@ export const isSideAvailable = (id: string) => !availabilityStore.getState().sol
  * (el menú ya trae el dato al día). Devuelve los acompañantes agotados.
  */
 export function useAvailability(): string[] {
+  useCatalogVersion()
   useStore(availabilityStore, (s) => s.dishes)
   return useStore(availabilityStore, (s) => s.soldOutSides)
 }
