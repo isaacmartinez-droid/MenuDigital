@@ -739,9 +739,9 @@ Para empezar de cero: borrar los datos del sitio en el navegador.
 ## 21. Pendiente
 
 **De la web:**
-- Ninguna etapa del Figma pendiente. Lo que sigue es el sistema real (backend): pedidos que
-  lleguen de verdad. La demo de cocina, caja y panel del dueño está en
-  [vista-personal.md](vista-personal.md).
+- Ninguna etapa del Figma pendiente. Lo que sigue es la web real (backend, domicilio, pantalla
+  del local y panel), con entrega el 8 de enero de 2027: ver [plan-entrega.md](plan-entrega.md).
+  La demo de cocina, caja y panel del dueño está en [vista-personal.md](vista-personal.md).
 
 **Del cliente:**
 - Dirección, número de WhatsApp y enlace real del perfil de Google (con su calificación,
@@ -750,8 +750,8 @@ Para empezar de cero: borrar los datos del sitio en el navegador.
 - Fotos reales (ver [vista-qr.md 19](vista-qr.md#19-pendiente)) y una foto de portada.
 
 **Del proyecto:**
-- El sistema real (backend): que los pedidos lleguen de verdad, con WhatsApp de confirmación,
-  pantallas de cocina y caja y panel del dueño (con los pedidos por canal y por origen).
+- La web real, según [plan-entrega.md](plan-entrega.md). El QR en mesa, los meseros, la caja y
+  los mensajes automáticos de WhatsApp quedan para una fase 2.
 - Definir el dominio y, con él, regenerar e imprimir las placas QR (`npm run qr`).
 
 ## 22. Historial de commits

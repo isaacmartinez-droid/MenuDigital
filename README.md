@@ -11,6 +11,7 @@ Documentación completa (pantallas, decisiones, arquitectura, config y pendiente
 - Vista QR, pedido en mesa: [docs/vista-qr.md](docs/vista-qr.md).
 - Vista web, para llevar: [docs/vista-web.md](docs/vista-web.md).
 - Vista del personal (cocina, caja y panel del dueño, demo): [docs/vista-personal.md](docs/vista-personal.md).
+- Plan de entrega de la web real (qué se hace, etapas, dependencias y seguridad): [docs/plan-entrega.md](docs/plan-entrega.md).
 - Fotos provisorias (Unsplash) y cómo reemplazarlas: [docs/fotos-provisorias.md](docs/fotos-provisorias.md).
 - Forma de trabajo: [CLAUDE.md](CLAUDE.md).
 

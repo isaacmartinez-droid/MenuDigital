@@ -3,6 +3,9 @@
 La documentación completa está en `docs/vista-qr.md` (pedido en mesa) y `docs/vista-web.md` (web
 para llevar, con sus etapas y lo anotado para corregir). Leerlas antes de tocar algo.
 
+El trabajo actual es la web real (solo web, para llevar y domicilio), con entrega el 8 de enero
+de 2027: qué se hace, en qué orden y qué frena qué está en `docs/plan-entrega.md`.
+
 En la web, lo compartido con la mesa usa lo ya corregido en la mesa; "Figma primero" aplica a lo
 propio de la web (ver `docs/vista-web.md`, sección 2).
 
